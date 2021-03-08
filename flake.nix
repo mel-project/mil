@@ -2,8 +2,8 @@
   description = "Mel Intermediate Lisp";
 
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-20.09";
-  inputs.mozilla = { url = "github:mozilla/nixpkgs-mozilla"; flake = false; };
   inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs.mozilla = { url = "github:mozilla/nixpkgs-mozilla"; flake = false; };
 
   outputs =
     { self
@@ -25,8 +25,8 @@
     in flake-utils.lib.eachDefaultSystem
       (system:
         let
-        inherit system;
         pkgs = import nixpkgs {
+          inherit system;
           overlays = [
             (import "${mozilla}/rust-overlay.nix")
             rustOverlay
