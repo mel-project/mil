@@ -11,6 +11,8 @@ use nom::{
     sequence::{preceded, delimited, separated_pair},
 };
 
+type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum BuiltIn {
     Add,
@@ -23,6 +25,7 @@ pub enum Atom {
     BuiltIn(BuiltIn),
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum Expr {
     Atom(Atom),
     App(BuiltIn, Vec<Expr>),
@@ -68,12 +71,6 @@ fn atom_expr<'a>(input: &'a str)
         .map(Expr::Atom).parse(input)
 }
 
-/*
-fn ws<'a>(input: &'a str)
--> IResult<&'a str, &'a str, VerboseError<&'a str>> {
-}
-*/
-
 fn app_expr<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     //let identifier = alpha1;
@@ -94,57 +91,37 @@ fn expr<'a>(input: &'a str)
     alt((app_expr, atom_expr))(input)
 }
 
-/*
-#[derive(Debug)]
-pub struct Sexp {
-    op: char,//Operation,
-    args: Vec<Exp>,
-}
-
-// TODO: To 256
-type U256 = u64;
-
-/// Accepted expression types
-#[derive(Debug)]
-pub enum Exp {
-    Int(U256),
-    List(Sexp),
-}
-
-//pub fn parse_sexp(i: &str) -> IResult<&str, Sexp> {
-pub fn sexp<E>() -> impl Parser<'& str, Exp, E> {
-    let delimiter = char(' ');
-    let identifier = alpha1;
-    let args = separated_list1(delimiter, exp());
-    let content = separated_pair(identifier,
-                                 delimiter,
-                                 args);
-
-    delimited(char('('),
-              content,
-              char(')'))
-        .map(|id, args| Exp::List( Sexp {
-            op: id,
-            args: args.into(),
-         }))
-}
-
-pub fn exp() -> impl Parser<'& str, Exp, E> {
-    alt((sexp, int))
-}
-*/
-
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::fmt::Debug;
+
+    /// Map a parser over a list of tests and assert equality. Panics when equality fails.
+    fn batch_test<'a, O: Debug + Eq>(
+        mut f: impl Parser<&'a str, O, VerboseError<&'a str>>,
+        tests: Vec<(&'a str, ParseRes<'a, O>)>)
+    {
+        tests.into_iter()
+             .for_each(|(i,o)|
+                 assert_eq!(f.parse(&i), o))
+    }
 
     #[test]
     fn parse_int_as_atom() {
         let tests = vec![("10",   Ok(("", Atom::Int(10)))),
                          ("-742", Ok(("", Atom::Int(-742))))];
 
-        tests.into_iter()
-             .for_each(|(i,o)|
-                 assert_eq!(int_atom(&i), o))
+        batch_test(int_atom, tests)
+    }
+
+    #[test]
+    fn parse_app_expr() {
+        let tests = vec![
+            ("(+ 1 2)",
+             Ok(("", Expr::App(BuiltIn::Add,
+                               vec![Expr::Atom(Atom::Int(1)),
+                                    Expr::Atom(Atom::Int(2))]))))];
+
+        batch_test(app_expr, tests)
     }
 }
