@@ -5,7 +5,7 @@ use nom::{
     bytes::complete::is_a,
     combinator::{map_res, map},
     error::{FromExternalError, VerboseError},
-    character::complete::{alpha1, one_of, digit1},
+    character::complete::{multispace1, one_of, digit1},
     multi::{separated_list1},
     character::complete::char,
     sequence::{preceded, delimited, separated_pair},
@@ -60,6 +60,38 @@ fn int_atom<'a>(input: &'a str)
             .map(|n| -1*n)
             .map(Atom::Int)))
         (input)
+}
+
+fn atom_expr<'a>(input: &'a str)
+-> IResult<&'a str, Expr, VerboseError<&'a str>> {
+    alt((int_atom, builtin_atom))
+        .map(Expr::Atom).parse(input)
+}
+
+/*
+fn ws<'a>(input: &'a str)
+-> IResult<&'a str, &'a str, VerboseError<&'a str>> {
+}
+*/
+
+fn app_expr<'a>(input: &'a str)
+-> IResult<&'a str, Expr, VerboseError<&'a str>> {
+    //let identifier = alpha1;
+    let args = separated_list1(multispace1, expr);
+    let content = separated_pair(builtin,
+                                 multispace1,
+                                 args);
+
+    delimited(char('('),
+              content,
+              char(')'))
+        .map(|(op, args)| Expr::App(op, args))
+        .parse(input)
+}
+
+fn expr<'a>(input: &'a str)
+-> IResult<&'a str, Expr, VerboseError<&'a str>> {
+    alt((app_expr, atom_expr))(input)
 }
 
 /*
