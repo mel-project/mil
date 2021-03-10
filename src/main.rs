@@ -7,6 +7,6 @@ fn main() -> std::io::Result<()> {
     let mut code = String::new();
     file.read_to_string(&mut code)?;
 
-    println!("{:?}", parser::parse_sexp(&code[..]));
+    //println!("{:?}", parser::parse_sexp(&code[..]));
     Ok(())
 }
