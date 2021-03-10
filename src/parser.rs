@@ -120,7 +120,14 @@ mod test {
             ("(+ 1 2)",
              Ok(("", Expr::App(BuiltIn::Add,
                                vec![Expr::Atom(Atom::Int(1)),
-                                    Expr::Atom(Atom::Int(2))]))))];
+                                    Expr::Atom(Atom::Int(2))])))),
+            ("(+ 1 (- 5 -8))",
+             Ok(("", Expr::App(BuiltIn::Add,
+                               vec![Expr::Atom(Atom::Int(1)),
+                                    Expr::App(BuiltIn::Sub,
+                                              vec![Expr::Atom(Atom::Int(5)),
+                                                   Expr::Atom(Atom::Int(-8))])]))))
+        ];
 
         batch_test(app_expr, tests)
     }
