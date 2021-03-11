@@ -1,9 +1,9 @@
 use primitive_types::U256;
 use crate::types::{BuiltIn, Atom, Expr};
 
-struct BinCode(Vec<u8>);
+pub struct BinCode(pub Vec<u8>);
 
-trait Compile {
+pub trait Compile {
     /// Produce MelVM interpretable binary from a data type. Consumes a binary struct
     /// and mutates for efficient allocation.
     fn compile_onto(&self, b: BinCode) -> BinCode;
@@ -25,21 +25,23 @@ impl Compile for BuiltIn {
 
 // Convenience fn for allocating and appending an op code and number to bincode
 fn append_pushi(b: &mut Vec<u8>, op: u8, n: &U256) {
-    // U256 number (32 bytes) + u8 op code (1 byte)
-    let num_bytes = n.bits() / 8 + 1;
-    b.reserve(num_bytes);
-
     // Write op + n to bincode
     b.push(op);
-    let i = b.len();
-    n.to_big_endian(&mut b[i..]);
+
+    let idx = b.len();
+
+    // Extend vec by 32 bytes to effeciently add U256
+    let B = 32;
+    b.reserve(B);
+    unsafe { b.set_len(idx + B); }
+
+    n.to_big_endian(&mut b[idx..]);
 }
 
 impl Compile for Atom {
     fn compile_onto(&self, mut b: BinCode) -> BinCode {
         match self {
             // PushI
-            // TODO: Make sure n encodes to be
             Atom::Int(n) => append_pushi(&mut b.0, 0xf1, n),
         }
 

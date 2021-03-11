@@ -77,7 +77,7 @@ fn app_expr<'a>(input: &'a str)
         .parse(input)
 }
 
-fn expr<'a>(input: &'a str)
+pub fn expr<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     alt((app_expr, atom_expr))(input)
 }
