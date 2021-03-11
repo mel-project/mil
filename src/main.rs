@@ -1,5 +1,6 @@
-use mil::parser;
-use mil::compiler::{Compile, BinCode};
+use mil::{
+    parser, executor,
+    compiler::{Compile, BinCode}};
 use std::fs::File;
 use std::io::prelude::*;
 use blkstructs::melvm::Covenant;
@@ -22,6 +23,9 @@ fn main() -> std::io::Result<()> {
 
     // Make sure the compiled binary can be disassembled
     println!("{:?}", script.to_ops());
+
+    let v = executor::execute(bincode);
+    println!("Execution evaluated -> {}", v);
     //println!("{:?}", parser::parse_sexp(&code[..]));
     Ok(())
 }
