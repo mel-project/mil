@@ -17,15 +17,17 @@ fn main() -> std::io::Result<()> {
     // Compile to binary
     let empty = BinCode(Vec::new());
     let bincode = ast.compile_onto(empty);
+    // Write to file
+    std::fs::write("script.mvm", &bincode.0[..]);
+    //println!("Binary code: {:#04x?}", bincode.0);
 
     // Wrap in a covenant
-    let script = Covenant(bincode.0);
-
-    // Make sure the compiled binary can be disassembled
+    let script = Covenant(bincode.0.clone());
+    // Disassemble compiled binary
     println!("{:?}", script.to_ops());
 
-    let v = executor::execute(bincode);
+    // Execute and print return value
+    let v = executor::execute(bincode.clone());
     println!("Execution evaluated -> {}", v);
-    //println!("{:?}", parser::parse_sexp(&code[..]));
     Ok(())
 }

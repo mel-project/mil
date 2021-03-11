@@ -1,6 +1,7 @@
 use primitive_types::U256;
 use crate::types::{BuiltIn, Atom, Expr};
 
+#[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
 
 pub trait Compile {

@@ -980,6 +980,7 @@ dependencies = [
  "blkstructs",
  "nom",
  "primitive-types 0.9.0",
+ "tmelcrypt",
 ]
 
 [[package]]
