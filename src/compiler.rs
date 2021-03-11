@@ -1,0 +1,61 @@
+use primitive_types::U256;
+use crate::types::{BuiltIn, Atom, Expr};
+
+struct BinCode(Vec<u8>);
+
+trait Compile {
+    /// Produce MelVM interpretable binary from a data type. Consumes a binary struct
+    /// and mutates for efficient allocation.
+    fn compile_onto(&self, b: BinCode) -> BinCode;
+
+    // Map on the output of the 
+    // fn map(&self, other: impl Fn(BinCode) -> BinCode) -> BinCode
+}
+
+impl Compile for BuiltIn {
+    fn compile_onto(&self, mut b: BinCode) -> BinCode {
+        match self {
+            Add => b.0.push(0x10),
+            Sub => b.0.push(0x11),
+        }
+
+        b
+    }
+}
+
+// Convenience fn for allocating and appending an op code and number to bincode
+fn append_pushi(b: &mut Vec<u8>, op: u8, n: &U256) {
+    // U256 number (32 bytes) + u8 op code (1 byte)
+    let num_bytes = n.bits() / 8 + 1;
+    b.reserve(num_bytes);
+
+    // Write op + n to bincode
+    b.push(op);
+    let i = b.len();
+    n.to_big_endian(&mut b[i..]);
+}
+
+impl Compile for Atom {
+    fn compile_onto(&self, mut b: BinCode) -> BinCode {
+        match self {
+            // PushI
+            // TODO: Make sure n encodes to be
+            Atom::Int(n) => append_pushi(&mut b.0, 0xf1, n),
+        }
+
+        b
+    }
+}
+
+impl Compile for Expr {
+    fn compile_onto(&self, mut b: BinCode) -> BinCode {
+        match self {
+            // Evaluate the args, then append the op
+            Expr::App(op, args) => op.compile_onto(
+                                args.iter().fold(b, |b_acc, arg|
+                                    arg.compile_onto(b_acc))),
+            // Push atoms
+            Expr::Atom(v) => v.compile_onto(b),
+        }
+    }
+}

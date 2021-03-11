@@ -1,10 +1,12 @@
+use primitive_types::U256;
+use crate::types::{BuiltIn, Atom, Expr};
 use nom::{
     IResult, Parser,
     error::ParseError,
     branch::alt,
     bytes::complete::is_a,
     combinator::{map_res, map},
-    error::{FromExternalError, VerboseError},
+    error::VerboseError,
     character::complete::{multispace1, one_of, digit1},
     multi::{separated_list1},
     character::complete::char,
@@ -12,24 +14,6 @@ use nom::{
 };
 
 type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum BuiltIn {
-    Add,
-    Sub,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum Atom {
-    Int(i64), // TODO: Make a i256
-    BuiltIn(BuiltIn),
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum Expr {
-    Atom(Atom),
-    App(BuiltIn, Vec<Expr>),
-}
 
 fn builtin<'a, E: ParseError<&'a str>>(input: &'a str)
 -> IResult<&'a str, BuiltIn, E> {
@@ -44,10 +28,12 @@ fn builtin<'a, E: ParseError<&'a str>>(input: &'a str)
         })
 }
 
+/*
 fn builtin_atom<'a, E: ParseError<&'a str>>(input: &'a str)
 -> IResult<&'a str, Atom, E> {
     builtin.map(Atom::BuiltIn).parse(input)
 }
+*/
 
 /*
 fn bind(p: P, f: F) -> impl Parser<I,O,E> {
@@ -56,18 +42,23 @@ fn bind(p: P, f: F) -> impl Parser<I,O,E> {
 
 fn int_atom<'a>(input: &'a str)
 -> IResult<&'a str, Atom, VerboseError<&'a str>> {
-    alt((map_res(digit1, |n_str: &str| n_str.parse::<i64>()
+    map_res(digit1, |n_str: &str| n_str.parse::<U256>()
+            .map(Atom::Int))
+        (input)
+    /*
+    alt((map_res(digit1, |n_str: &str| n_str.parse::<U256>()
               .map(Atom::Int)),
         map_res(preceded(char('-'), digit1),
-                |n_str: &str| n_str.parse::<i64>())
+                |n_str: &str| n_str.parse::<U256>())
             .map(|n| -1*n)
             .map(Atom::Int)))
         (input)
+        */
 }
 
 fn atom_expr<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
-    alt((int_atom, builtin_atom))
+    int_atom
         .map(Expr::Atom).parse(input)
 }
 
