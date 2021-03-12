@@ -1,5 +1,5 @@
 use primitive_types::U256;
-use crate::types::{BuiltIn, Atom, Expr};
+use crate::types::{PushI, BuiltIn, Atom, Expr};
 
 #[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
@@ -15,12 +15,7 @@ pub trait Compile {
 
 impl Compile for BuiltIn {
     fn compile_onto(&self, mut b: BinCode) -> BinCode {
-        match self {
-            BuiltIn::Add => b.0.push(0x10),
-            BuiltIn::Sub => b.0.push(0x11),
-            BuiltIn::PushI => b.0.push(0xf1),
-        }
-
+        b.0.push(self.into());
         b
     }
 }
@@ -44,7 +39,7 @@ impl Compile for Atom {
     fn compile_onto(&self, mut b: BinCode) -> BinCode {
         match self {
             // PushI
-            Atom::Int(n) => append_pushi(&mut b.0, 0xf1, n),
+            Atom::Int(n) => append_pushi(&mut b.0, PushI.into(), n),
         }
 
         b
@@ -61,5 +56,22 @@ impl Compile for Expr {
             // Push atoms
             Expr::Atom(v) => v.compile_onto(b),
         }
+    }
+}
+
+/// Opcode mapping
+impl From<&BuiltIn> for u8 {
+    fn from(b: &BuiltIn) -> u8 {
+        match b {
+            BuiltIn::Add => 0x10,
+            BuiltIn::Sub => 0x11,
+        }
+    }
+}
+
+/// Opcode mapping
+impl From<PushI> for u8 {
+    fn from(p: PushI) -> u8 {
+        0xf1
     }
 }

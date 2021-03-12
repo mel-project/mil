@@ -16,21 +16,10 @@ use nom::{
 type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
 impl BuiltIn {
-    /*
-    fn token<'a>(&'a self) -> &'a str {
-        match self {
-            BuiltIn::Add => "+",
-            BuiltIn::Sub => "-",
-            BuiltIn::PushI => "pushI",
-        }
-    }
-    */
-
     fn from_token(s: &str) -> Option<BuiltIn> {
         match s {
             "+" => Some(BuiltIn::Add),
             "-" => Some(BuiltIn::Sub),
-            "pushI" => Some(BuiltIn::PushI),
             _ => None,
         }
     }
@@ -38,12 +27,10 @@ impl BuiltIn {
 
 fn builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
-    //map_opt(alt((map(one_of("+-"), |c| c.to_string().as_str()),
     context("builtin",
         map_opt(alt((tag("+"), tag("-"),
                     alpha1)),
                 |s| BuiltIn::from_token(s)))
-                //.map(BuiltIn::from_token)
             .parse(input)
 }
 
@@ -95,7 +82,6 @@ pub fn expr<'a>(input: &'a str)
 /// Surrounding whitespace parser combinator
 fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
 -> impl Parser<&'a str, O, E>
-//-> impl Fn(&'a str) -> IResult<&'a str, O, E>
   where
   F: FnMut(&'a str) -> IResult<&'a str, O, E>,
 {
