@@ -28,6 +28,8 @@ impl BuiltIn {
             "or" => Some(BuiltIn::Or),
             "xor" => Some(BuiltIn::Xor),
             "not" => Some(BuiltIn::Not),
+            "vempty" => Some(BuiltIn::Vempty),
+            "vpush" => Some(BuiltIn::Vpush),
             "load" => Some(BuiltIn::Load),
             "store" => Some(BuiltIn::Store),
             _ => None,

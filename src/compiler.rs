@@ -21,28 +21,41 @@ impl Compile for BuiltIn {
 }
 
 // Convenience fn for allocating and appending an op code and number to bincode
-fn append_pushi(b: &mut Vec<u8>, op: u8, n: &U256) {
+fn write_pushi(mut b: BinCode, n: &U256) -> BinCode {
     // Write op + n to bincode
-    b.push(op);
+    b.0.push(PushI.into());
 
-    let idx = b.len();
+    let idx = b.0.len();
 
     // Extend vec by 32 bytes to effeciently add U256
     let B = 32;
-    b.reserve(B);
-    unsafe { b.set_len(idx + B); }
+    b.0.reserve(B);
+    unsafe { b.0.set_len(idx + B); }
 
-    n.to_big_endian(&mut b[idx..]);
+    n.to_big_endian(&mut b.0[idx..]);
+
+    b
+}
+
+fn write_vec(mut bin: BinCode, v: &Vec<Atom>) -> BinCode {
+    // Write v.len() vpush opcodes
+    let vpush: u8 = (&BuiltIn::Vpush).into();
+    bin.0.extend( (1..v.len()).map(|_| vpush) );
+
+    // Followed by vempty
+    bin.0.push( (&BuiltIn::Vempty).into() );
+
+    // Then the elements in reverse
+    v.iter().rev().fold(bin, |acc, e| e.compile_onto(acc))
 }
 
 impl Compile for Atom {
-    fn compile_onto(&self, mut b: BinCode) -> BinCode {
+    fn compile_onto(&self, b: BinCode) -> BinCode {
         match self {
             // PushI
-            Atom::Int(n) => append_pushi(&mut b.0, PushI.into(), n),
+            Atom::Int(n) => write_pushi(b, n),
+            Atom::Vec{members, ..} => write_vec(b, members),
         }
-
-        b
     }
 }
 
@@ -73,6 +86,8 @@ impl From<&BuiltIn> for u8 {
             BuiltIn::Or => 0x21,
             BuiltIn::Xor => 0x22,
             BuiltIn::Not => 0x23,
+            BuiltIn::Vpush => 54,
+            BuiltIn::Vempty => 0x52,
             BuiltIn::Load => 0x40,
             BuiltIn::Store => 0x41,
         }

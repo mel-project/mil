@@ -15,6 +15,8 @@ pub enum BuiltIn {
     Or,
     Xor,
     Not,
+    Vpush,
+    Vempty,
     Load,
     Store,
 }
@@ -22,6 +24,10 @@ pub enum BuiltIn {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Atom {
     Int(U256),
+    Vec {
+        members: Vec<Atom>,
+        is_struct: bool
+    },
 }
 
 #[derive(Debug, PartialEq, Eq)]
