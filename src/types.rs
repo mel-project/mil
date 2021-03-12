@@ -4,6 +4,7 @@ use primitive_types::U256;
 pub enum BuiltIn {
     Add,
     Sub,
+    PushI,
 }
 
 #[derive(Debug, PartialEq, Eq)]

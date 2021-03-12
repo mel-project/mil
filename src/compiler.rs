@@ -16,8 +16,9 @@ pub trait Compile {
 impl Compile for BuiltIn {
     fn compile_onto(&self, mut b: BinCode) -> BinCode {
         match self {
-            Add => b.0.push(0x10),
-            Sub => b.0.push(0x11),
+            BuiltIn::Add => b.0.push(0x10),
+            BuiltIn::Sub => b.0.push(0x11),
+            BuiltIn::PushI => b.0.push(0xf1),
         }
 
         b
