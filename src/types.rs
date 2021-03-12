@@ -7,6 +7,16 @@ pub struct PushI;
 pub enum BuiltIn {
     Add,
     Sub,
+    Mul,
+    Div,
+    Rem,
+    Oflo,
+    And,
+    Or,
+    Xor,
+    Not,
+    Load,
+    Store,
 }
 
 #[derive(Debug, PartialEq, Eq)]

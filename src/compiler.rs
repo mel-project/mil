@@ -65,6 +65,16 @@ impl From<&BuiltIn> for u8 {
         match b {
             BuiltIn::Add => 0x10,
             BuiltIn::Sub => 0x11,
+            BuiltIn::Mul => 0x12,
+            BuiltIn::Div => 0x13,
+            BuiltIn::Rem => 0x14,
+            BuiltIn::Oflo => 0x15,
+            BuiltIn::And => 0x20,
+            BuiltIn::Or => 0x21,
+            BuiltIn::Xor => 0x22,
+            BuiltIn::Not => 0x23,
+            BuiltIn::Load => 0x40,
+            BuiltIn::Store => 0x41,
         }
     }
 }

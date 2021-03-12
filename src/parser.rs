@@ -20,6 +20,16 @@ impl BuiltIn {
         match s {
             "+" => Some(BuiltIn::Add),
             "-" => Some(BuiltIn::Sub),
+            "*" => Some(BuiltIn::Mul),
+            "/" => Some(BuiltIn::Div),
+            "%" => Some(BuiltIn::Rem),
+            "oflo?" => Some(BuiltIn::Oflo),
+            "and" => Some(BuiltIn::And),
+            "or" => Some(BuiltIn::Or),
+            "xor" => Some(BuiltIn::Xor),
+            "not" => Some(BuiltIn::Not),
+            "load" => Some(BuiltIn::Load),
+            "store" => Some(BuiltIn::Store),
             _ => None,
         }
     }
