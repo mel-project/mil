@@ -1,8 +1,17 @@
+use std::fmt;
 use primitive_types::U256;
 use crate::types::{PushI, BuiltIn, Atom, Expr};
 
 #[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
+
+impl fmt::Display for BinCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0.iter()
+           .fold(String::from(""), |acc, bit|
+               acc + &format!("{:02x?}", bit)))
+    }
+}
 
 pub trait Compile {
     /// Produce MelVM interpretable binary from a data type. Consumes a binary struct
@@ -98,5 +107,31 @@ impl From<&BuiltIn> for u8 {
 impl From<PushI> for u8 {
     fn from(p: PushI) -> u8 {
         0xf1
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::parser;
+
+    fn compile(code: &str) -> Result<BinCode, ()> {
+        // Parse
+        let (_, ast) = parser::expr(&code[..])
+            .map_err(|_| ())?;
+
+        let empty = BinCode(Vec::new());
+        Ok( ast.compile_onto(empty) )
+    }
+
+    #[test]
+    fn cons_a_vec() {
+        let bin = compile("(cons 1 (nil))")
+            .unwrap();
+
+        assert_eq!(
+            format!("{}", bin),
+            "f100000000000000000000000000000000000000000000000000000000000000015254");
     }
 }

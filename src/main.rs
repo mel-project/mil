@@ -20,12 +20,7 @@ fn main() -> std::io::Result<()> {
     let bincode = ast.compile_onto(empty);
     // Write to file
     std::fs::write("script.mvm", &bincode.0[..])?;
-    print!("Binary: 0x");
-    for b in bincode.0.iter() {
-        print!("{:02x?}", b);
-    }
-    println!("");
-    //println!("Binary code: {:#04x?}", bincode.0);
+    println!("Binary: b{}", bincode);
 
     // Wrap in a covenant
     let script = Covenant(bincode.0.clone());

@@ -28,8 +28,8 @@ impl BuiltIn {
             "or" => Some(BuiltIn::Or),
             "xor" => Some(BuiltIn::Xor),
             "not" => Some(BuiltIn::Not),
-            "vempty" => Some(BuiltIn::Vempty),
-            "vpush" => Some(BuiltIn::Vpush),
+            "nil" => Some(BuiltIn::Vempty),
+            "cons" => Some(BuiltIn::Vpush),
             "load" => Some(BuiltIn::Load),
             "store" => Some(BuiltIn::Store),
             _ => None,
@@ -49,7 +49,9 @@ fn builtin<'a>(input: &'a str)
 fn int_atom<'a>(input: &'a str)
 -> IResult<&'a str, Atom, VerboseError<&'a str>> {
     context("int",
-        map_res(digit1, |n_str: &str| n_str.parse::<U256>())
+        // TODO: Strange parsing behaviour when parsing directly n_str.parse::<U256>
+        map_res(digit1, |n_str: &str| n_str.parse::<u64>())
+            .map(U256::from)
             .map(Atom::Int))
             .parse(input)
     /*
@@ -119,13 +121,13 @@ mod test {
     {
         tests.into_iter()
              .for_each(|(i,o)|
-                 assert_eq!(f.parse(&i), o))
+                 assert_eq!(f.parse(i), o))
     }
 
     #[test]
     fn parse_int_as_atom() {
-        let tests = vec![("10",   Ok(("", Atom::Int(10)))),
-                         ("-742", Ok(("", Atom::Int(-742))))];
+        let tests = vec![("10",   Ok(("", Atom::Int(U256::from(10))))),
+                         ("742", Ok(("", Atom::Int(U256::from(742)))))];
 
         batch_test(int_atom, tests)
     }
@@ -135,14 +137,14 @@ mod test {
         let tests = vec![
             ("(+ 1 2)",
              Ok(("", Expr::App(BuiltIn::Add,
-                               vec![Expr::Atom(Atom::Int(1)),
-                                    Expr::Atom(Atom::Int(2))])))),
-            ("(+ 1 (- 5 -8))",
+                               vec![Expr::Atom(Atom::Int(U256::from(1))),
+                                    Expr::Atom(Atom::Int(U256::from(2)))])))),
+            ("(+ 1 (- 5 8))",
              Ok(("", Expr::App(BuiltIn::Add,
-                               vec![Expr::Atom(Atom::Int(1)),
+                               vec![Expr::Atom(Atom::Int(U256::from(1))),
                                     Expr::App(BuiltIn::Sub,
-                                              vec![Expr::Atom(Atom::Int(5)),
-                                                   Expr::Atom(Atom::Int(-8))])]))))
+                                              vec![Expr::Atom(Atom::Int(U256::from(5))),
+                                                   Expr::Atom(Atom::Int(U256::from(8)))])]))))
         ];
 
         batch_test(app_expr, tests)
