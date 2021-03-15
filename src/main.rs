@@ -30,7 +30,12 @@ fn main() -> std::io::Result<()> {
     // Wrap in a covenant
     let script = Covenant(bincode.0.clone());
     // Disassemble compiled binary
-    println!("{:?}", script.to_ops());
+    print!("Disassembly: ");
+    if let Some(ops) = script.to_ops() {
+        println!("{:?}", ops);
+    } else {
+        println!("FAILED");
+    }
 
     // Execute and print return value
     let v = executor::execute(bincode.clone());

@@ -86,7 +86,7 @@ impl From<&BuiltIn> for u8 {
             BuiltIn::Or => 0x21,
             BuiltIn::Xor => 0x22,
             BuiltIn::Not => 0x23,
-            BuiltIn::Vpush => 54,
+            BuiltIn::Vpush => 0x54,
             BuiltIn::Vempty => 0x52,
             BuiltIn::Load => 0x40,
             BuiltIn::Store => 0x41,

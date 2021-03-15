@@ -74,9 +74,12 @@ fn app_expr<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     //let identifier = alpha1;
     let args = separated_list1(multispace1, expr);
-    let content = separated_pair(builtin,
-                                 multispace1,
-                                 args);
+    let content = alt((
+            separated_pair(builtin,
+                           multispace1,
+                           args),
+            builtin
+                .map(|op| (op, vec![]))));
 
     context("App expr",
         ws(delimited(char('('),
