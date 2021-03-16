@@ -97,6 +97,10 @@ impl From<&BuiltIn> for u8 {
             BuiltIn::Not => 0x23,
             BuiltIn::Vpush => 0x54,
             BuiltIn::Vempty => 0x52,
+            BuiltIn::Vref => 0x50,
+            BuiltIn::Vlen => 0x53,
+            BuiltIn::Vappend => 0x51,
+            BuiltIn::Vslice => 0x55,
             BuiltIn::Load => 0x40,
             BuiltIn::Store => 0x41,
         }
@@ -115,6 +119,7 @@ impl From<PushI> for u8 {
 mod test {
     use super::*;
     use crate::parser;
+    use blkstructs::melvm::{Covenant, OpCode::{self, *}};
 
     fn compile(code: &str) -> Result<BinCode, ()> {
         // Parse
@@ -125,6 +130,17 @@ mod test {
         Ok( ast.compile_onto(empty) )
     }
 
+    /// Compile a str of code and disassemble back into ops using melVM.
+    fn to_ops(code: &str) -> Result<Vec<OpCode>, ()> {
+        let bin = compile(code)?;
+        Covenant(bin.0).to_ops().ok_or(())
+    }
+
+    fn assert_veq<T: PartialEq + std::fmt::Debug>(v1: Vec<T>, v2: Vec<T>) {
+        v1.iter().zip(v2.iter())
+          .for_each(|(x,y)| assert_eq!(x, y))
+    }
+
     #[test]
     fn cons_a_vec() {
         let bin = compile("(cons 1 (nil))")
@@ -133,5 +149,12 @@ mod test {
         assert_eq!(
             format!("{}", bin),
             "f100000000000000000000000000000000000000000000000000000000000000015254");
+    }
+
+    fn vec_len() {
+        let ops = to_ops("(len (cons 1 (nil)))").unwrap();
+        let target = vec![PUSHI(U256::from(2)), PUSHI(U256::from(1)), VEMPTY, VPUSH, VPUSH, VLENGTH];
+
+        assert_veq(ops, target);
     }
 }

@@ -17,6 +17,10 @@ pub enum BuiltIn {
     Not,
     Vpush,
     Vempty,
+    Vref,
+    Vlen,
+    Vappend,
+    Vslice,
     Load,
     Store,
 }
