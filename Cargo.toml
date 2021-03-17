@@ -10,4 +10,4 @@ edition = "2018"
 nom = "6.1.2"
 blkstructs = { git = "https://github.com/themeliolabs/themelio-core" }
 tmelcrypt = { git = "https://github.com/themeliolabs/themelio-core" }
-primitive-types = { version = "0.9.0", default-features = false }
+primitive-types = { version = "0.7.2", default-features = false }

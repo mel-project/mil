@@ -151,9 +151,19 @@ mod test {
             "f100000000000000000000000000000000000000000000000000000000000000015254");
     }
 
+    #[test]
     fn vec_len() {
-        let ops = to_ops("(len (cons 1 (nil)))").unwrap();
+        let ops = to_ops("(len (cons 2 (cons 1 (nil))))").unwrap();
         let target = vec![PUSHI(U256::from(2)), PUSHI(U256::from(1)), VEMPTY, VPUSH, VPUSH, VLENGTH];
+
+        assert_veq(ops, target);
+    }
+
+    #[test]
+    fn vec_append() {
+        let ops = to_ops("(concat (cons 2 (cons 1 (nil))) (cons 4 (cons 3 (nil))))").unwrap();
+        let target = vec![PUSHI(U256::from(2)), PUSHI(U256::from(1)), VEMPTY, VPUSH, VPUSH,
+                          PUSHI(U256::from(4)), PUSHI(U256::from(3)), VEMPTY, VPUSH, VPUSH, VLENGTH];
 
         assert_veq(ops, target);
     }

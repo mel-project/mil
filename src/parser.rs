@@ -5,10 +5,10 @@ use nom::{
     error::{context, ParseError},
     branch::alt,
     bytes::complete::tag,
-    combinator::{map_res, map, map_opt},
+    combinator::{map_res, map, map_opt, opt},
     error::VerboseError,
-    character::complete::{alpha1, multispace1, multispace0, one_of, digit1},
-    multi::{separated_list1},
+    character::complete::{line_ending, alpha1, multispace1, multispace0, one_of, digit1},
+    multi::{separated_list1, many0},
     character::complete::char,
     sequence::{preceded, delimited, separated_pair},
 };
@@ -90,7 +90,8 @@ fn app_expr<'a>(input: &'a str)
     context("App expr",
         ws(delimited(char('('),
                   content,
-                  char(')')))
+                  //char(')')))
+                  char(')').and(many0(line_ending))))
         .map(|(op, args)| Expr::App(op, args)))
         .parse(input)
 }
