@@ -11,6 +11,7 @@ fn main() -> std::io::Result<()> {
     file.read_to_string(&mut code)?;
 
     // Parse to abstract syntax tree
+    /*
     let (_, ast) = parser::expr(&code[..])
         .expect("Failed to parse");
     println!("AST\n----\n{:?}", ast);
@@ -35,5 +36,6 @@ fn main() -> std::io::Result<()> {
     // Execute and print return value
     let v = executor::execute(bincode.clone());
     println!("Execution evaluated -> {}", v);
+    */
     Ok(())
 }

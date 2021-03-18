@@ -8,8 +8,8 @@ use nom::{
     bytes::complete::tag,
     combinator::{success, map_res, map, map_opt, opt},
     error::VerboseError,
-    character::complete::{line_ending, alpha1, multispace1, multispace0, one_of, digit1},
-    multi::{separated_list0, many0},
+    character::complete::{not_line_ending, line_ending, alpha1, multispace1, multispace0, one_of, digit1},
+    multi::{separated_list0, many0, fold_many1},
     character::complete::char,
     sequence::{preceded, delimited, separated_pair},
 };
@@ -56,19 +56,18 @@ impl BuiltIn {
 fn builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("builtin",
-        map_opt(alt((tag("+"), tag("-"),
-                    alpha1)),
-                |s| BuiltIn::from_token(s)))
+        map_opt(alt((tag("+"), tag("-"), alpha1)),
+                BuiltIn::from_token))
             .parse(input)
 }
 
 fn int<'a>(input: &'a str)
--> IResult<&'a str, Expr, VerboseError<&'a str>> {
+-> IResult<&'a str, U256, VerboseError<&'a str>> {
     context("int",
         // TODO: Strange parsing behaviour when parsing directly n_str.parse::<U256>
         map_res(digit1, |n_str: &str| n_str.parse::<u64>())
-            .map(U256::from)
-            .map(Expr::Int))
+            .map(U256::from))
+            //.map(Expr::Int))
             .parse(input)
     /*
     alt((map_res(digit1, |n_str: &str| n_str.parse::<U256>()
@@ -129,36 +128,58 @@ fn defn<'a>(input: &'a str)
 //          F: Parser<I, O, E>,
 //          E: ParseError<I>
     //where P: Fn(Vec<&'a str>) -> IResult<&'a str, O, VerboseError<&'a str>>
-/*
+
+/// Generic S-expression function application. Every expression has this form.
+/// Since Operator is not a standalone expression, we uniquely identify it as the start of an
+/// S-expression.
+type App = (Operator, Vec<BaseExpr>);
+
+/// First-pass expression type. Does not distinguish different types of s-expressions like [Expr]
+/// does. Useful for tokenizing a string.
+pub enum BaseExpr {
+    /// Fundamental data type.
+    Int(U256),
+    /// Application of an op to some arguments.
+    App(Operator, Vec<BaseExpr>),
+}
+
+/// Effectively tokenizes an input S-expression as a str, into a list of [Expr]s.
 fn list<'a>(input: &'a str)
--> IResult<&'a str, Operator, VerboseError<&'a str>> {
+-> IResult<&'a str, App, VerboseError<&'a str>> {
     //let elements = separated_list1(multispace1, not(multispace);
     //let elements = |s| s.split_whitespace().collect();
+    let args     = separated_list0(multispace1, base_expr);
+    let elements = separated_pair(operator,
+                                 multispace1,
+                                 args);
 
-    //move |i: &'a str| {
-        context("s-expression",
-            ws(delimited(
-                char('(').and(multispace0),
-                inner,
-                char(')').and(multispace0))))
-                //char(')').and(many0(line_ending)))))
-            .parse(i)
-    //}
+    ws(delimited(
+        char('(').and(multispace0),
+        elements,
+        char(')').and(multispace0)))
+        .parse(input)
 }
-*/
 
 /// Parse out an [Operator].
 fn operator<'a>(input: &'a str)
 -> IResult<&'a str, Operator, VerboseError<&'a str>> {
     alt((
         // BuiltIn
-        map_opt(success, BuiltIn::from_token)
+        //map_opt(fold_many1(none_of("\n\r "), "", |acc, s| format!("{}{}")), BuiltIn::from_token)
+        map_opt(not_line_ending, BuiltIn::from_token)
             .map(Operator::BuiltIn),
         // Symbol
         alpha1
             .map(String::from)
             .map(Operator::Symbol),
     ))(input)
+}
+
+fn base_expr<'a>(input: &'a str)
+-> IResult<&'a str, BaseExpr, VerboseError<&'a str>> {
+    alt((list.map(|app| BaseExpr::App(app.0, app.1)),
+         int.map(BaseExpr::Int),
+     ))(input)
 }
 
 /*
@@ -175,11 +196,12 @@ fn vec_map(v: Vec<Result<Expr, E>>) -> Result<Vec<Expr>, E> {
 /// Takes whatever the first expression of the list is and treats it as the operator to the
 /// arguments in the list following.
 /*
-fn app(sexpr: Vec<&str>)
+fn app((op, args): App)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     // TODO: Panics if sexpr is empty
-    let op = operator( sexpr.split_off(1)[0] )?;
-    let args = vec_map(sexpr)?;
+    //let op = operator( sexpr.split_off(1)[0] )?;
+    //let (op, args) = app;
+    //let args = vec_map(sexpr)?;
     /*
     let args = sexpr.iter()
         .map(expr)
@@ -189,6 +211,7 @@ fn app(sexpr: Vec<&str>)
 }
 */
 
+/*
 pub fn app<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     let args = separated_list0(multispace1, expr);
@@ -196,7 +219,9 @@ pub fn app<'a>(input: &'a str)
         .map(|(op, args)| Expr::App(op, args))
         .parse(input)
 }
+*/
 
+/*
 pub fn expr<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     context("s-expression",
@@ -206,13 +231,16 @@ pub fn expr<'a>(input: &'a str)
             char(')').and(multispace0))))
             //char(')').and(many0(line_ending)))))
         .parse(i)
+    /*
     alt((
         // Int
         int,
         // App
         list(app),
     ))(input)
+    */
 }
+*/
 
 /// Surrounding whitespace parser combinator
 fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)

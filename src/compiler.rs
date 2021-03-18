@@ -79,7 +79,7 @@ impl Compile for MelExpr {
             MelExpr::Int(n) => write_pushi(b, n),
             // Evaluate the args, then append the op (postfix)
             MelExpr::App(op, args) => op.compile_onto(
-                                args.iter().fold(b, |b_acc, &arg|
+                                args.iter().fold(b, |b_acc, arg|
                                     arg.compile_onto(b_acc))),
         }
     }
@@ -110,6 +110,12 @@ impl From<&BuiltIn> for u8 {
         }
     }
 }
+
+/*
+match expr {
+    Expr::Defn(name, args, body) => new_fn(name, args, body),
+}
+*/
 
 /// Opcode mapping
 impl From<PushI> for u8 {
