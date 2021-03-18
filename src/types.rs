@@ -67,6 +67,8 @@ pub enum MelExpr {
 pub enum Expr {
     /// Fundamental data type.
     Int(U256),
+    /// Symbol
+    Symbol(String),
     //Atom(Atom),
     /// Application of an [Operator] to some arguments.
     App(Operator, Vec<Expr>),
