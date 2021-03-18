@@ -1,6 +1,6 @@
 use std::fmt;
 use primitive_types::U256;
-use crate::types::{PushI, BuiltIn, Atom, Expr};
+use crate::types::{PushI, BuiltIn, MelExpr};
 
 #[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
@@ -46,6 +46,7 @@ fn write_pushi(mut b: BinCode, n: &U256) -> BinCode {
     b
 }
 
+/*
 fn write_vec(mut bin: BinCode, v: &Vec<Atom>) -> BinCode {
     // Write v.len() vpush opcodes
     let vpush: u8 = (&BuiltIn::Vpush).into();
@@ -57,26 +58,29 @@ fn write_vec(mut bin: BinCode, v: &Vec<Atom>) -> BinCode {
     // Then the elements in reverse
     v.iter().rev().fold(bin, |acc, e| e.compile_onto(acc))
 }
+*/
 
+/*
 impl Compile for Atom {
     fn compile_onto(&self, b: BinCode) -> BinCode {
         match self {
             // PushI
             Atom::Int(n) => write_pushi(b, n),
-            Atom::Vec{members, ..} => write_vec(b, members),
+            //Atom::Vec{members, ..} => write_vec(b, members),
         }
     }
 }
+*/
 
-impl Compile for Expr {
+impl Compile for MelExpr {
     fn compile_onto(&self, mut b: BinCode) -> BinCode {
         match self {
-            // Evaluate the args, then append the op
-            Expr::App(op, args) => op.compile_onto(
-                                args.iter().fold(b, |b_acc, arg|
+            // Integers evaluate to themselves (push onto stack)
+            MelExpr::Int(n) => write_pushi(b, n),
+            // Evaluate the args, then append the op (postfix)
+            MelExpr::App(op, args) => op.compile_onto(
+                                args.iter().fold(b, |b_acc, &arg|
                                     arg.compile_onto(b_acc))),
-            // Push atoms
-            Expr::Atom(v) => v.compile_onto(b),
         }
     }
 }
