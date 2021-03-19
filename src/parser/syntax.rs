@@ -10,11 +10,13 @@ use nom::{
 /// S-expression.
 type App = (Operator, Vec<BaseExpr>);
 
-//type ParseRes = IResult<App, Expr, VerboseError<&'a str>>;
 type ParseRes = Result<Expr, ParseErr>;
-struct ParseErr(String);
+pub struct ParseErr(String);
 
-fn expr(input: BaseExpr) -> ParseRes {
+/// Top-level converter from any [BaseExpr] into an [Expr].
+/// This is called after the first pass of parsing, and analyzes
+/// syntactic details of the input program.
+pub fn expr(input: BaseExpr) -> ParseRes {
     match input {
         BaseExpr::Int(n) => Ok( Expr::Int(n) ),
         BaseExpr::Symbol(s) =>
@@ -26,18 +28,10 @@ fn expr(input: BaseExpr) -> ParseRes {
         BaseExpr::List(mut elems) => {
             let op = elems.pop()
                 // Should never happen since parser uses 'separated_list1'
-                .ok_or( ParseErr("Expected an operator in list expression.".to_string()) )?;
+                .ok_or( ParseErr("Expected an operator in empty list expression.".to_string()) )?;
 
-            /*
-            let op = match op {
-                BaseExpr::Symbol(s) => Ok( Operator::Symbol(s) ),
-                BaseExpr::BuiltIn(op) => Ok( Operator::BuiltIn(op) ),
-                BaseExpr::Special(op) => Ok(
-                _ => Err(ParseErr(format!("First element of list, {:?}, should be an operator.", op))),
-            }?;
-            */
+            // Determine the operator-type of the list and handle accordingly
             match op {
-                //BaseExpr::Symbol(s) => Ok( Expr::Symbol(s) ),
                 BaseExpr::Symbol(op) => app((Operator::Symbol(op), elems)),
                 BaseExpr::BuiltIn(op) => app((Operator::BuiltIn(op), elems)),
                 BaseExpr::Special(op) => match op {
@@ -46,37 +40,11 @@ fn expr(input: BaseExpr) -> ParseRes {
                 BaseExpr::Int(_) | BaseExpr::List(_) =>
                     Err(ParseErr(format!("First element of list, {:?}, should be an operator.", op))),
             }
-
-            //defn((op, elems))
-            //    .or_else(app)
-            /*
-            alt(defn as fn((Operator, Vec<BaseExpr>)) -> std::result::Result<Expr, ParseErr>,
-                app  as fn((Operator, Vec<BaseExpr>)) -> std::result::Result<Expr, ParseErr>)
-                ((op, elems))
-            */
-
-            //alt((op, elems))
-            //alt((defn, app))((op, elems))
         },
     }
 }
 
-/*
-/// Tries to evaluate f, and if it fails, tries to evaluate g. Discarding the error from f.
-fn alt<F>(f: F, g: F) -> F
-    where F: Fn(I) -> Result<O,E>
-{
-    move |i: I| {
-        match f(i) {
-            Ok(o) => o,
-            Err(_) => g(i),
-        }
-    }
-}
-*/
-
 /// Parses a function definition if the input is well formed. Otherwise returns an error.
-//fn defn((op, args): App) -> ParseRes {
 fn defn(mut elems: Vec<BaseExpr>) -> ParseRes {
     // TODO: Check for symbol conflicts here? Set symbol into env
     if elems.len() != 3 {
@@ -101,7 +69,6 @@ fn symbol(e: BaseExpr) -> Result<Symbol, ParseErr> {
 
 /// Convert a BaseExpr::List into a vector of symbols. Returns error otherwise.
 fn fn_args(be: BaseExpr) -> Result<Vec<Symbol>, ParseErr> {
-    //let mut symbols = vec![];
     let symbols = match be {
         BaseExpr::List(l) => Ok(l.into_iter().map(symbol).collect()),
         _ => Err(ParseErr(format!("Function arguments must be in a list, not {:?}.", be))),

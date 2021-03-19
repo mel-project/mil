@@ -17,16 +17,6 @@ use nom::{
 
 type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
-/*
-impl From<&str> for Operator {
-    fn from(s: &str) -> Operator {
-        match BuiltIn::from_token(s) {
-            Some(op) => Operator::BuiltIn(op),
-            None     => Operator::Symbol(s.to_string()),
-        }
-    }
-}
-*/
 fn special<'a>(input: &'a str)
 -> IResult<&'a str, SpecialOp, VerboseError<&'a str>> {
     context("special operator",
@@ -68,17 +58,11 @@ fn list<'a>(input: &'a str)
     delimited(
         ws(char('(')),
         elements,
-        ws(char(')')))(input)
-            //.parse(input)
-    /*
-    ws(delimited(
-        char('(').and(multispace0),
-        elements,
-        char(')').and(multispace0)))
-        .parse(input)
-        */
+        ws(char(')')))
+    (input)
 }
 
+/// Top level parser returns any valid [BaseExpr].
 fn base_expr<'a>(input: &'a str)
 -> IResult<&'a str, BaseExpr, VerboseError<&'a str>> {
     alt((list.map(BaseExpr::List),
