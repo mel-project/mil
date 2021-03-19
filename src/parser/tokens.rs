@@ -31,10 +31,16 @@ impl From<&str> for Operator {
 fn builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("builtin",
+        //map_opt(not_line_ending, BuiltIn::from_token)
+        //    .map(Operator::BuiltIn),
         map_opt(alt((tag("+"), tag("-"), alpha1)),
                 BuiltIn::from_token))
             .parse(input)
 }
+
+fn symbol<'a>(input: &'a str)
+-> IResult<&'a str, String, VerboseError<&'a str>> {
+    context("symbol", alpha1)(input)
 
 fn int<'a>(input: &'a str)
 -> IResult<&'a str, U256, VerboseError<&'a str>> {
@@ -47,13 +53,16 @@ fn int<'a>(input: &'a str)
 
 /// Effectively tokenizes an input S-expression as a str, into a list of [Expr]s.
 fn list<'a>(input: &'a str)
--> IResult<&'a str, App, VerboseError<&'a str>> {
+-> IResult<&'a str, Vec<BaseExpr>, VerboseError<&'a str>> {
     //let elements = separated_list1(multispace1, not(multispace);
     //let elements = |s| s.split_whitespace().collect();
+    /*
     let args     = separated_list0(multispace1, base_expr);
     let elements = separated_pair(operator,
                                  multispace1,
                                  args);
+    */
+    let elements = separated_list1(base_expr, multispace1);
 
     ws(delimited(
         char('(').and(multispace0),
@@ -62,25 +71,12 @@ fn list<'a>(input: &'a str)
         .parse(input)
 }
 
-/// Parse out an [Operator].
-fn operator<'a>(input: &'a str)
--> IResult<&'a str, Operator, VerboseError<&'a str>> {
-    alt((
-        // BuiltIn
-        map_opt(not_line_ending, BuiltIn::from_token)
-            .map(Operator::BuiltIn),
-        // Symbol
-        alpha1
-            .map(String::from)
-            .map(Operator::Symbol),
-    ))(input)
-}
-
 fn base_expr<'a>(input: &'a str)
 -> IResult<&'a str, BaseExpr, VerboseError<&'a str>> {
-    alt((list.map(|app| BaseExpr::App(app.0, app.1)),
-    //alt((list.map(|app| BaseExpr::App(app.0, app.1)),
+    alt((list.map(BaseExpr::List),
          int.map(BaseExpr::Int),
+         builtin.map(BaseExpr::BuiltIn),
+         symbol.map(BaseExpr::Symbol),
      ))(input)
 }
 

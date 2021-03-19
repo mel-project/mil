@@ -25,8 +25,15 @@ pub enum BuiltIn {
     Store,
 }
 
+/// Operators with special evaluation cases when parsing. These are distinguished from
+/// [BuiltIn]s, which translace directly to MelVM. Special forms are evaluated into BuiltIns.
+pub enum SpecialOp {
+    Defn,
+    //Let,
+}
+
 /// Symbolic name for an expression
-type Symbol = String;
+pub type Symbol = String;
 
 #[derive(Debug, PartialEq, Eq)]
 /// Operator of an expression (the first element of an S-expression), can either
@@ -34,6 +41,7 @@ type Symbol = String;
 pub enum Operator {
     BuiltIn(BuiltIn),
     Symbol(Symbol),
+    Special(SpecialOp),
 }
 
 /*
@@ -69,7 +77,6 @@ pub enum Expr {
     Int(U256),
     /// Symbol
     Symbol(String),
-    //Atom(Atom),
     /// Application of an [Operator] to some arguments.
     App(Operator, Vec<Expr>),
     /// Function definition.
