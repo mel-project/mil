@@ -1,5 +1,5 @@
 use crate::parser::BaseExpr;
-use crate::types::{Symbol, BuiltIn, Expr, Operator};
+use crate::types::{SpecialOp, Symbol, BuiltIn, Expr, Operator};
 use nom::{
     IResult, Parser,
     branch::alt,
@@ -17,7 +17,12 @@ struct ParseErr(String);
 fn expr(input: BaseExpr) -> ParseRes {
     match input {
         BaseExpr::Int(n) => Ok( Expr::Int(n) ),
-        BaseExpr::Symbol(s) => Ok( Expr::Symbol(s)),
+        BaseExpr::Symbol(s) =>
+            Err( ParseErr(format!("Standalone operator '{:?}' is not a valid expression. Consider wrapping in parenthesis.", s)) ),
+        BaseExpr::Special(s) =>
+            Err( ParseErr(format!("Standalone operator '{:?}' is not a valid expression. Consider wrapping in parenthesis.", s)) ),
+        BaseExpr::BuiltIn(s) =>
+            Err( ParseErr(format!("Standalone operator '{:?}' is not a valid expression. Consider wrapping in parenthesis.", s)) ),
         BaseExpr::List(mut elems) => {
             let op = elems.pop()
                 // Should never happen since parser uses 'separated_list1'
@@ -32,13 +37,15 @@ fn expr(input: BaseExpr) -> ParseRes {
             }?;
             */
             match op {
-                BaseExpr::Symbol(s) => Ok( Operator::Symbol(s) ),
-                BaseExpr::BuiltIn(op) => Ok( Operator::BuiltIn(op) ),
+                //BaseExpr::Symbol(s) => Ok( Expr::Symbol(s) ),
+                BaseExpr::Symbol(op) => app((Operator::Symbol(op), elems)),
+                BaseExpr::BuiltIn(op) => app((Operator::BuiltIn(op), elems)),
                 BaseExpr::Special(op) => match op {
                     SpecialOp::Defn => defn(elems),
-                }
-                _ => Err(ParseErr(format!("First element of list, {:?}, should be an operator.", op))),
-            }?;
+                },
+                BaseExpr::Int(_) | BaseExpr::List(_) =>
+                    Err(ParseErr(format!("First element of list, {:?}, should be an operator.", op))),
+            }
 
             //defn((op, elems))
             //    .or_else(app)
@@ -54,6 +61,7 @@ fn expr(input: BaseExpr) -> ParseRes {
     }
 }
 
+/*
 /// Tries to evaluate f, and if it fails, tries to evaluate g. Discarding the error from f.
 fn alt<F>(f: F, g: F) -> F
     where F: Fn(I) -> Result<O,E>
@@ -65,25 +73,29 @@ fn alt<F>(f: F, g: F) -> F
         }
     }
 }
+*/
 
 /// Parses a function definition if the input is well formed. Otherwise returns an error.
 //fn defn((op, args): App) -> ParseRes {
-fn defn(elems: Vec<BaseExpr>) -> ParseRes {
+fn defn(mut elems: Vec<BaseExpr>) -> ParseRes {
     // TODO: Check for symbol conflicts here? Set symbol into env
-    if elems != 3 {
-        return Err( ParseErr(format!("Incorrect number of elements in a function definition. Expected 3.")) );
+    if elems.len() != 3 {
+        return Err( ParseErr(format!("Expected 3 elements in a function definition, found {}.", elems.len())));
     }
 
-    let fn_name = elems.pop().unwrap();
-    let params  = elems.pop().unwrap();
-    let body    = elems.pop().unwrap();
+    let fn_name = symbol(  elems.pop().unwrap() )?;
+    let params  = fn_args( elems.pop().unwrap() )?;
+    let body    = expr(    elems.pop().unwrap() )?;
 
-    if args.len() == 2 {
-        let fn_args = fn_args( args.pop().unwrap() )?;
-        let body    = expr( args.pop().unwrap() )?;
-        Ok( Expr::Defn(fn_name, fn_args, Box::new(body)) )
-    } else {
-        Err( ParseErr(format!("Expected 2 arguments to 'defn', {:?} provided.", args.len())) )
+    Ok( Expr::Defn(fn_name, params, Box::new(body)) )
+}
+
+/// Convert BaseExpr into a symbol or fail.
+fn symbol(e: BaseExpr) -> Result<Symbol, ParseErr> {
+    match e {
+        BaseExpr::Symbol(s) => Ok(s),
+        _ => Err(ParseErr(format!("{:?} is not a symbol. Only symbols are allowed\
+                               in a function parameter list.", e))),
     }
 }
 
@@ -91,12 +103,7 @@ fn defn(elems: Vec<BaseExpr>) -> ParseRes {
 fn fn_args(be: BaseExpr) -> Result<Vec<Symbol>, ParseErr> {
     //let mut symbols = vec![];
     let symbols = match be {
-        BaseExpr::List(l) =>
-            Ok(l.iter().map(|v| match v {
-                BaseExpr::Symbol(s) => Ok(s),
-                _ => Err(ParseErr(format!("{:?} is not a symbol. Only symbols are allowed\
-                                       in a function parameter list.", v)));
-            }).collect()),
+        BaseExpr::List(l) => Ok(l.into_iter().map(symbol).collect()),
         _ => Err(ParseErr(format!("Function arguments must be in a list, not {:?}.", be))),
     }?;
 

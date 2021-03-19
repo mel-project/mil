@@ -27,6 +27,7 @@ pub enum BuiltIn {
 
 /// Operators with special evaluation cases when parsing. These are distinguished from
 /// [BuiltIn]s, which translace directly to MelVM. Special forms are evaluated into BuiltIns.
+#[derive(Debug, PartialEq, Eq)]
 pub enum SpecialOp {
     Defn,
     //Let,
@@ -75,8 +76,8 @@ pub enum MelExpr {
 pub enum Expr {
     /// Fundamental data type.
     Int(U256),
-    /// Symbol
-    Symbol(String),
+    // Symbol
+    //Symbol(String),
     /// Application of an [Operator] to some arguments.
     App(Operator, Vec<Expr>),
     /// Function definition.

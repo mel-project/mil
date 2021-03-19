@@ -2,7 +2,7 @@ pub mod tokens;
 pub mod syntax;
 
 use primitive_types::U256;
-use crate::types::{BuiltIn, Operator};
+use crate::types::{SpecialOp, BuiltIn, Operator};
 
 /// First-pass expression type. Does not distinguish different types of s-expressions like [Expr]
 /// does. Useful for tokenizing a string.
@@ -16,7 +16,7 @@ pub enum BaseExpr {
     /// A built in operator.
     BuiltIn(BuiltIn),
     /// Operators with special evaluation cases.
-    Special(SpecialForm),
+    Special(SpecialOp),
     /// Recursive list of expressions.
     List(Vec<BaseExpr>),
 }
@@ -42,7 +42,15 @@ impl BuiltIn {
             "slice" => Some(BuiltIn::Vslice),
             "load" => Some(BuiltIn::Load),
             "store" => Some(BuiltIn::Store),
-            "fn" => Some(BuiltIn::Defn),
+            _ => None,
+        }
+    }
+}
+
+impl SpecialOp {
+    fn from_token(s: &str) -> Option<SpecialOp> {
+        match s {
+            "fn" => Some(SpecialOp::Defn),
             _ => None,
         }
     }

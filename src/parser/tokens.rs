@@ -1,6 +1,6 @@
-use crate::parser::{App, BaseExpr};
+use crate::parser::BaseExpr;
 use primitive_types::U256;
-use crate::types::{BuiltIn, Expr, Operator};
+use crate::types::{SpecialOp, BuiltIn, Expr, Operator};
 use nom::{
     IResult, Parser,
     InputTake, InputLength, InputTakeAtPosition,
@@ -10,7 +10,7 @@ use nom::{
     combinator::{success, map_res, map, map_opt, opt},
     error::VerboseError,
     character::complete::{not_line_ending, line_ending, alpha1, multispace1, multispace0, one_of, digit1},
-    multi::{separated_list0, many0, fold_many1},
+    multi::{separated_list1, many0, fold_many1},
     character::complete::char,
     sequence::{preceded, delimited, separated_pair},
 };
@@ -27,6 +27,13 @@ impl From<&str> for Operator {
     }
 }
 */
+fn special<'a>(input: &'a str)
+-> IResult<&'a str, SpecialOp, VerboseError<&'a str>> {
+    context("special operator",
+        map_opt(alt((tag("defn"), tag("let"))),
+                SpecialOp::from_token))
+            .parse(input)
+}
 
 fn builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
@@ -40,7 +47,9 @@ fn builtin<'a>(input: &'a str)
 
 fn symbol<'a>(input: &'a str)
 -> IResult<&'a str, String, VerboseError<&'a str>> {
-    context("symbol", alpha1)(input)
+    context("symbol", alpha1.map(String::from))(input)
+}
+
 
 fn int<'a>(input: &'a str)
 -> IResult<&'a str, U256, VerboseError<&'a str>> {
@@ -54,21 +63,20 @@ fn int<'a>(input: &'a str)
 /// Effectively tokenizes an input S-expression as a str, into a list of [Expr]s.
 fn list<'a>(input: &'a str)
 -> IResult<&'a str, Vec<BaseExpr>, VerboseError<&'a str>> {
-    //let elements = separated_list1(multispace1, not(multispace);
-    //let elements = |s| s.split_whitespace().collect();
-    /*
-    let args     = separated_list0(multispace1, base_expr);
-    let elements = separated_pair(operator,
-                                 multispace1,
-                                 args);
-    */
-    let elements = separated_list1(base_expr, multispace1);
+    let elements = separated_list1(multispace1, base_expr);
 
+    delimited(
+        ws(char('(')),
+        elements,
+        ws(char(')')))(input)
+            //.parse(input)
+    /*
     ws(delimited(
         char('(').and(multispace0),
         elements,
         char(')').and(multispace0)))
         .parse(input)
+        */
 }
 
 fn base_expr<'a>(input: &'a str)
@@ -76,6 +84,7 @@ fn base_expr<'a>(input: &'a str)
     alt((list.map(BaseExpr::List),
          int.map(BaseExpr::Int),
          builtin.map(BaseExpr::BuiltIn),
+         special.map(BaseExpr::Special),
          symbol.map(BaseExpr::Symbol),
      ))(input)
 }
