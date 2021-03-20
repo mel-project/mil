@@ -1,16 +1,10 @@
 use crate::parser::BaseExpr;
 use crate::types::{SpecialOp, Symbol, BuiltIn, Expr, Operator};
-use nom::{
-    IResult, Parser,
-    branch::alt,
-};
 
-/// Generic S-expression function application. Every expression has this form.
-/// Since Operator is not a standalone expression, we uniquely identify it as the start of an
-/// S-expression.
-type App = (Operator, Vec<BaseExpr>);
-
+/// Syntax parser result type.
 type ParseRes = Result<Expr, ParseErr>;
+/// Syntax parser error type. May become may intricate later.
+#[derive(Debug)]
 pub struct ParseErr(String);
 
 /// Top-level converter from any [BaseExpr] into an [Expr].
@@ -26,6 +20,9 @@ pub fn expr(input: BaseExpr) -> ParseRes {
         BaseExpr::BuiltIn(s) =>
             Err( ParseErr(format!("Standalone operator '{:?}' is not a valid expression. Consider wrapping in parenthesis.", s)) ),
         BaseExpr::List(mut elems) => {
+            // Reverse list to parse in prefix
+            elems.reverse();
+
             let op = elems.pop()
                 // Should never happen since parser uses 'separated_list1'
                 .ok_or( ParseErr("Expected an operator in empty list expression.".to_string()) )?;
@@ -78,7 +75,7 @@ fn fn_args(be: BaseExpr) -> Result<Vec<Symbol>, ParseErr> {
 }
 
 /// Parses a function application.
-fn app((op, args): App) -> ParseRes {
+fn app((op, args): (Operator, Vec<BaseExpr>)) -> ParseRes {
     let args = fold_results( args.into_iter().map(expr).collect() )?;
     Ok( Expr::App(op, args) )
 }

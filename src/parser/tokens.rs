@@ -53,23 +53,28 @@ fn int<'a>(input: &'a str)
 /// Effectively tokenizes an input S-expression as a str, into a list of [Expr]s.
 fn list<'a>(input: &'a str)
 -> IResult<&'a str, Vec<BaseExpr>, VerboseError<&'a str>> {
+//fn list<'a, O1, F>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O1, VerboseError<&'a str>>
+//where
+//  F: Parser<&'a str, O1, VerboseError<&'a str>>,
     let elements = separated_list1(multispace1, base_expr);
 
+    context("list",
     delimited(
         ws(char('(')),
         elements,
-        ws(char(')')))
+        char(')').and(many0(line_ending))))
     (input)
 }
 
 /// Top level parser returns any valid [BaseExpr].
-fn base_expr<'a>(input: &'a str)
+pub fn base_expr<'a>(input: &'a str)
 -> IResult<&'a str, BaseExpr, VerboseError<&'a str>> {
-    alt((list.map(BaseExpr::List),
+    alt((//list.map(BaseExpr::List),
          int.map(BaseExpr::Int),
          builtin.map(BaseExpr::BuiltIn),
          special.map(BaseExpr::Special),
          symbol.map(BaseExpr::Symbol),
+         list.map(BaseExpr::List),
      ))(input)
 }
 
@@ -80,9 +85,9 @@ fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
   F: FnMut(&'a str) -> IResult<&'a str, O, E>,
 {
   delimited(
-    multispace0,
+    multispace0.and(many0(line_ending)),
     inner,
-    multispace0
+    multispace0.and(many0(line_ending)),
   )
 }
 

@@ -11,11 +11,15 @@ fn main() -> std::io::Result<()> {
     file.read_to_string(&mut code)?;
 
     // Parse to abstract syntax tree
-    /*
-    let (_, ast) = parser::expr(&code[..])
+    let (_, base_expr) = parser::tokens::base_expr(&code[..])
+        //.map_err(|e| format!("{:?}", e))?;
         .expect("Failed to parse");
-    println!("AST\n----\n{:?}", ast);
+    println!("Base Ast\n----\n{:?}", base_expr);
+    let ast = parser::syntax::expr(base_expr)
+        .expect("Failed to parse");
+    println!("Ast\n----\n{:?}", ast);
 
+    /*
     // Compile to binary
     let empty = BinCode(Vec::new());
     let bincode = ast.compile_onto(empty);

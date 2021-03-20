@@ -4,6 +4,9 @@ pub mod syntax;
 use primitive_types::U256;
 use crate::types::{SpecialOp, BuiltIn, Operator};
 
+// TODO: hide underlying parse fns and provide a unified parser interface here.
+//pub fn parse(input: &str) -> Result<Expr, ?>
+
 /// First-pass expression type. Does not distinguish different types of s-expressions like [Expr]
 /// does. Useful for tokenizing a string.
 // TODO: Implement Display
