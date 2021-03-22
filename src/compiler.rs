@@ -131,6 +131,7 @@ mod test {
     use crate::parser;
     use blkstructs::melvm::{Covenant, OpCode::{self, *}};
 
+    /*
     fn compile(code: &str) -> Result<BinCode, ()> {
         // Parse
         let (_, ast) = parser::expr(&code[..])
@@ -145,12 +146,14 @@ mod test {
         let bin = compile(code)?;
         Covenant(bin.0).to_ops().ok_or(())
     }
+    */
 
     fn assert_veq<T: PartialEq + std::fmt::Debug>(v1: Vec<T>, v2: Vec<T>) {
         v1.iter().zip(v2.iter())
           .for_each(|(x,y)| assert_eq!(x, y))
     }
 
+    /*
     #[test]
     fn cons_a_vec() {
         let bin = compile("(cons 1 (nil))")
@@ -177,4 +180,5 @@ mod test {
 
         assert_veq(ops, target);
     }
+    */
 }

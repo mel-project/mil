@@ -53,9 +53,6 @@ fn int<'a>(input: &'a str)
 /// Effectively tokenizes an input S-expression as a str, into a list of [Expr]s.
 fn list<'a>(input: &'a str)
 -> IResult<&'a str, Vec<BaseExpr>, VerboseError<&'a str>> {
-//fn list<'a, O1, F>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O1, VerboseError<&'a str>>
-//where
-//  F: Parser<&'a str, O1, VerboseError<&'a str>>,
     let elements = separated_list1(multispace1, base_expr);
 
     context("list",
@@ -69,8 +66,7 @@ fn list<'a>(input: &'a str)
 /// Top level parser returns any valid [BaseExpr].
 pub fn base_expr<'a>(input: &'a str)
 -> IResult<&'a str, BaseExpr, VerboseError<&'a str>> {
-    alt((//list.map(BaseExpr::List),
-         int.map(BaseExpr::Int),
+    alt((int.map(BaseExpr::Int),
          builtin.map(BaseExpr::BuiltIn),
          special.map(BaseExpr::Special),
          symbol.map(BaseExpr::Symbol),
@@ -89,46 +85,4 @@ fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
     inner,
     multispace0.and(many0(line_ending)),
   )
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use std::fmt::Debug;
-
-    /// Map a parser over a list of tests and assert equality. Panics when equality fails.
-    fn batch_test<'a, O: Debug + Eq>(
-        mut f: impl Parser<&'a str, O, VerboseError<&'a str>>,
-        tests: Vec<(&'a str, ParseRes<'a, O>)>)
-    {
-        tests.into_iter()
-             .for_each(|(i,o)|
-                 assert_eq!(f.parse(i), o))
-    }
-
-    #[test]
-    fn parse_int_as_atom() {
-        let tests = vec![("10",   Ok(("", Atom::Int(U256::from(10))))),
-                         ("742", Ok(("", Atom::Int(U256::from(742)))))];
-
-        batch_test(int_atom, tests)
-    }
-
-    #[test]
-    fn parse_app_expr() {
-        let tests = vec![
-            ("(+ 1 2)",
-             Ok(("", Expr::App(BuiltIn::Add,
-                               vec![Expr::Atom(Atom::Int(U256::from(1))),
-                                    Expr::Atom(Atom::Int(U256::from(2)))])))),
-            ("(+ 1 (- 5 8))",
-             Ok(("", Expr::App(BuiltIn::Add,
-                               vec![Expr::Atom(Atom::Int(U256::from(1))),
-                                    Expr::App(BuiltIn::Sub,
-                                              vec![Expr::Atom(Atom::Int(U256::from(5))),
-                                                   Expr::Atom(Atom::Int(U256::from(8)))])]))))
-        ];
-
-        batch_test(app_expr, tests)
-    }
 }

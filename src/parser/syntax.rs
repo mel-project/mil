@@ -4,7 +4,7 @@ use crate::types::{SpecialOp, Symbol, BuiltIn, Expr, Operator};
 /// Syntax parser result type.
 type ParseRes = Result<Expr, ParseErr>;
 /// Syntax parser error type. May become may intricate later.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ParseErr(String);
 
 /// Top-level converter from any [BaseExpr] into an [Expr].
@@ -29,8 +29,9 @@ pub fn expr(input: BaseExpr) -> ParseRes {
 
             // Determine the operator-type of the list and handle accordingly
             match op {
-                BaseExpr::Symbol(op) => app((Operator::Symbol(op), elems)),
-                BaseExpr::BuiltIn(op) => app((Operator::BuiltIn(op), elems)),
+                //BaseExpr::Symbol(op) => app(from(Operator::Symbol(op), elems)),
+                BaseExpr::Symbol(ref op) => app(to_op(op), elems),
+                BaseExpr::BuiltIn(op) => app(Operator::BuiltIn(op), elems),
                 BaseExpr::Special(op) => match op {
                     SpecialOp::Defn => defn(elems),
                 },
@@ -55,12 +56,28 @@ fn defn(mut elems: Vec<BaseExpr>) -> ParseRes {
     Ok( Expr::Defn(fn_name, params, Box::new(body)) )
 }
 
-/// Convert BaseExpr into a symbol or fail.
+/// Potentially convert a BaseExpr::Symbol to some kind of [Operator].
+fn to_op(s: &str) -> Operator {
+    BuiltIn::from_token(s)
+            .map(Operator::BuiltIn)
+        .or(SpecialOp::from_token(s)
+            .map(Operator::Special))
+        .or(Some(Operator::Symbol(s.to_string())))
+        .expect("Base case is a symbol, this failure is unreachable.")
+}
+
+/// Interpret a BaseExpr as an Operator::Symbol or fail.
 fn symbol(e: BaseExpr) -> Result<Symbol, ParseErr> {
-    match e {
-        BaseExpr::Symbol(s) => Ok(s),
-        _ => Err(ParseErr(format!("{:?} is not a symbol. Only symbols are allowed\
-                               in a function parameter list.", e))),
+    if let BaseExpr::Symbol(s) = &e {
+        // Check that the string doesn't match to a reserved operator
+        if let Operator::Symbol(_) = to_op(s) {
+            Ok(s.to_string())
+        } else {
+            Err(ParseErr(format!("{:?} is a reserved operator and cannot be used as a symbol", s)))
+        }
+    } else {
+        Err(ParseErr(format!("{:?} is not a symbol. Only symbols are allowed\
+                              in a function parameter list.", e)))
     }
 }
 
@@ -75,7 +92,7 @@ fn fn_args(be: BaseExpr) -> Result<Vec<Symbol>, ParseErr> {
 }
 
 /// Parses a function application.
-fn app((op, args): (Operator, Vec<BaseExpr>)) -> ParseRes {
+fn app(op: Operator, args: Vec<BaseExpr>) -> ParseRes {
     let args = fold_results( args.into_iter().map(expr).collect() )?;
     Ok( Expr::App(op, args) )
 }
@@ -90,4 +107,53 @@ fn fold_results<O,E>(v: Vec<Result<O, E>>) -> Result<Vec<O>, E> {
          inner_vec.push(v);
          Ok(inner_vec)
      })
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::fmt::Debug;
+    use primitive_types::U256;
+
+    /// Map a parser over a list of tests and assert equality. Panics when equality fails.
+    fn batch_test(
+        f: impl Fn(BaseExpr) -> ParseRes,
+        tests: Vec<(BaseExpr, ParseRes)>)
+    {
+        tests.into_iter()
+             .for_each(|(i,o)|
+                 assert_eq!(f(i), o))
+    }
+
+    /*
+    #[test]
+    fn parse_int_as_expr() {
+        let tests = vec![("10",  Expr::Int(U256::from(10))),
+                         ("742", Expr::Int(U256::from(742)))];
+
+        batch_test(expr, tests)
+    }
+    */
+
+    #[test]
+    fn parse_app() {
+        let tests = vec![
+            // (+ 1 2)
+            (BaseExpr::List(vec![BaseExpr::Symbol("+".to_string()), BaseExpr::Int(U256::from(1)), BaseExpr::Int(U256::from(2))]),
+             Expr::App(Operator::BuiltIn(BuiltIn::Add),
+                           vec![Expr::Int(U256::from(1)),
+                                Expr::Int(U256::from(2))])),
+            // (+ 1 (- 5 8))
+            (BaseExpr::List(vec![BaseExpr::Symbol("+".to_string()), BaseExpr::Int(U256::from(1)), BaseExpr::Int(U256::from(2))]),
+             Expr::App(Operator::BuiltIn(BuiltIn::Add),
+                           vec![Expr::Int(U256::from(1)),
+                                Expr::App(Operator::BuiltIn(BuiltIn::Sub),
+                                          vec![Expr::Int(U256::from(5)),
+                                               Expr::Int(U256::from(8))])]))
+        ].into_iter()
+         .map(|(i,e)| (i, Ok(e)))
+         .collect();
+
+        batch_test(expr, tests)
+    }
 }
