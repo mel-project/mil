@@ -107,6 +107,7 @@ fn fold_results<O,E>(v: Vec<Result<O, E>>) -> Result<Vec<O>, E> {
          inner_vec.push(v);
          Ok(inner_vec)
      })
+    .map(|mut v| { v.reverse(); v })
 }
 
 #[cfg(test)]
@@ -139,12 +140,20 @@ mod test {
     fn parse_app() {
         let tests = vec![
             // (+ 1 2)
-            (BaseExpr::List(vec![BaseExpr::Symbol("+".to_string()), BaseExpr::Int(U256::from(1)), BaseExpr::Int(U256::from(2))]),
+            (BaseExpr::List(vec![BaseExpr::Symbol("+".to_string()),
+                                 BaseExpr::Int(U256::from(1)),
+                                 BaseExpr::Int(U256::from(2))]),
              Expr::App(Operator::BuiltIn(BuiltIn::Add),
                            vec![Expr::Int(U256::from(1)),
                                 Expr::Int(U256::from(2))])),
             // (+ 1 (- 5 8))
-            (BaseExpr::List(vec![BaseExpr::Symbol("+".to_string()), BaseExpr::Int(U256::from(1)), BaseExpr::Int(U256::from(2))]),
+            (BaseExpr::List(vec![
+                BaseExpr::Symbol("+".to_string()),
+                BaseExpr::Int(U256::from(1)),
+                BaseExpr::List(vec![
+                    BaseExpr::Symbol("-".to_string()),
+                    BaseExpr::Int(U256::from(5)),
+                    BaseExpr::Int(U256::from(8))])]),
              Expr::App(Operator::BuiltIn(BuiltIn::Add),
                            vec![Expr::Int(U256::from(1)),
                                 Expr::App(Operator::BuiltIn(BuiltIn::Sub),
