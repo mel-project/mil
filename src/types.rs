@@ -29,7 +29,7 @@ pub enum BuiltIn {
 /// [BuiltIn]s, which translace directly to MelVM. Special forms are evaluated into BuiltIns.
 #[derive(Debug, PartialEq, Eq)]
 pub enum SpecialOp {
-    Defn,
+    //Defn,
     Set,
     //Let,
 }
@@ -60,10 +60,6 @@ pub enum Atom {
     */
 }
 */
-
-/// Macros are not part of an [Expr] because they are only defined at the beginning of a program,
-/// and cannot be nested.
-type Defn = (Symbol, (Vec<Symbol>, Expr));
 
 #[derive(Debug, PartialEq, Eq)]
 /// The lower level representation of a program that is directly compilable into a binary for the

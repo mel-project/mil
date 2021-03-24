@@ -1,4 +1,4 @@
-use crate::parser::BaseExpr;
+use crate::parser::{Defn, BaseExpr};
 use primitive_types::U256;
 use crate::types::{SpecialOp, BuiltIn, Expr, Operator};
 use nom::{
@@ -12,16 +12,29 @@ use nom::{
     character::complete::{not_line_ending, line_ending, alpha1, multispace1, multispace0, one_of, digit1},
     multi::{separated_list1, many0, fold_many1},
     character::complete::char,
-    sequence::{preceded, delimited, separated_pair},
+    sequence::{tuple, preceded, delimited, separated_pair},
 };
 
 type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
+fn defn<'a>(input: &'a str)
+-> IResult<&'a str, Defn, VerboseError<&'a str>> {
+    context("defn",
+        s_expr(
+            preceded(ws(tag("fn")),
+                     tuple((ws(alpha1),
+                            ws(s_expr(many0(symbol))),
+                            base_expr)))))
+        //.map(|l| (l.pop().unwrap(), (l.pop().unwrap(), l.pop().unwrap())))
+        .map(|(name, params, body)| (name.to_string(), (params, body)))
+        .parse(input)
+}
+
 fn special<'a>(input: &'a str)
 -> IResult<&'a str, SpecialOp, VerboseError<&'a str>> {
     context("special operator",
-        map_opt(alt((tag("defn"), tag("let"))),
-                SpecialOp::from_token))
+        //map_opt(alt((tag("defn"), tag("let"))),
+        map_opt((tag("let")), SpecialOp::from_token))
             .parse(input)
 }
 
@@ -61,6 +74,24 @@ fn list<'a>(input: &'a str)
         elements,
         char(')').and(many0(line_ending))))
     (input)
+}
+
+fn s_expr<'a, O, F>(parser: F)
+-> impl FnMut(&'a str) -> IResult<&'a str, O, VerboseError<&'a str>>
+where F: Parser<&'a str, O, VerboseError<&'a str>> {
+    context("list",
+    delimited(
+        ws(char('(')),
+        parser,
+        char(')').and(many0(line_ending))))
+}
+
+/// Top level of a program consists of a list of fn definitions and an expression.
+pub fn root<'a>(input: &'a str)
+-> IResult<&'a str, (Vec<Defn>, BaseExpr), VerboseError<&'a str>> {
+    tuple((many0(defn),
+           base_expr))
+    .parse(input)
 }
 
 /// Top level parser returns any valid [BaseExpr].

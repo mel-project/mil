@@ -1,4 +1,5 @@
 /// An index for a location on the MelVM heap.
+/*
 type HeapPos = u16;
 
 /// Evaluate a Mil [Expr], tracking symbols and unrolling macros.
@@ -67,6 +68,7 @@ fn apply_macro(body: &Expr, params: Vec<Symbol>, args: Vec<UnrolledExpr>)
         Expr::Set(s,b) => UnrolledExpr::Set(s,b),
     }
 }
+*/
 
 /*
 /// If top-level operator is a symbol, returns its value.

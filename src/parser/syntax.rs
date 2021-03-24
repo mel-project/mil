@@ -33,7 +33,7 @@ pub fn expr(input: BaseExpr) -> ParseRes {
                 BaseExpr::Symbol(ref op) => app(to_op(op), elems),
                 BaseExpr::BuiltIn(op) => app(Operator::BuiltIn(op), elems),
                 BaseExpr::Special(op) => match op {
-                    SpecialOp::Defn => defn(elems),
+                    //SpecialOp::Defn => defn(elems),
                     SpecialOp::Set => set(elems),
                 },
                 BaseExpr::Int(_) | BaseExpr::List(_) =>
@@ -43,6 +43,7 @@ pub fn expr(input: BaseExpr) -> ParseRes {
     }
 }
 
+/*
 /// Parses a function definition if the input is well formed. Otherwise returns an error.
 fn defn(mut elems: Vec<BaseExpr>) -> ParseRes {
     // TODO: Check for symbol conflicts here? Set symbol into env
@@ -56,6 +57,7 @@ fn defn(mut elems: Vec<BaseExpr>) -> ParseRes {
 
     Ok( Expr::Defn(fn_name, params, Box::new(body)) )
 }
+*/
 
 /// Parse a set! expression.
 fn set(mut elems: Vec<BaseExpr>) -> ParseRes {

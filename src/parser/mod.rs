@@ -2,10 +2,14 @@ pub mod tokens;
 pub mod syntax;
 
 use primitive_types::U256;
-use crate::types::{SpecialOp, BuiltIn, Operator};
+use crate::types::{Symbol, SpecialOp, BuiltIn, Operator};
 
 // TODO: hide underlying parse fns and provide a unified parser interface here.
 //pub fn parse(input: &str) -> Result<Expr, ?>
+
+/// Macros are not part of an [Expr] because they are only defined at the beginning of a program,
+/// and cannot be nested.
+pub type Defn = (Symbol, (Vec<Symbol>, BaseExpr));
 
 /// First-pass expression type. Does not distinguish different types of s-expressions like [Expr]
 /// does. Useful for tokenizing a string.
@@ -53,7 +57,7 @@ impl BuiltIn {
 impl SpecialOp {
     fn from_token(s: &str) -> Option<SpecialOp> {
         match s {
-            "fn" => Some(SpecialOp::Defn),
+            //"fn" => Some(SpecialOp::Defn),
             "set!" => Some(SpecialOp::Set),
             _ => None,
         }
