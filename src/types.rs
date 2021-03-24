@@ -91,7 +91,6 @@ pub enum Expr {
     //Let(Symbol, Box<Expr>),
 }
 
-/*
 /// An expression where all applications are on [BuiltIn] operators.
 /// This is the result of applying all defined macros.
 pub enum UnrolledExpr {
@@ -106,4 +105,3 @@ pub enum UnrolledExpr {
     /// A variable is a pointer to a location on the heap.
     Var(Symbol),
 }
-*/

@@ -6,22 +6,21 @@ type HeapPos = u16;
 trait Evaluator {
     fn eval(UnrolledExpr) -> MelExpr;
     /// Recursively unroll macro invocations in an [Expr] so that only [BuiltIn]s are left.
-    fn unroll_macros(&Expr) -> UnrolledExpr;
+    fn expand_macros(&Expr) -> Expr;
     fn new(Vec<Macros>) -> Self;
     //fn unroll_macros(Expr, &HashMap<Macro>) -> UnrolledExpr;
 }
 
-struct Eval {
-    /// Symbol table
-    symbols: HashMap<Symbol, HeapPos>,
+struct Env {
+    /// Mapping variables to the location they point to on the heap.
+    vars: HashMap<Symbol, HeapPos>,
     /// Tracking macros. Notice [Macro] bodies are [Expr]s, meaning they can use other macros
     /// (non-builtins).
     macros: HashMap<Symbol, Expr>,
 }
 
-impl Evaluator for Eval {
-    // fn eval(UnrolledExpr) -> MelExpr;
-    pub fn new(self, macros: Vec<Macro>) -> Self {
+impl Evaluator for Env {
+    pub fn new(macros: Vec<Macro>) -> Self {
         // Store macros in a hashmap
         let macros = HashMap<Symbol, Expr> = macros.iter().collect();
 
@@ -31,20 +30,34 @@ impl Evaluator for Eval {
         }
     }
 
-    fn unroll_macros(&self, e: &Expr) -> Result<UnrolledExpr, ParseErr> {
+    fn expand_macros(&self, e: &Expr) -> Result<UnrolledExpr, ParseErr> {
         if let Expr::App(op, args) = e {
             if let Operator::Symbol(sym) = op {
                 match self.macros.get(sym) {
                     // Apply the unrolled arguments to the macro body
-                    Some((params, body)) => substitute(
-                        body, params, args.iter().map(unroll_macros)),
-                    // Otherwise recurse unroll, but leave current op as-is
-                    None => UnrolledExpr::App(
-                        op, args.iter().map(unroll_macros)),
-                }
+                    Some((params, body)) => apply_macro(
+                        body, params, args.iter().map(expand_macros)),
+                    None => Err(ParseErr(format!("Undefind macro '{}'.", sym))),
+                },
+                // Replace with location in symbol table
+                /*
+                Operator::Special(sp) => match sp {
+                    Set => set(env),
+                },
+                */
+                // Otherwise recurse unroll and just cast op as-is
+                Operator::Builtin => UnrolledExpr::App(
+                    op, args.iter().map(expand_macros)),
             }
         }
     }
+
+    /// Mangles parameters and binds them to args the environment.
+    fn bind_args(&mut self, params: Vec<Symbol>, args: Vec<UnrolledExpr>) {
+    }
+
+    /// Replace each occurence of a variable with its mangled
+    fn expand_macro
 }
 
 fn apply_macro(body: &Expr, params: Vec<Symbol>, args: Vec<UnrolledExpr>)
