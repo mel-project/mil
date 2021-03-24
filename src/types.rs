@@ -30,6 +30,7 @@ pub enum BuiltIn {
 #[derive(Debug, PartialEq, Eq)]
 pub enum SpecialOp {
     Defn,
+    Set,
     //Let,
 }
 
@@ -60,6 +61,10 @@ pub enum Atom {
 }
 */
 
+/// Macros are not part of an [Expr] because they are only defined at the beginning of a program,
+/// and cannot be nested.
+type Defn = (Symbol, (Vec<Symbol>, Expr));
+
 #[derive(Debug, PartialEq, Eq)]
 /// The lower level representation of a program that is directly compilable into a binary for the
 /// MelVM.
@@ -80,7 +85,29 @@ pub enum Expr {
     //Symbol(String),
     /// Application of an [Operator] to some arguments.
     App(Operator, Vec<Expr>),
-    /// Function definition.
-    Defn(Symbol, Vec<Symbol>, Box<Expr>),
-    //Let(
+    // Function definition.
+    //Defn(Symbol, Vec<Symbol>, Box<Expr>),
+    /// Assign a value stored on the heap to a symbol
+    Set(Symbol, Box<Expr>),
+    /// A variable is a pointer to a location on the heap.
+    Var(Symbol),
+    // Bind a symbol to a value that is determined at compile-time
+    //Let(Symbol, Box<Expr>),
 }
+
+/*
+/// An expression where all applications are on [BuiltIn] operators.
+/// This is the result of applying all defined macros.
+pub enum UnrolledExpr {
+    /// Fundamental data type.
+    Int(U256),
+    // Symbol
+    //Symbol(String),
+    /// Application of an [Operator] to some arguments.
+    App(BuiltIn, Vec<UnrolledExpr>),
+    /// Assign a value stored on the heap to a symbol
+    Set(Symbol, Box<UnrolledExpr>),
+    /// A variable is a pointer to a location on the heap.
+    Var(Symbol),
+}
+*/

@@ -34,6 +34,7 @@ pub fn expr(input: BaseExpr) -> ParseRes {
                 BaseExpr::BuiltIn(op) => app(Operator::BuiltIn(op), elems),
                 BaseExpr::Special(op) => match op {
                     SpecialOp::Defn => defn(elems),
+                    SpecialOp::Set => set(elems),
                 },
                 BaseExpr::Int(_) | BaseExpr::List(_) =>
                     Err(ParseErr(format!("First element of list, {:?}, should be an operator.", op))),
@@ -54,6 +55,18 @@ fn defn(mut elems: Vec<BaseExpr>) -> ParseRes {
     let body    = expr(    elems.pop().unwrap() )?;
 
     Ok( Expr::Defn(fn_name, params, Box::new(body)) )
+}
+
+/// Parse a set! expression.
+fn set(mut elems: Vec<BaseExpr>) -> ParseRes {
+    if elems.len() != 2 {
+        return Err( ParseErr(format!("Expected 2 elements to 'set!', found {}.", elems.len())));
+    }
+
+    let name = symbol(  elems.pop().unwrap() )?;
+    let value = expr(   elems.pop().unwrap() )?;
+
+    Ok( Expr::Set(name, Box::new(value)) )
 }
 
 /// Potentially convert a BaseExpr::Symbol to some kind of [Operator].
@@ -126,18 +139,8 @@ mod test {
                  assert_eq!(f(i), o))
     }
 
-    /*
     #[test]
-    fn parse_int_as_expr() {
-        let tests = vec![("10",  Expr::Int(U256::from(10))),
-                         ("742", Expr::Int(U256::from(742)))];
-
-        batch_test(expr, tests)
-    }
-    */
-
-    #[test]
-    fn parse_app() {
+    fn parse_nested_applications() {
         let tests = vec![
             // (+ 1 2)
             (BaseExpr::List(vec![BaseExpr::Symbol("+".to_string()),

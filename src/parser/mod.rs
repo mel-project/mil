@@ -54,6 +54,7 @@ impl SpecialOp {
     fn from_token(s: &str) -> Option<SpecialOp> {
         match s {
             "fn" => Some(SpecialOp::Defn),
+            "set!" => Some(SpecialOp::Set),
             _ => None,
         }
     }
