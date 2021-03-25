@@ -11,10 +11,17 @@ fn main() -> std::io::Result<()> {
     file.read_to_string(&mut code)?;
 
     // Parse to abstract syntax tree
-    let (_, expr) = parser::tokens::expr(&code[..])
+    //let (_, expr) = parser::tokens::expr(&code[..])
+    match parser::tokens::expr(&code[..]) {
+        Ok(expr) => println!("Ast\n----\n{:?}", expr),
+        Err(e) => match e {
+            nom::Err::Failure(e) | nom::Err::Error(e) => println!("{}", nom::error::convert_error(&code[..], e)),
+            _ => unreachable!(),
+        },
+    }
         //.map_err(|e| format!("{:?}", e))?;
-        .expect("Failed to parse");
-    println!("Ast\n----\n{:?}", expr);
+        //.expect("Failed to parse");
+    //println!("Ast\n----\n{:?}", expr);
     //let ast = parser::syntax::expr(base_expr)
     //    .expect("Failed to parse");
     //println!("Ast\n----\n{:?}", ast);

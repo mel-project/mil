@@ -11,8 +11,14 @@ use nom::{
     character::complete::{line_ending, alpha1, multispace1, multispace0, digit1},
     multi::{separated_list1, many0},
     character::complete::char,
-    sequence::{tuple, preceded, delimited},
+    sequence::{separated_pair, tuple, preceded, delimited},
 };
+
+macro_rules! list {
+    ($($parser:expr),+) => (
+        s_expr(tuple(($(ws($parser)),+)))
+    )
+}
 
 type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
@@ -31,15 +37,19 @@ fn defn<'a>(input: &'a str)
 fn tri_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("tri builtin",
-        map_opt(tuple((
+        map_opt(/*tuple((
               ws(tag("slice")),
               ws(expr),
               ws(expr),
               expr
-        )), |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
+              */
+            list!(tag("slice"), expr, expr, expr),
+        //)), |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
+        |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
     .parse(input)
 }
 
+/// Builtins without arguments aren't wrapped in s-expressions.
 fn empty_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("unary builtin",
@@ -51,45 +61,41 @@ fn empty_builtin<'a>(input: &'a str)
 fn unary_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("unary builtin",
-        map_opt(tuple((
-            ws(alt((
-                tag("load"),
-                tag("len"),
-                tag("not"),
-            ))),
-            expr
-        )), |(s,e)| BuiltIn::from_uni_token(s, e)))
+        map_opt(
+            list!(alt((
+                    tag("load"),
+                    tag("len"),
+                    tag("not"),
+                )),
+                expr),
+        //)), |(s,e)| BuiltIn::from_uni_token(s, e)))
+        |(s,e)| BuiltIn::from_uni_token(s, e)))
     .parse(input)
 }
 
 fn binary_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("binary builtin",
-        //map_opt(not_line_ending, BuiltIn::from_token)
-        //    .map(Operator::BuiltIn),
         alt((
             // <tag> <expr> <expr>
-            map_opt(
-                tuple((
-                    ws(alt((
-                        tag("+"), tag("-"),
-                        tag("*"), tag("/"),
-                        tag("%"), tag("and"),
-                        tag("or"), tag("xor"),
-                        tag("cons"), tag("get"),
-                        tag("concat"),
-                    ))),
-                    ws(expr),
-                    expr
+            map_opt(list!(
+                alt((
+                    tag("+"), tag("-"),
+                    tag("*"), tag("/"),
+                    tag("%"), tag("and"),
+                    tag("or"), tag("xor"),
+                    tag("cons"), tag("get"),
+                    tag("concat"),
                 )),
-                |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)
-            ),
+                expr,
+                expr),
+                |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)),
             // <tag> <symb> <expr>
-            tuple((
-                ws(tag("store")),
-                ws(symbol),
+            list!(
+                tag("store"),
+                symbol,
                 expr
-            )).map(|(_,s,e)| BuiltIn::Store(s,e)),
+            ).map(|(_,s,e)| BuiltIn::Store(s,e)),
         )))
         //)), |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)))
     .parse(input)
@@ -158,7 +164,7 @@ where F: Parser<&'a str, O, VerboseError<&'a str>> {
     delimited(
         ws(char('(')),
         parser,
-        char(')').and(many0(line_ending))))
+        ws(char(')')).and(many0(line_ending))))
 }
 
 /// Top level of a program consists of a list of fn definitions and an expression.
@@ -188,10 +194,12 @@ pub fn app<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     let args = separated_list1(multispace1, expr);
     context("Application",
-        tuple((symbol, args)))
+        list!(symbol, args))
+        //s_expr(tuple((symbol, args))))
         .map(|(s,a)| Expr::App(s,a))
         .parse(input)
 }
+
 
 /*
 /// Top level parser returns any valid [BaseExpr].
