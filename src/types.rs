@@ -5,26 +5,26 @@ pub struct PushI;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BuiltIn {
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Rem,
-    Oflo,
-    And,
-    Or,
-    Xor,
-    Not,
-    Vpush,
+    Add(Expr, Expr),
+    Sub(Expr, Expr),
+    Mul(Expr, Expr),
+    Div(Expr, Expr),
+    Rem(Expr, Expr),
+    And(Expr, Expr),
+    Or(Expr, Expr),
+    Xor(Expr, Expr),
+    Not(Expr),
+    Vpush(Expr, Expr),
     Vempty,
-    Vref,
-    Vlen,
-    Vappend,
-    Vslice,
-    Load,
-    Store,
+    Vref(Expr, Expr),
+    Vlen(Expr),
+    Vappend(Expr, Expr),
+    Vslice(Expr, Expr, Expr),
+    Load(Expr),
+    Store(Symbol, Expr),
 }
 
+/*
 /// Operators with special evaluation cases when parsing. These are distinguished from
 /// [BuiltIn]s, which translace directly to MelVM. Special forms are evaluated into BuiltIns.
 #[derive(Debug, PartialEq, Eq)]
@@ -33,10 +33,12 @@ pub enum SpecialOp {
     Set,
     //Let,
 }
+*/
 
 /// Symbolic name for an expression
 pub type Symbol = String;
 
+/*
 #[derive(Debug, PartialEq, Eq)]
 /// Operator of an expression (the first element of an S-expression), can either
 /// be a [BuiltIn], or a user defined [Symbol].
@@ -45,6 +47,7 @@ pub enum Operator {
     Symbol(Symbol),
     Special(SpecialOp),
 }
+*/
 
 /*
 #[derive(Debug, PartialEq, Eq)]
@@ -67,8 +70,11 @@ pub enum Atom {
 pub enum MelExpr {
     /// Fundamental data type.
     Int(U256),
-    /// Application of an op to some arguments.
-    App(BuiltIn, Vec<MelExpr>),
+    // ByteString(.),
+    // Vector(Vec,
+    BuiltIn(BuiltIn),
+    // Application of an op to some arguments.
+    //App(BuiltIn, Vec<MelExpr>),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -77,18 +83,18 @@ pub enum MelExpr {
 pub enum Expr {
     /// Fundamental data type.
     Int(U256),
-    // Symbol
-    //Symbol(String),
-    /// Application of an [Operator] to some arguments.
-    App(Operator, Vec<Expr>),
+    /// Builtin operations.
+    BuiltIn(Box<BuiltIn>),
+    /// Application of a user-defined function to some arguments.
+    App(Symbol, Vec<Expr>),
     // Function definition.
     //Defn(Symbol, Vec<Symbol>, Box<Expr>),
     /// Assign a value stored on the heap to a symbol
     Set(Symbol, Box<Expr>),
     /// A variable is a pointer to a location on the heap.
     Var(Symbol),
-    // Bind a symbol to a value that is determined at compile-time
-    //Let(Symbol, Box<Expr>),
+    /// Bind a symbol to a value within the scope of a given expression.
+    Let(Vec<(Symbol, Expr)>, Box<Expr>),
 }
 
 /// An expression where all applications are on [BuiltIn] operators.

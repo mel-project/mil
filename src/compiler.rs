@@ -2,6 +2,7 @@ use std::fmt;
 use primitive_types::U256;
 use crate::types::{PushI, BuiltIn, MelExpr};
 
+/*
 #[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
 
@@ -94,7 +95,7 @@ impl From<&BuiltIn> for u8 {
             BuiltIn::Mul => 0x12,
             BuiltIn::Div => 0x13,
             BuiltIn::Rem => 0x14,
-            BuiltIn::Oflo => 0x15,
+            //BuiltIn::Oflo => 0x15,
             BuiltIn::And => 0x20,
             BuiltIn::Or => 0x21,
             BuiltIn::Xor => 0x22,
@@ -123,6 +124,7 @@ impl From<PushI> for u8 {
         0xf1
     }
 }
+*/
 
 
 #[cfg(test)]

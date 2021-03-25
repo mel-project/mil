@@ -1,6 +1,7 @@
-use crate::parser::BaseExpr;
-use crate::types::{SpecialOp, Symbol, BuiltIn, Expr, Operator};
+//use crate::parser::BaseExpr;
+//use crate::types::{SpecialOp, Symbol, BuiltIn, Expr, Operator};
 
+/*
 /// Syntax parser result type.
 type ParseRes = Result<Expr, ParseErr>;
 /// Syntax parser error type. May become may intricate later.
@@ -171,3 +172,4 @@ mod test {
         batch_test(expr, tests)
     }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 use crate::compiler::BinCode;
 use tmelcrypt::ed25519_keygen;
 use blkstructs::{
@@ -14,3 +15,4 @@ pub fn execute(bincode: BinCode) -> bool {
 
     script.check(&tx)
 }
+*/

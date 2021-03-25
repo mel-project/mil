@@ -1,6 +1,6 @@
 use mil::{
-    parser, executor,
-    compiler::{Compile, BinCode}};
+    parser, executor,};
+    //compiler::{Compile, BinCode}};
 use std::fs::File;
 use std::io::prelude::*;
 use blkstructs::melvm::Covenant;
@@ -11,13 +11,13 @@ fn main() -> std::io::Result<()> {
     file.read_to_string(&mut code)?;
 
     // Parse to abstract syntax tree
-    let (_, base_expr) = parser::tokens::base_expr(&code[..])
+    let (_, expr) = parser::tokens::expr(&code[..])
         //.map_err(|e| format!("{:?}", e))?;
         .expect("Failed to parse");
-    println!("Base Ast\n----\n{:?}", base_expr);
-    let ast = parser::syntax::expr(base_expr)
-        .expect("Failed to parse");
-    println!("Ast\n----\n{:?}", ast);
+    println!("Ast\n----\n{:?}", expr);
+    //let ast = parser::syntax::expr(base_expr)
+    //    .expect("Failed to parse");
+    //println!("Ast\n----\n{:?}", ast);
 
     /*
     // Compile to binary
