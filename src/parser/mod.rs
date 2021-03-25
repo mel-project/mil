@@ -10,25 +10,6 @@ use crate::types::{Symbol, BuiltIn, Expr};
 /// and cannot be nested.
 pub type Defn = (Symbol, (Vec<Symbol>, Expr));
 
-/*
-/// First-pass expression type. Does not distinguish different types of s-expressions like [Expr]
-/// does. Useful for tokenizing a string.
-// TODO: Implement Display
-#[derive(Debug)]
-pub enum BaseExpr {
-    /// Fundamental integer data type.
-    Int(U256),
-    /// A symbol representing some expression.
-    Symbol(String),
-    /// A built in operator.
-    BuiltIn(BuiltIn),
-    /// Operators with special evaluation cases.
-    Special(SpecialOp),
-    /// Recursive list of expressions.
-    List(Vec<BaseExpr>),
-}
-*/
-
 impl BuiltIn {
     fn from_bin_token(s: &str, e1: Expr, e2: Expr) -> Option<BuiltIn> {
         match s {
@@ -68,40 +49,4 @@ impl BuiltIn {
             _ => None,
         }
     }
-    /*
-    fn from_token(s: &str) -> Option<BuiltIn> {
-        match s {
-            "+" => Some(BuiltIn::Add),
-            "-" => Some(BuiltIn::Sub),
-            "*" => Some(BuiltIn::Mul),
-            "/" => Some(BuiltIn::Div),
-            "%" => Some(BuiltIn::Rem),
-            "and" => Some(BuiltIn::And),
-            "or" => Some(BuiltIn::Or),
-            "xor" => Some(BuiltIn::Xor),
-            "not" => Some(BuiltIn::Not),
-            "nil" => Some(BuiltIn::Vempty),
-            "cons" => Some(BuiltIn::Vpush),
-            "get" => Some(BuiltIn::Vref),
-            "len" => Some(BuiltIn::Vlen),
-            "concat" => Some(BuiltIn::Vappend),
-            "slice" => Some(BuiltIn::Vslice),
-            "load" => Some(BuiltIn::Load),
-            "store" => Some(BuiltIn::Store),
-            _ => None,
-        }
-    }
-    */
 }
-
-/*
-impl SpecialOp {
-    fn from_token(s: &str) -> Option<SpecialOp> {
-        match s {
-            //"fn" => Some(SpecialOp::Defn),
-            "set!" => Some(SpecialOp::Set),
-            _ => None,
-        }
-    }
-}
-*/

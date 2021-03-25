@@ -14,6 +14,11 @@ use nom::{
     sequence::{separated_pair, tuple, preceded, delimited},
 };
 
+/// Create a parser for an s-expression, where each element of the list is a parser.
+/// ```
+/// // Parses "(f 1 (* 3 4))"
+/// list!(symbol, expr, expr);
+/// ```
 macro_rules! list {
     ($($parser:expr),+) => (
         s_expr(tuple(($(ws($parser)),+)))
@@ -34,18 +39,13 @@ fn defn<'a>(input: &'a str)
         .parse(input)
 }
 
+/// Parse a [BuiltIn] expression with three arguments.
 fn tri_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("tri builtin",
-        map_opt(/*tuple((
-              ws(tag("slice")),
-              ws(expr),
-              ws(expr),
-              expr
-              */
+        map_opt(
             list!(tag("slice"), expr, expr, expr),
-        //)), |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
-        |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
+            |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
     .parse(input)
 }
 
@@ -97,42 +97,17 @@ fn binary_builtin<'a>(input: &'a str)
                 expr
             ).map(|(_,s,e)| BuiltIn::Store(s,e)),
         )))
-        //)), |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)))
     .parse(input)
 }
 
-/*
-fn special<'a>(input: &'a str)
--> IResult<&'a str, SpecialOp, VerboseError<&'a str>> {
-    context("special operator",
-        //map_opt(alt((tag("defn"), tag("let"))),
-        map_opt((tag("let")), SpecialOp::from_token))
-            .parse(input)
-}
-*/
-
-/*
-fn builtin<'a>(input: &'a str)
--> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
-    context("builtin",
-        //map_opt(not_line_ending, BuiltIn::from_token)
-        //    .map(Operator::BuiltIn),
-        //map_opt(alt((tag("+"), tag("-"), alpha1)),
-        //        BuiltIn::from_token))
-        alt((empty_builtin,
-             unary_builtin,
-             binary_builtin,
-             tri_builtin,
-         ))).parse(input)
-}
-*/
-
+/// Parse a symbol, which is any alphanumeric string.
 fn symbol<'a>(input: &'a str)
 -> IResult<&'a str, String, VerboseError<&'a str>> {
     context("symbol", alpha1.map(String::from))(input)
 }
 
 
+/// Parse a [U256] integer.
 fn int<'a>(input: &'a str)
 -> IResult<&'a str, U256, VerboseError<&'a str>> {
     context("int",
@@ -142,21 +117,7 @@ fn int<'a>(input: &'a str)
             .parse(input)
 }
 
-/*
-/// Effectively tokenizes an input S-expression as a str, into a list of [Expr]s.
-fn list<'a>(input: &'a str)
--> IResult<&'a str, Vec<BaseExpr>, VerboseError<&'a str>> {
-    let elements = separated_list1(multispace1, base_expr);
-
-    context("list",
-    delimited(
-        ws(char('(')),
-        elements,
-        char(')').and(many0(line_ending))))
-    (input)
-}
-*/
-
+/// Wrap a parser in surrounding parenthesis with whitespace.
 fn s_expr<'a, O, F>(parser: F)
 -> impl FnMut(&'a str) -> IResult<&'a str, O, VerboseError<&'a str>>
 where F: Parser<&'a str, O, VerboseError<&'a str>> {
@@ -190,6 +151,7 @@ pub fn expr<'a>(input: &'a str)
      )).parse(input)
 }
 
+/// Parse a function call (application) to any non-[BuiltIn] function.
 pub fn app<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     let args = separated_list1(multispace1, expr);
@@ -200,19 +162,6 @@ pub fn app<'a>(input: &'a str)
         .parse(input)
 }
 
-
-/*
-/// Top level parser returns any valid [BaseExpr].
-pub fn base_expr<'a>(input: &'a str)
--> IResult<&'a str, BaseExpr, VerboseError<&'a str>> {
-    alt((int.map(BaseExpr::Int),
-         builtin.map(BaseExpr::BuiltIn),
-         special.map(BaseExpr::Special),
-         symbol.map(BaseExpr::Symbol),
-         list.map(BaseExpr::List),
-     ))(input)
-}
-*/
 
 /// Surrounding whitespace parser combinator
 fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
