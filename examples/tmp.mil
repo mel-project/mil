@@ -1,1 +1,9 @@
-(concat (cons 2 (cons 1 nil)) (cons 4 (cons 3 nil)))
+(fn f (x) (+ x x))
+
+(concat
+    (cons
+        (f 1)
+        (cons 1 nil))
+    (cons
+        4
+        (cons 3 nil)))
