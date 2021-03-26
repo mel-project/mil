@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::types::{Symbol, Expr, VarId, UnrolledExpr};
+use crate::types::{UnrolledBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
 use crate::parser::{ParseErr, Defn};
 
 /// An index for a location on the MelVM heap.
@@ -8,11 +8,11 @@ type HeapPos = u16;
 type FnInfo = (Vec<Symbol>, Expr);
 
 /// Evaluate a Mil [Expr], tracking symbols and unrolling fns.
-trait Evaluator {
+pub trait Evaluator {
     //fn eval(UnrolledExpr) -> MelExpr;
     /// Recursively unroll fn invocations in an [Expr] so that only [BuiltIn]s are left.
-    fn expand_fns(&self, &Expr) -> UnrolledExpr;
-    fn new(Vec<Defn>) -> Self;
+    fn expand_fns(&self, e: &Expr) -> Result<UnrolledExpr, ParseErr>;
+    fn new(fns: Vec<Defn>) -> Self;
 }
 
 /// Short hand for a Result<_, ParseErr> type given the error string and args.
@@ -22,7 +22,7 @@ macro_rules! PErr {
     }
 }
 
-struct Env {
+pub struct Env {
     // Mapping variables to the location they point to on the heap.
     /// Mapping parameters as defined in a fn definition, to their mangled form.
     mangled: HashMap<Symbol, VarId>,
@@ -48,18 +48,28 @@ impl Evaluator for Env {
     fn expand_fns(&self, expr: &Expr) -> Result<UnrolledExpr, ParseErr> {
         match expr {
             Expr::Var(x) => {
+                let v = try_get_var(x, &self.mangled)?;
+                Ok(UnrolledExpr::Var(v))
+                /*
                 match self.mangled.get(x) {
                     Some(v) => Ok(UnrolledExpr::Var(v)),
                     None => PErr!("Variable {} is not defined.", x),
                 }
+                */
             },
-            Expr::BuiltIn(b) => match *b {
+            Expr::BuiltIn(b) => match &**b {
+                BuiltIn::Add(e1,e2) => {
+                    let e1 = self.expand_fns(&e1)?;
+                    let e2 = self.expand_fns(&e2)?;
+
+                    Ok(UnrolledExpr::BuiltIn( Box::new(UnrolledBuiltIn::Add(e1, e2)) ))
+                },
+                _ => unreachable!(), // TODO
             },
             Expr::Set(s,e) => {
-                let var  = vars.get(s)
-                    .ok_or(ParseErr(format!("Variable {} is not defined.", s)))?;
-                let expr = subst_vars(&**e, vars)?;
-                Ok(UnrolledExpr::Set(*var, Box::new(expr)))
+                let var = try_get_var(s, &self.mangled)?;
+                let expr = self.expand_fns(e)?;
+                Ok(UnrolledExpr::Set(var, Box::new(expr)))
             },
             Expr::App(f,es) => {
                 // Get the fn definition from the env
@@ -77,7 +87,7 @@ impl Evaluator for Env {
                     .map(|e| self.expand_fns(e)).collect())?;
 
                 // Mangle parameters of fn
-                let mangled_vars = params.iter().map(mangled).collect();
+                let mangled_vars: Vec<VarId> = params.iter().map(mangled).collect();
                 // Map between mangled and original
                 let mangled_map: HashMap<Symbol, VarId>
                     = params.clone().into_iter()
@@ -88,48 +98,38 @@ impl Evaluator for Env {
                 let f_env = Env {
                     // TODO: Make sure mangled_map overrides mangled
                     mangled: self.mangled.clone().into_iter().chain(mangled_map).collect(),
-                    fns: self.fns,
+                    fns: self.fns.clone(),
                 };
 
                 // lol
-                let mangled_body = expand_fns(f_env, body)?;
+                let mangled_body = f_env.expand_fns(body)?;
 
                 let bindings = mangled_vars.into_iter()
                                            .zip(args.into_iter())
                                            .collect();
 
                 // Wrap our mangled body in let bindings
-                Ok(UnrolledExpr::Let(bindings, mangled_body))
+                Ok(UnrolledExpr::Let(bindings, Box::new(mangled_body)))
             },
-            Expr::Let(syms, e) => {
-                Ok(UnrolledExpr::Let(var, expr))
+            Expr::Let(binds, e) => {
+                let mangled_binds = fold_results(binds.iter()
+                    .map(|(sym, expr)| {
+                        let m_sym  = try_get_var(sym, &self.mangled)?;
+                        let m_expr = self.expand_fns(expr)?;
+                        Ok((m_sym, m_expr))
+                    }).collect())?;
+                let u_expr = self.expand_fns(expr)?;
+                Ok(UnrolledExpr::Let(mangled_binds, Box::new(u_expr)))
             },
-            Expr::Int(n) => UnrolledExpr::Int(n),
+            Expr::Int(n) => Ok(UnrolledExpr::Int(n.clone())),
         }
     }
+}
 
-    /*
-    fn expand_fns(&self, e: &Expr) -> Result<UnrolledExpr, ParseErr> {
-        if let Expr::App(fn_name, args) = e {
-            match self.fns.get(fn_name) {
-                // Apply the unrolled arguments to the fn body
-                Some((params, body)) => apply_fn(
-                    body, params, args.iter().map(expand_fns)),
-                None => Err(ParseErr(format!("Undefind fn '{}'.", fn_name))),
-            },
-                // Replace with location in symbol table
-                /*
-                Operator::Special(sp) => match sp {
-                    Set => set(env),
-                },
-                */
-                // Otherwise recurse unroll and just cast op as-is
-                //Operator::Builtin => UnrolledExpr::App(
-                    //op, args.iter().map(expand_fns)),
-            //}
-        }
-    }
-    */
+fn try_get_var(sym: &Symbol, hm: &HashMap<Symbol, VarId>) -> Result<VarId, ParseErr> {
+    hm.get(sym)
+        .ok_or(ParseErr(format!("Variable {} is not defined.", sym)))
+        .map(|v| v.clone())
 }
 
 // TODO: This should probably be part of Env so that previously mangled symbols return the same number

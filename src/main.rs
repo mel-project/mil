@@ -1,5 +1,6 @@
 use mil::{
-    parser, executor,};
+    parser, executor,
+    parser::semantics::Evaluator};
     //compiler::{Compile, BinCode}};
 use std::fs::File;
 use std::io::prelude::*;
@@ -12,13 +13,25 @@ fn main() -> std::io::Result<()> {
 
     // Parse to abstract syntax tree
     //let (_, expr) = parser::tokens::expr(&code[..])
-    match parser::tokens::expr(&code[..]) {
+    parser::tokens::root(&code[..])
+        .map(|(_, expr)| {
+            println!("Ast\n----\n{:?}", expr);
+            let env = parser::semantics::Env::new(expr.0);
+            println!("Expanded\n-----\n{:?}", env.expand_fns(&expr.1));
+        })
+        .map_err(|e| match e {
+            nom::Err::Failure(e) | nom::Err::Error(e) => println!("{}", nom::error::convert_error(&code[..], e)),
+            _ => unreachable!(),
+        });
+    /*
+    match parser::tokens::root(&code[..]) {
         Ok(expr) => println!("Ast\n----\n{:?}", expr),
         Err(e) => match e {
             nom::Err::Failure(e) | nom::Err::Error(e) => println!("{}", nom::error::convert_error(&code[..], e)),
             _ => unreachable!(),
         },
     }
+    */
         //.map_err(|e| format!("{:?}", e))?;
         //.expect("Failed to parse");
     //println!("Ast\n----\n{:?}", expr);
