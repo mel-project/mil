@@ -1,10 +1,15 @@
 pub mod tokens;
 pub mod syntax;
+pub mod semantics;
 
 use crate::types::{Symbol, BuiltIn, Expr};
 
 // TODO: hide underlying parse fns and provide a unified parser interface here.
 //pub fn parse(input: &str) -> Result<Expr, ?>
+
+/// Syntax parser error type. May become may intricate later.
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParseErr(String);
 
 /// Macros are not part of an [Expr] because they are only defined at the beginning of a program,
 /// and cannot be nested.

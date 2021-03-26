@@ -157,8 +157,7 @@ pub fn app<'a>(input: &'a str)
     let args = separated_list1(multispace1, expr);
     context("Application",
         list!(symbol, args))
-        //s_expr(tuple((symbol, args))))
-        .map(|(s,a)| Expr::App(s,a))
+            .map(|(s,a)| Expr::App(s,a))
         .parse(input)
 }
 
