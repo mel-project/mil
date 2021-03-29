@@ -1,5 +1,6 @@
 use mil::{
     parser, executor,
+    parser::mel_expr::MemoryMap,
     parser::semantics::Evaluator};
     //compiler::{Compile, BinCode}};
 use std::fs::File;
@@ -17,7 +18,11 @@ fn main() -> std::io::Result<()> {
         .map(|(_, expr)| {
             println!("Ast\n----\n{:?}", expr);
             let env = parser::semantics::Env::new(expr.0);
-            println!("Expanded\n-----\n{:?}", env.expand_fns(&expr.1));
+            let expanded = env.expand_fns(&expr.1);
+            println!("Expanded\n-----\n{:?}", expanded);
+
+            let mut mem = MemoryMap::new();
+            println!("MelVM\n-----\n{:?}", mem.to_mel_expr(expanded.unwrap()));
         })
         .map_err(|e| match e {
             nom::Err::Failure(e) | nom::Err::Error(e) => println!("{}", nom::error::convert_error(&code[..], e)),
