@@ -1,6 +1,7 @@
 pub mod tokens;
 pub mod syntax;
 pub mod semantics;
+pub mod mel_expr;
 
 use crate::types::{Symbol, BuiltIn, Expr};
 
@@ -10,6 +11,17 @@ use crate::types::{Symbol, BuiltIn, Expr};
 /// Syntax parser error type. May become may intricate later.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ParseErr(String);
+
+/// Short hand for a Result<_, ParseErr> type given the error string and args.
+#[macro_export]
+macro_rules! PErr {
+    ($msg:expr) => {
+        Err(ParseErr($msg.to_string()))
+    };
+    ($msg:expr, $($var:expr),+) => {
+        Err(ParseErr(format!($msg, $($var),+)))
+    }
+}
 
 /// Macros are not part of an [Expr] because they are only defined at the beginning of a program,
 /// and cannot be nested.
@@ -48,7 +60,7 @@ impl BuiltIn {
 
     fn from_uni_token(s: &str, e: Expr) -> Option<BuiltIn> {
         match s {
-            "load" => Some(BuiltIn::Load(e)),
+            //"load" => Some(BuiltIn::Load(e)),
             "not" => Some(BuiltIn::Not(e)),
             "len" => Some(BuiltIn::Vlen(e)),
             _ => None,

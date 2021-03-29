@@ -1,9 +1,9 @@
+#[macro_use]
+use crate::PErr;
 use std::collections::HashMap;
-use crate::types::{UnrolledBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
+use crate::types::{ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
 use crate::parser::{ParseErr, Defn};
 
-/// An index for a location on the MelVM heap.
-type HeapPos = u16;
 /// A list of a function's parameters and its body.
 type FnInfo = (Vec<Symbol>, Expr);
 
@@ -13,13 +13,6 @@ pub trait Evaluator {
     /// Recursively unroll fn invocations in an [Expr] so that only [BuiltIn]s are left.
     fn expand_fns(&self, e: &Expr) -> Result<UnrolledExpr, ParseErr>;
     fn new(fns: Vec<Defn>) -> Self;
-}
-
-/// Short hand for a Result<_, ParseErr> type given the error string and args.
-macro_rules! PErr {
-    ($msg:expr, $($var:expr),+) => {
-        Err(ParseErr(format!($msg, $($var),+)))
-    }
 }
 
 pub struct Env {
@@ -73,7 +66,7 @@ impl Env {
                     let e1 = self.expand_mangle_fns(&e1, mangler)?;
                     let e2 = self.expand_mangle_fns(&e2, mangler)?;
 
-                    Ok(UnrolledExpr::BuiltIn( Box::new(UnrolledBuiltIn::Add(e1, e2)) ))
+                    Ok(UnrolledExpr::BuiltIn( Box::new(ExpandedBuiltIn::Add(e1, e2)) ))
                 },
                 _ => unreachable!(), // TODO
             },
@@ -141,11 +134,6 @@ fn try_get_var(sym: &Symbol, hm: &HashMap<Symbol, VarId>) -> Result<VarId, Parse
     hm.get(sym)
         .ok_or(ParseErr(format!("Variable {} is not defined.", sym)))
         .map(|v| v.clone())
-}
-
-// TODO: This should probably be part of Env so that previously mangled symbols return the same number
-fn mangle(s: &Symbol) -> VarId {
-    0 // TODO
 }
 
 /// Try to extract values from results in vector. Short circuit on the first failure. Note this

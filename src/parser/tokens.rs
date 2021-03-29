@@ -61,42 +61,46 @@ fn empty_builtin<'a>(input: &'a str)
 fn unary_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("unary builtin",
-        map_opt(
-            list!(alt((
-                    tag("load"),
-                    tag("len"),
-                    tag("not"),
-                )),
-                expr),
-        //)), |(s,e)| BuiltIn::from_uni_token(s, e)))
-        |(s,e)| BuiltIn::from_uni_token(s, e)))
+        alt((
+            map_opt(
+                list!(alt((
+                        tag("load"),
+                        tag("len"),
+                        tag("not"),
+                    )),
+                    expr),
+                |(s,e)| BuiltIn::from_uni_token(s, e)),
+                // <tag> <symb>
+                // TODO: Probably take these out since theyre very low level and redundant w/ let/set
+                alt((
+                    list!(
+                        tag("store"),
+                        symbol)
+                    .map(|(_,s)| BuiltIn::Store(s)),
+                    list!(
+                        tag("load"),
+                        symbol)
+                    .map(|(_,s)| BuiltIn::Load(s)),
+                )))))
     .parse(input)
 }
 
 fn binary_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
     context("binary builtin",
-        alt((
-            // <tag> <expr> <expr>
-            map_opt(list!(
-                alt((
-                    tag("+"), tag("-"),
-                    tag("*"), tag("/"),
-                    tag("%"), tag("and"),
-                    tag("or"), tag("xor"),
-                    tag("cons"), tag("get"),
-                    tag("concat"),
-                )),
-                expr,
-                expr),
-                |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)),
-            // <tag> <symb> <expr>
-            list!(
-                tag("store"),
-                symbol,
-                expr
-            ).map(|(_,s,e)| BuiltIn::Store(s,e)),
-        )))
+        // <tag> <expr> <expr>
+        map_opt(list!(
+            alt((
+                tag("+"), tag("-"),
+                tag("*"), tag("/"),
+                tag("%"), tag("and"),
+                tag("or"), tag("xor"),
+                tag("cons"), tag("get"),
+                tag("concat"),
+            )),
+            expr,
+            expr),
+            |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)))
     .parse(input)
 }
 
@@ -136,6 +140,14 @@ pub fn root<'a>(input: &'a str)
     .parse(input)
 }
 
+pub fn set<'a>(input: &'a str)
+-> IResult<&'a str, Expr, VerboseError<&'a str>> {
+    // <tag> <symb> <expr>
+    list!(tag("set"), symbol, expr)
+        .map(|(_,s,e)| Expr::Set(s,Box::new(e)))
+        .parse(input)
+}
+
 /// Top level parser returns any valid [Expr].
 pub fn expr<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
@@ -145,7 +157,7 @@ pub fn expr<'a>(input: &'a str)
          tri_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          empty_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          symbol.map(Expr::Var),
-         //set.map(Expr::Set),
+         set,
          //let.map(Expr::Let),
          app,
      )).parse(input)
