@@ -1,9 +1,4 @@
 (fn f (x) (+ x x))
+(fn g (x) (+ x 2))
 
-(concat
-    (cons
-        (f 1)
-        (cons 1 nil))
-    (cons
-        4
-        (cons 3 nil)))
+(f (g 2))

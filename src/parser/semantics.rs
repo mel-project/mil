@@ -31,6 +31,16 @@ pub struct Env {
     fns: HashMap<Symbol, FnInfo>,
 }
 
+/// A simple mangler that just returns i+1 for the next variable id.
+struct LinearMangler { idx: VarId }
+
+impl LinearMangler {
+    fn next(&mut self) -> VarId {
+        self.idx = self.idx + 1;
+        self.idx
+    }
+}
+
 impl Evaluator for Env {
     fn new(fns: Vec<Defn>) -> Self {
         // Store fns in a hashmap
@@ -46,21 +56,22 @@ impl Evaluator for Env {
     /// Prepend set! ops for each variable parameter to the body.
     /// Return the new expression as an [UnrolledExpr].
     fn expand_fns(&self, expr: &Expr) -> Result<UnrolledExpr, ParseErr> {
+        self.expand_mangle_fns(expr, &mut LinearMangler{ idx:0 })
+    }
+}
+
+impl Env {
+    fn expand_mangle_fns(&self, expr: &Expr, mangler: &mut LinearMangler) -> Result<UnrolledExpr, ParseErr>
+    {
         match expr {
             Expr::Var(x) => {
                 let v = try_get_var(x, &self.mangled)?;
                 Ok(UnrolledExpr::Var(v))
-                /*
-                match self.mangled.get(x) {
-                    Some(v) => Ok(UnrolledExpr::Var(v)),
-                    None => PErr!("Variable {} is not defined.", x),
-                }
-                */
             },
             Expr::BuiltIn(b) => match &**b {
                 BuiltIn::Add(e1,e2) => {
-                    let e1 = self.expand_fns(&e1)?;
-                    let e2 = self.expand_fns(&e2)?;
+                    let e1 = self.expand_mangle_fns(&e1, mangler)?;
+                    let e2 = self.expand_mangle_fns(&e2, mangler)?;
 
                     Ok(UnrolledExpr::BuiltIn( Box::new(UnrolledBuiltIn::Add(e1, e2)) ))
                 },
@@ -68,7 +79,7 @@ impl Evaluator for Env {
             },
             Expr::Set(s,e) => {
                 let var = try_get_var(s, &self.mangled)?;
-                let expr = self.expand_fns(e)?;
+                let expr = self.expand_mangle_fns(e, mangler)?;
                 Ok(UnrolledExpr::Set(var, Box::new(expr)))
             },
             Expr::App(f,es) => {
@@ -84,10 +95,10 @@ impl Evaluator for Env {
 
                 // Expand arguments before expanding body
                 let args = fold_results(es.iter()
-                    .map(|e| self.expand_fns(e)).collect())?;
+                    .map(|e| self.expand_mangle_fns(e, mangler)).collect())?;
 
                 // Mangle parameters of fn
-                let mangled_vars: Vec<VarId> = params.iter().map(mangled).collect();
+                let mangled_vars: Vec<VarId> = params.iter().map(|_| mangler.next()).collect();
                 // Map between mangled and original
                 let mangled_map: HashMap<Symbol, VarId>
                     = params.clone().into_iter()
@@ -102,7 +113,7 @@ impl Evaluator for Env {
                 };
 
                 // lol
-                let mangled_body = f_env.expand_fns(body)?;
+                let mangled_body = f_env.expand_mangle_fns(body, mangler)?;
 
                 let bindings = mangled_vars.into_iter()
                                            .zip(args.into_iter())
@@ -115,10 +126,10 @@ impl Evaluator for Env {
                 let mangled_binds = fold_results(binds.iter()
                     .map(|(sym, expr)| {
                         let m_sym  = try_get_var(sym, &self.mangled)?;
-                        let m_expr = self.expand_fns(expr)?;
+                        let m_expr = self.expand_mangle_fns(expr, mangler)?;
                         Ok((m_sym, m_expr))
                     }).collect())?;
-                let u_expr = self.expand_fns(expr)?;
+                let u_expr = self.expand_mangle_fns(expr, mangler)?;
                 Ok(UnrolledExpr::Let(mangled_binds, Box::new(u_expr)))
             },
             Expr::Int(n) => Ok(UnrolledExpr::Int(n.clone())),
@@ -133,19 +144,9 @@ fn try_get_var(sym: &Symbol, hm: &HashMap<Symbol, VarId>) -> Result<VarId, Parse
 }
 
 // TODO: This should probably be part of Env so that previously mangled symbols return the same number
-fn mangled(s: &Symbol) -> VarId {
+fn mangle(s: &Symbol) -> VarId {
     0 // TODO
 }
-
-/*
-/// If top-level operator is a symbol, returns its value.
-fn is_symbol(e: &Expr) -> Option<Symbol> {
-    if let Expr::Symbol(s) = &e {
-        // Check that the string doesn't match to a reserved operator
-        if let Operator::Symbol(_) = to_op(s) {
-            Ok(s.to_string())
-}
-*/
 
 /// Try to extract values from results in vector. Short circuit on the first failure. Note this
 /// does not return an iterator (because it folds).
