@@ -45,25 +45,11 @@ fn main() -> std::io::Result<()> {
     let script = Covenant(bincode.0.clone());
     // Disassemble compiled binary
     println!("Disassembly: ");
-
-    // Manual disassmebly
-    let mut reversed = script.0.clone();
-    reversed.reverse();
-    let mut output = Vec::new();
-    while !reversed.is_empty() {
-        match Covenant::disassemble_one(&mut reversed, &mut output, 0) {
-            Some(_) => println!("op success"),
-            None => println!("broke"),
-        }
-    }
-
-    /*
     if let Some(ops) = script.to_ops() {
         println!("{:?}", ops);
     } else {
         println!("FAILED");
     }
-    */
 
     // Execute and print return value
     let v = executor::execute(bincode.clone());
