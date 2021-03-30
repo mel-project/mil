@@ -54,8 +54,9 @@ impl Evaluator for Env {
 }
 
 impl Env {
-    // Convenience funtion to abstract repetitive code
-    fn expand_binop<F>(&self, e1: &Expr, e2: &Expr, op: F, mangler: &mut LinearMangler) -> Result<UnrolledExpr, ParseErr>
+    // Convenience abstraction for repetitive code
+    fn expand_binop<F>(&self, e1: &Expr, e2: &Expr, op: F, mangler: &mut LinearMangler)
+    -> Result<UnrolledExpr, ParseErr>
         where F: Fn(UnrolledExpr, UnrolledExpr) -> ExpandedBuiltIn<UnrolledExpr>
     {
         let e1 = self.expand_mangle_fns(&e1, mangler)?;
@@ -64,15 +65,28 @@ impl Env {
         Ok(UnrolledExpr::BuiltIn( Box::new(op(e1, e2)) ))
     }
 
+    fn expand_uniop<F>(&self, e: &Expr, op: F, mangler: &mut LinearMangler)
+    -> Result<UnrolledExpr, ParseErr>
+        where F: Fn(UnrolledExpr) -> ExpandedBuiltIn<UnrolledExpr>
+    {
+        let e = self.expand_mangle_fns(&e, mangler)?;
+        Ok(UnrolledExpr::BuiltIn( Box::new(op(e)) ))
+    }
+
+    // Auxillery function to expand and mangle an expression
     fn expand_mangle_fns(&self, expr: &Expr, mangler: &mut LinearMangler) -> Result<UnrolledExpr, ParseErr>
     {
         match expr {
+            // A variable should already be mangled, find its mangled value
             Expr::Var(x) => {
                 let v = try_get_var(x, &self.mangled)?;
                 Ok(UnrolledExpr::Var(v))
             },
+            // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
-                //BuiltIn::Vempty => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Or, mangler),
+                BuiltIn::Vempty => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty))),
+                BuiltIn::Not(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler),
+                BuiltIn::Vlen(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Vlen, mangler),
                 BuiltIn::Add(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Add, mangler),
                 BuiltIn::Sub(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Sub, mangler),
                 BuiltIn::Mul(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Mul, mangler),
@@ -84,13 +98,21 @@ impl Env {
                 BuiltIn::Vref(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vref, mangler),
                 BuiltIn::Vappend(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vappend, mangler),
                 BuiltIn::Vpush(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vpush, mangler),
+                /*
+                BuiltIn::Store(e) => {
+                    let e = self.expand_mangle_fns(&e, mangler)?;
+                    Ok(UnrolledExpr::BuiltIn( Box::new(ExpandedBuiltIn::<UnrolledExpr>::Store(e)) ))
+                },
+                */
                 _ => unreachable!(), // TODO
             },
+            // A `set!` must operate on a bound variable; find it and also expand the assignment expression
             Expr::Set(s,e) => {
                 let var = try_get_var(s, &self.mangled)?;
                 let expr = self.expand_mangle_fns(e, mangler)?;
                 Ok(UnrolledExpr::Set(var, Box::new(expr)))
             },
+            // Expand a fn call to its body, fail if a defn is not found
             Expr::App(f,es) => {
                 // Get the fn definition from the env
                 let (params, body) = self.fns.get(f)
@@ -131,6 +153,7 @@ impl Env {
                 // Wrap our mangled body in let bindings
                 Ok(UnrolledExpr::Let(bindings, Box::new(mangled_body)))
             },
+            // Mangling happens here
             Expr::Let(binds, e) => {
                 let mangled_binds = fold_results(binds.iter()
                     .map(|(sym, expr)| {

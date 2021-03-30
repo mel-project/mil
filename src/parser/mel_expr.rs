@@ -11,6 +11,16 @@ impl MemoryMap {
         MemoryMap { memory_store: HashMap::new() }
     }
 
+    // Abstraction for repetition
+    fn binop<F>(&mut self, e1: UnrolledExpr, e2: UnrolledExpr, op: F)
+    -> ExpandedBuiltIn<MelExpr>
+        where F: Fn(MelExpr, MelExpr) -> ExpandedBuiltIn<MelExpr>
+    {
+        let mel_e1 = self.to_mel_expr(e1);
+        let mel_e2 = self.to_mel_expr(e2);
+        op(mel_e1, mel_e2)
+    }
+
     /// Translate an [UnrolledExpr] into a set of low-level [MelExpr] instructions.
     // TODO: Does this really need to be a result?
     //fn to_mel_expr(&mut self, expr: UnrolledExpr) -> Result<Vec<MelExpr>, ParseErr> {
@@ -25,11 +35,17 @@ impl MemoryMap {
             },
             UnrolledExpr::BuiltIn(b) => {
                 let mel_b = match *b {
-                    ExpandedBuiltIn::Add(e1,e2) => {
-                        let mel_e1 = self.to_mel_expr(e1);
-                        let mel_e2 = self.to_mel_expr(e2);
-                        ExpandedBuiltIn::Add(mel_e1, mel_e2)
-                    },
+                    ExpandedBuiltIn::Vempty => ExpandedBuiltIn::<MelExpr>::Vempty,
+                    ExpandedBuiltIn::Add(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Add),
+                    ExpandedBuiltIn::Sub(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Sub),
+                    ExpandedBuiltIn::Mul(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Mul),
+                    ExpandedBuiltIn::Div(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Div),
+                    ExpandedBuiltIn::Rem(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Rem),
+                    ExpandedBuiltIn::And(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::And),
+                    ExpandedBuiltIn::Or(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Or),
+                    ExpandedBuiltIn::Xor(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Xor),
+                    ExpandedBuiltIn::Vpush(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Vpush),
+                    ExpandedBuiltIn::Vappend(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Vappend),
                     _ => unreachable!(),
                 };
 
