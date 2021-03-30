@@ -1,8 +1,7 @@
 use std::fmt;
 use primitive_types::U256;
-use crate::types::{PushI, BuiltIn, MelExpr};
+use crate::types::{PushI, ExpandedBuiltIn, MelExpr};
 
-/*
 #[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
 
@@ -23,11 +22,45 @@ pub trait Compile {
     // fn map(&self, other: impl Fn(BinCode) -> BinCode) -> BinCode
 }
 
-impl Compile for BuiltIn {
-    fn compile_onto(&self, mut b: BinCode) -> BinCode {
-        b.0.push(self.into());
-        b
+impl<T: Compile> Compile for ExpandedBuiltIn<T> {
+    fn compile_onto(&self, b: BinCode) -> BinCode {
+        match self {
+            ExpandedBuiltIn::Add(e1,e2) => compile_op(b, 0x10, vec![e1,e2]),
+            /*
+                let mut b = e2.compile_onto( e1.compile_onto(b) );
+                b.0.push(0x10);
+                b
+            },
+            */
+            _ => unreachable!(),
+            /*
+            ExpandedBuiltIn::Sub(e1,e2) => 0x11,
+            ExpandedBuiltIn::Mul(e1,e2) => 0x12,
+            ExpandedBuiltIn::Div(e1,e2) => 0x13,
+            ExpandedBuiltIn::Rem => 0x14,
+            ExpandedBuiltIn::And(e1,e2) => 0x20,
+            ExpandedBuiltIn::Or(e1,e2) => 0x21,
+            ExpandedBuiltIn::Xor(e1,e2) => 0x22,
+            ExpandedBuiltIn::Not => 0x23,
+            ExpandedBuiltIn::Vpush => 0x54,
+            ExpandedBuiltIn::Vempty => 0x52,
+            ExpandedBuiltIn::Vref => 0x50,
+            ExpandedBuiltIn::Vlen => 0x53,
+            ExpandedBuiltIn::Vappend => 0x51,
+            ExpandedBuiltIn::Vslice => 0x55,
+            ExpandedBuiltIn::Load => 0x40,
+            ExpandedBuiltIn::Store => 0x41,
+            */
+        }
     }
+}
+
+// Compile the args, then append the op (postfix)
+fn compile_op<T: Compile>(b: BinCode, opcode: u8, args: Vec<&T>) -> BinCode {
+    let mut b = args.iter().fold(b, |b_acc, arg|
+            arg.compile_onto(b_acc));
+    b.0.push(opcode);
+    b
 }
 
 // Convenience fn for allocating and appending an op code and number to bincode
@@ -74,49 +107,18 @@ impl Compile for Atom {
 */
 
 impl Compile for MelExpr {
-    fn compile_onto(&self, mut b: BinCode) -> BinCode {
+    fn compile_onto(&self, b: BinCode) -> BinCode {
         match self {
             // Integers evaluate to themselves (push onto stack)
             MelExpr::Int(n) => write_pushi(b, n),
-            // Evaluate the args, then append the op (postfix)
-            MelExpr::App(op, args) => op.compile_onto(
-                                args.iter().fold(b, |b_acc, arg|
-                                    arg.compile_onto(b_acc))),
+            // Compile each expression in sequence
+            MelExpr::Seq(l) => l.iter().fold(b, |b_acc, expr|
+                                   expr.compile_onto(b_acc)),
+            // Compile the op wth args in postfix
+            MelExpr::BuiltIn(op) => op.compile_onto(b),
         }
     }
 }
-
-/// Opcode mapping
-impl From<&BuiltIn> for u8 {
-    fn from(b: &BuiltIn) -> u8 {
-        match b {
-            BuiltIn::Add => 0x10,
-            BuiltIn::Sub => 0x11,
-            BuiltIn::Mul => 0x12,
-            BuiltIn::Div => 0x13,
-            BuiltIn::Rem => 0x14,
-            //BuiltIn::Oflo => 0x15,
-            BuiltIn::And => 0x20,
-            BuiltIn::Or => 0x21,
-            BuiltIn::Xor => 0x22,
-            BuiltIn::Not => 0x23,
-            BuiltIn::Vpush => 0x54,
-            BuiltIn::Vempty => 0x52,
-            BuiltIn::Vref => 0x50,
-            BuiltIn::Vlen => 0x53,
-            BuiltIn::Vappend => 0x51,
-            BuiltIn::Vslice => 0x55,
-            BuiltIn::Load => 0x40,
-            BuiltIn::Store => 0x41,
-        }
-    }
-}
-
-/*
-match expr {
-    Expr::Defn(name, args, body) => new_fn(name, args, body),
-}
-*/
 
 /// Opcode mapping
 impl From<PushI> for u8 {
@@ -124,7 +126,6 @@ impl From<PushI> for u8 {
         0xf1
     }
 }
-*/
 
 
 #[cfg(test)]
