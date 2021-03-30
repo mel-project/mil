@@ -1,6 +1,6 @@
 use std::fmt;
 use primitive_types::U256;
-use crate::types::{PushI, ExpandedBuiltIn, MelExpr};
+use crate::types::{HeapPos, PushI, ExpandedBuiltIn, MelExpr};
 
 #[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
@@ -26,33 +26,30 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
     fn compile_onto(&self, b: BinCode) -> BinCode {
         match self {
             ExpandedBuiltIn::Add(e1,e2) => compile_op(b, 0x10, vec![e1,e2]),
-            /*
-                let mut b = e2.compile_onto( e1.compile_onto(b) );
-                b.0.push(0x10);
-                b
-            },
-            */
-            _ => unreachable!(),
-            /*
-            ExpandedBuiltIn::Sub(e1,e2) => 0x11,
-            ExpandedBuiltIn::Mul(e1,e2) => 0x12,
-            ExpandedBuiltIn::Div(e1,e2) => 0x13,
-            ExpandedBuiltIn::Rem => 0x14,
-            ExpandedBuiltIn::And(e1,e2) => 0x20,
-            ExpandedBuiltIn::Or(e1,e2) => 0x21,
-            ExpandedBuiltIn::Xor(e1,e2) => 0x22,
-            ExpandedBuiltIn::Not => 0x23,
-            ExpandedBuiltIn::Vpush => 0x54,
-            ExpandedBuiltIn::Vempty => 0x52,
-            ExpandedBuiltIn::Vref => 0x50,
-            ExpandedBuiltIn::Vlen => 0x53,
-            ExpandedBuiltIn::Vappend => 0x51,
-            ExpandedBuiltIn::Vslice => 0x55,
-            ExpandedBuiltIn::Load => 0x40,
-            ExpandedBuiltIn::Store => 0x41,
-            */
+            ExpandedBuiltIn::Sub(e1,e2) => compile_op(b, 0x11, vec![e1,e2]),
+            ExpandedBuiltIn::Mul(e1,e2) => compile_op(b, 0x12, vec![e1,e2]),
+            ExpandedBuiltIn::Div(e1,e2) => compile_op(b, 0x13, vec![e1,e2]),
+            ExpandedBuiltIn::Rem(e1,e2) => compile_op(b, 0x14, vec![e1,e2]),
+            ExpandedBuiltIn::And(e1,e2) => compile_op(b, 0x20, vec![e1,e2]),
+            ExpandedBuiltIn::Or(e1,e2)  => compile_op(b, 0x21, vec![e1,e2]),
+            ExpandedBuiltIn::Xor(e1,e2) => compile_op(b, 0x22, vec![e1,e2]),
+            ExpandedBuiltIn::Not(e)     => compile_op(b, 0x23, vec![e]),
+            ExpandedBuiltIn::Vref(e1,e2)    => compile_op(b, 0x50, vec![e1,e2]),
+            ExpandedBuiltIn::Vappend(e1,e2) => compile_op(b, 0x51, vec![e1,e2]),
+            ExpandedBuiltIn::Vempty         => compile_op::<MelExpr>(b, 0x52, vec![]),
+            ExpandedBuiltIn::Vlen(e)        => compile_op(b, 0x53, vec![e]),
+            ExpandedBuiltIn::Vpush(e1,e2)   => compile_op(b, 0x54, vec![e1,e2]),
+            ExpandedBuiltIn::Vslice(e1,e2,e3) => compile_op(b, 0x55, vec![e1,e2,e3]),
+            ExpandedBuiltIn::Store(idx) => compile_u16op(b, 0x43, idx),
+            ExpandedBuiltIn::Load(idx)  => compile_u16op(b, 0x42, idx),
         }
     }
+}
+
+fn compile_u16op(mut b: BinCode, opcode: u8, idx: &HeapPos) -> BinCode {
+    //let mut b = idx.compile_onto(b);
+    b.0.push(opcode);
+    idx.compile_onto(b)
 }
 
 // Compile the args, then append the op (postfix)
@@ -108,6 +105,7 @@ impl Compile for Atom {
 
 impl Compile for MelExpr {
     fn compile_onto(&self, b: BinCode) -> BinCode {
+        println!("writing {:?} to {}", self, b);
         match self {
             // Integers evaluate to themselves (push onto stack)
             MelExpr::Int(n) => write_pushi(b, n),
@@ -117,6 +115,13 @@ impl Compile for MelExpr {
             // Compile the op wth args in postfix
             MelExpr::BuiltIn(op) => op.compile_onto(b),
         }
+    }
+}
+
+impl Compile for HeapPos {
+    fn compile_onto(&self, mut b: BinCode) -> BinCode {
+        b.0.extend(self.to_be_bytes().iter());
+        b
     }
 }
 
