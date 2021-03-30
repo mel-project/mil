@@ -44,7 +44,7 @@ fn main() -> std::io::Result<()> {
     // Wrap in a covenant
     let script = Covenant(bincode.0.clone());
     // Disassemble compiled binary
-    println!("Disassembly: ");
+    println!("\nDisassembly: ");
     if let Some(ops) = script.to_ops() {
         println!("{:?}", ops);
     } else {

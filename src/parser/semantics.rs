@@ -54,6 +54,16 @@ impl Evaluator for Env {
 }
 
 impl Env {
+    // Convenience funtion to abstract repetitive code
+    fn expand_binop<F>(&self, e1: &Expr, e2: &Expr, op: F, mangler: &mut LinearMangler) -> Result<UnrolledExpr, ParseErr>
+        where F: Fn(UnrolledExpr, UnrolledExpr) -> ExpandedBuiltIn<UnrolledExpr>
+    {
+        let e1 = self.expand_mangle_fns(&e1, mangler)?;
+        let e2 = self.expand_mangle_fns(&e2, mangler)?;
+
+        Ok(UnrolledExpr::BuiltIn( Box::new(op(e1, e2)) ))
+    }
+
     fn expand_mangle_fns(&self, expr: &Expr, mangler: &mut LinearMangler) -> Result<UnrolledExpr, ParseErr>
     {
         match expr {
@@ -62,12 +72,18 @@ impl Env {
                 Ok(UnrolledExpr::Var(v))
             },
             Expr::BuiltIn(b) => match &**b {
-                BuiltIn::Add(e1,e2) => {
-                    let e1 = self.expand_mangle_fns(&e1, mangler)?;
-                    let e2 = self.expand_mangle_fns(&e2, mangler)?;
-
-                    Ok(UnrolledExpr::BuiltIn( Box::new(ExpandedBuiltIn::Add(e1, e2)) ))
-                },
+                //BuiltIn::Vempty => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Or, mangler),
+                BuiltIn::Add(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Add, mangler),
+                BuiltIn::Sub(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Sub, mangler),
+                BuiltIn::Mul(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Mul, mangler),
+                BuiltIn::Div(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Div, mangler),
+                BuiltIn::Rem(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Rem, mangler),
+                BuiltIn::And(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::And, mangler),
+                BuiltIn::Or(e1,e2)  => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Or, mangler),
+                BuiltIn::Xor(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Xor, mangler),
+                BuiltIn::Vref(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vref, mangler),
+                BuiltIn::Vappend(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vappend, mangler),
+                BuiltIn::Vpush(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vpush, mangler),
                 _ => unreachable!(), // TODO
             },
             Expr::Set(s,e) => {

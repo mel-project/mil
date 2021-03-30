@@ -5,34 +5,6 @@ pub struct PushI;
 /// An index for a location on the MelVM heap.
 pub type HeapPos = u16;
 
-/*
-macro_rules! BuiltInType {
-    ($name:ident, $expr_type:ident) => {
-        #[derive(Clone, Debug, PartialEq, Eq)]
-        pub enum $name {
-            Add($expr_type, $expr_type),
-            Sub($expr_type, $expr_type),
-            Mul($expr_type, $expr_type),
-            Div($expr_type, $expr_type),
-            Rem($expr_type, $expr_type),
-            And($expr_type, $expr_type),
-            Or($expr_type, $expr_type),
-            Xor($expr_type, $expr_type),
-            Not($expr_type),
-            Vpush($expr_type, $expr_type),
-            Vempty,
-            Vref($expr_type, $expr_type),
-            Vlen($expr_type),
-            Vappend($expr_type, $expr_type),
-            Vslice($expr_type, $expr_type, $expr_type),
-            Load(HeapPos),
-            Store(HeapPos),
-            //Store(HeapPos, $expr_type),
-        }
-    }
-}
-*/
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ExpandedBuiltIn<E> {
     Add(E, E),
@@ -52,32 +24,7 @@ pub enum ExpandedBuiltIn<E> {
     Vslice(E, E, E),
     Load(HeapPos),
     Store(HeapPos),
-    //Store(HeapPos, E),
 }
-//BuiltInType!(UnrolledBuiltIn, UnrolledExpr);
-//BuiltInType!(MelBuiltIn, MelExpr);
-/*
-#[derive(Debug, PartialEq, Eq)]
-pub enum UnrolledBuiltIn {
-    Add(UnrolledExpr, UnrolledExpr),
-    Sub(UnrolledExpr, UnrolledExpr),
-    Mul(UnrolledExpr, UnrolledExpr),
-    Div(UnrolledExpr, UnrolledExpr),
-    Rem(UnrolledExpr, UnrolledExpr),
-    And(UnrolledExpr, UnrolledExpr),
-    Or(UnrolledExpr, UnrolledExpr),
-    Xor(UnrolledExpr, UnrolledExpr),
-    Not(UnrolledExpr),
-    Vpush(UnrolledExpr, UnrolledExpr),
-    Vempty,
-    Vref(UnrolledExpr, UnrolledExpr),
-    Vlen(UnrolledExpr),
-    Vappend(UnrolledExpr, UnrolledExpr),
-    Vslice(UnrolledExpr, UnrolledExpr, UnrolledExpr),
-    Load(UnrolledExpr),
-    Store(HeapPos, UnrolledExpr),
-}
-*/
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BuiltIn {
@@ -96,9 +43,9 @@ pub enum BuiltIn {
     Vlen(Expr),
     Vappend(Expr, Expr),
     Vslice(Expr, Expr, Expr),
+    // TODO: Remove these
     Load(Symbol),
     Store(Symbol),
-    //Store(Symbol, Expr),
 }
 
 /// Symbolic name for an expression
@@ -166,7 +113,6 @@ pub enum UnrolledExpr {
     /// A variable is a pointer to a location on the heap.
     /// The [VarId] represents a unique-mangled variable id.
     Var(VarId),
-    //Var(Symbol),
     /// Bind a symbol to a value within the scope of a given expression.
     Let(Vec<(VarId, UnrolledExpr)>, Box<UnrolledExpr>),
 }

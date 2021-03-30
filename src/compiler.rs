@@ -105,7 +105,7 @@ impl Compile for Atom {
 
 impl Compile for MelExpr {
     fn compile_onto(&self, b: BinCode) -> BinCode {
-        println!("writing {:?} to {}", self, b);
+        //println!("writing {:?} to {}", self, b);
         match self {
             // Integers evaluate to themselves (push onto stack)
             MelExpr::Int(n) => write_pushi(b, n),
