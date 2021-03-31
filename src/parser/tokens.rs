@@ -2,7 +2,7 @@
 use crate::PErr;
 use crate::parser::{Defn, ParseErr};
 use primitive_types::U256;
-use crate::types::{BuiltIn, Expr};
+use crate::types::{Value, BuiltIn, Expr};
 use nom::{IResult, Parser, branch::alt, bytes::complete::tag,
 character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
 character::{complete::char, is_hex_digit},
@@ -108,6 +108,7 @@ fn symbol<'a>(input: &'a str)
     context("symbol", alpha1.map(String::from))(input)
 }
 
+// This function assumes an ascii encoding
 fn from_hex(s: &str) -> Result<Vec<u8>, ParseErr> {
     if s.len() % 2 != 0 {
         return PErr!("Hex string {} is not an even number of characters.", s);
@@ -126,13 +127,11 @@ fn from_hex(s: &str) -> Result<Vec<u8>, ParseErr> {
 
 fn bytes<'a>(input: &'a str)
 -> IResult<&'a str, Vec<u8>, VerboseError<&'a str>> {
-    context("bytes",
+    let res = context("bytes",
         map_res(preceded(tag("0x"), hex_digit1),
-        //preceded(tag("0x"),
-                 //many1(map_res(is_hex_digit,
-                         from_hex))
-                         //|s| u8::from_str_radix(s, 16)))))
-        .parse(input)
+                from_hex))
+        .parse(input);
+    res
 }
 
 /// Parse a [U256] integer.
@@ -175,7 +174,8 @@ pub fn set<'a>(input: &'a str)
 /// Top level parser returns any valid [Expr].
 pub fn expr<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
-    alt((int.map(Expr::Int),
+    alt((bytes.map(Value::Bytes).map(Expr::Value),
+         int.map(Value::Int).map(Expr::Value),
          binary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          unary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          tri_builtin.map(|b| Expr::BuiltIn(Box::new(b))),

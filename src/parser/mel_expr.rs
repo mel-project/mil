@@ -1,6 +1,5 @@
 use std::collections::HashMap;
-use crate::parser::ParseErr;
-use crate::types::{ExpandedBuiltIn, UnrolledExpr, MelExpr, VarId, HeapPos};
+use crate::types::{Value, ExpandedBuiltIn, UnrolledExpr, MelExpr, VarId, HeapPos};
 
 pub struct MemoryMap {
     memory_store: HashMap<VarId, HeapPos>,
@@ -26,7 +25,10 @@ impl MemoryMap {
     //fn to_mel_expr(&mut self, expr: UnrolledExpr) -> Result<Vec<MelExpr>, ParseErr> {
     pub fn to_mel_expr(&mut self, expr: UnrolledExpr) -> MelExpr {
         match expr {
-            UnrolledExpr::Int(n) => MelExpr::Int(n),
+            UnrolledExpr::Value(v) => match v {
+                Value::Int(n) => MelExpr::Value(Value::Int(n)),
+                Value::Bytes(b) => MelExpr::Value(Value::Bytes(b)),
+            }
             // A variable by itself is the value of its location in memory
             UnrolledExpr::Var(ref v) => {
                 let loc = self.memory_store.get(v)

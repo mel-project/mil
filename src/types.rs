@@ -2,6 +2,7 @@ use primitive_types::U256;
 
 /// Push is inherent in the language and so not a variant of BuiltIn.
 pub struct PushI;
+pub struct PushB;
 /// An index for a location on the MelVM heap.
 pub type HeapPos = u16;
 
@@ -53,12 +54,11 @@ pub type Symbol = String;
 /// Internal data type for tracking variable ids.
 pub type VarId = i32;
 
-/*
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 /// Lisp evaluator fundamental data types. These are used by the compiler, not by MelVM.
-pub enum Atom {
+pub enum Value {
     Int(U256),
-    Symbol(Symbol),
+    Bytes(Vec<u8>),
     /*
     Vec {
         members: Vec<Atom>,
@@ -66,14 +66,14 @@ pub enum Atom {
     },
     */
 }
-*/
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 /// The lower level representation of a program that is directly compilable into a binary for the
 /// MelVM.
 pub enum MelExpr {
     /// Fundamental data type.
-    Int(U256),
+    Value(Value),
+    //Int(U256),
     // ByteString(.),
     // Vector(Vec,
     BuiltIn(Box<ExpandedBuiltIn<MelExpr>>),
@@ -86,7 +86,8 @@ pub enum MelExpr {
 /// the MelVM.
 pub enum Expr {
     /// Fundamental data type.
-    Int(U256),
+    Value(Value),
+    //Int(U256),
     /// Builtin operations.
     BuiltIn(Box<BuiltIn>),
     /// Application of a user-defined function to some arguments.
@@ -105,7 +106,8 @@ pub enum Expr {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum UnrolledExpr {
     /// Fundamental data type.
-    Int(U256),
+    Value(Value),
+    //Int(U256),
     /// Builtin operations.
     BuiltIn(Box<ExpandedBuiltIn<UnrolledExpr>>),
     /// Assign a value stored on the heap to a symbol

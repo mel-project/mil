@@ -1,7 +1,7 @@
 #[macro_use]
 use crate::PErr;
 use std::collections::HashMap;
-use crate::types::{ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
+use crate::types::{Value, ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
 use crate::parser::{fold_results, ParseErr, Defn};
 
 /// A list of a function's parameters and its body.
@@ -165,7 +165,10 @@ impl Env {
                 let u_expr = self.expand_mangle_fns(expr, mangler)?;
                 Ok(UnrolledExpr::Let(mangled_binds, Box::new(u_expr)))
             },
-            Expr::Int(n) => Ok(UnrolledExpr::Int(n.clone())),
+            Expr::Value(v) => match v {
+                Value::Int(n) => Ok(UnrolledExpr::Value(Value::Int(n.clone()))),
+                Value::Bytes(b) => Ok(UnrolledExpr::Value(Value::Bytes(b.clone()))),
+            },
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::fmt;
 use primitive_types::U256;
-use crate::types::{HeapPos, PushI, ExpandedBuiltIn, MelExpr};
+use crate::types::{Value, HeapPos, PushI, PushB, ExpandedBuiltIn, MelExpr};
 
 #[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
@@ -77,6 +77,16 @@ fn write_pushi(mut b: BinCode, n: &U256) -> BinCode {
     b
 }
 
+fn write_pushb(mut b: BinCode, bytes: &Vec<u8>) -> BinCode {
+    // Op
+    b.0.push(PushB.into());
+    // Length of bytestring
+    b.0.push(bytes.len() as u8);
+    // Bytes
+    b.0.extend(bytes.iter());
+    b
+}
+
 /*
 fn write_vec(mut bin: BinCode, v: &Vec<Atom>) -> BinCode {
     // Write v.len() vpush opcodes
@@ -108,7 +118,10 @@ impl Compile for MelExpr {
         //println!("writing {:?} to {}", self, b);
         match self {
             // Integers evaluate to themselves (push onto stack)
-            MelExpr::Int(n) => write_pushi(b, n),
+            MelExpr::Value(v) => match v {
+                Value::Int(n) => write_pushi(b, n),
+                Value::Bytes(bytes) => write_pushb(b, bytes),
+            },
             // Compile each expression in sequence
             MelExpr::Seq(l) => l.iter().fold(b, |b_acc, expr|
                                    expr.compile_onto(b_acc)),
@@ -129,6 +142,11 @@ impl Compile for HeapPos {
 impl From<PushI> for u8 {
     fn from(p: PushI) -> u8 {
         0xf1
+    }
+}
+impl From<PushB> for u8 {
+    fn from(p: PushB) -> u8 {
+        0xf0
     }
 }
 
