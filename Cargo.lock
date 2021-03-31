@@ -199,7 +199,7 @@ dependencies = [
  "num_enum",
  "once_cell",
  "parking_lot",
- "primitive-types",
+ "primitive-types 0.7.3",
  "quickcheck",
  "quickcheck_macros",
  "rand 0.7.3",
@@ -589,6 +589,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fixed-hash"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfcf0ed7fe52a17a03854ec54a9f76d6d84508d1c0e66bc1793301c73fc8493c"
+dependencies = [
+ "static_assertions",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -945,7 +954,7 @@ version = "0.1.0"
 dependencies = [
  "blkstructs",
  "nom",
- "primitive-types",
+ "primitive-types 0.9.0",
  "tmelcrypt",
 ]
 
@@ -1149,10 +1158,20 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dd39dcacf71411ba488570da7bbc89b717225e46478b30ba99b92db6b149809"
 dependencies = [
- "fixed-hash",
+ "fixed-hash 0.6.1",
  "impl-codec",
  "impl-serde",
- "uint",
+ "uint 0.8.5",
+]
+
+[[package]]
+name = "primitive-types"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2415937401cb030a2a0a4d922483f945fa068f52a7dbb22ce0fe5f2b6f6adace"
+dependencies = [
+ "fixed-hash 0.7.0",
+ "uint 0.9.0",
 ]
 
 [[package]]
@@ -1677,6 +1696,18 @@ dependencies = [
  "byteorder",
  "crunchy",
  "rustc-hex",
+ "static_assertions",
+]
+
+[[package]]
+name = "uint"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e11fe9a9348741cf134085ad57c249508345fe16411b3d7fb4ff2da2f1d6382e"
+dependencies = [
+ "byteorder",
+ "crunchy",
+ "hex",
  "static_assertions",
 ]
 

@@ -67,3 +67,16 @@ impl BuiltIn {
         }
     }
 }
+
+/// Try to extract values from results in vector. Short circuit on the first failure. Note this
+/// does not return an iterator (because it folds).
+// TODO: For efficiency: fold_results(v: Vec<O>, f: Fn(O) -> Result<O,E>), map and fold in one pass
+fn fold_results<O,E>(v: Vec<Result<O, E>>) -> Result<Vec<O>, E> {
+    v.into_iter()
+     .try_fold(vec![], |mut inner_vec, r| { //inner_vec.push(v)))
+         let v = r?;
+         inner_vec.push(v);
+         Ok(inner_vec)
+     })
+    .map(|mut v| { v.reverse(); v })
+}

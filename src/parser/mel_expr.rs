@@ -46,6 +46,7 @@ impl MemoryMap {
                     ExpandedBuiltIn::Xor(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Xor),
                     ExpandedBuiltIn::Vpush(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Vpush),
                     ExpandedBuiltIn::Vappend(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Vappend),
+                    ExpandedBuiltIn::Vref(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Vref),
                     _ => unreachable!(),
                 };
 

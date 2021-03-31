@@ -1,18 +1,16 @@
-use crate::parser::{Defn};
+#[macro_use]
+use crate::PErr;
+use crate::parser::{Defn, ParseErr};
 use primitive_types::U256;
 use crate::types::{BuiltIn, Expr};
-use nom::{
-    IResult, Parser,
-    error::{context, ParseError},
-    branch::alt,
-    bytes::complete::tag,
-    combinator::{map_res, map_opt},
-    error::VerboseError,
-    character::complete::{line_ending, alpha1, multispace1, multispace0, digit1},
-    multi::{separated_list1, many0},
-    character::complete::char,
-    sequence::{separated_pair, tuple, preceded, delimited},
-};
+use nom::{IResult, Parser, branch::alt, bytes::complete::tag,
+character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
+character::{complete::char, is_hex_digit},
+combinator::{map_res, map_opt},
+error::{context, ParseError},
+error::VerboseError,
+multi::{separated_list1, many0, many1},
+sequence::{tuple, preceded, delimited}};
 
 /// Create a parser for an s-expression, where each element of the list is a parser.
 /// ```
@@ -110,6 +108,32 @@ fn symbol<'a>(input: &'a str)
     context("symbol", alpha1.map(String::from))(input)
 }
 
+fn from_hex(s: &str) -> Result<Vec<u8>, ParseErr> {
+    if s.len() % 2 != 0 {
+        return PErr!("Hex string {} is not an even number of characters.", s);
+    }
+
+    let mut bytes = vec![];
+    for i in 0..s.len()/2 {
+        let idx = i*2;
+        let b = u8::from_str_radix(&s[idx..idx+2], 16)
+            .map_err(|_| ParseErr("Not a valid hex character.".to_string()))?;
+        bytes.push(b);
+    }
+    Ok(bytes)
+    //fold_results( s.chars().map(|c| u8::from_str_radix(c as &str, 16)).collect() )
+}
+
+fn bytes<'a>(input: &'a str)
+-> IResult<&'a str, Vec<u8>, VerboseError<&'a str>> {
+    context("bytes",
+        map_res(preceded(tag("0x"), hex_digit1),
+        //preceded(tag("0x"),
+                 //many1(map_res(is_hex_digit,
+                         from_hex))
+                         //|s| u8::from_str_radix(s, 16)))))
+        .parse(input)
+}
 
 /// Parse a [U256] integer.
 fn int<'a>(input: &'a str)

@@ -2,7 +2,7 @@
 use crate::PErr;
 use std::collections::HashMap;
 use crate::types::{ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
-use crate::parser::{ParseErr, Defn};
+use crate::parser::{fold_results, ParseErr, Defn};
 
 /// A list of a function's parameters and its body.
 type FnInfo = (Vec<Symbol>, Expr);
@@ -49,7 +49,8 @@ impl Evaluator for Env {
     /// Prepend set! ops for each variable parameter to the body.
     /// Return the new expression as an [UnrolledExpr].
     fn expand_fns(&self, expr: &Expr) -> Result<UnrolledExpr, ParseErr> {
-        self.expand_mangle_fns(expr, &mut LinearMangler{ idx:0 })
+        // Start from 2 bcs 0 and 1 memory locations are occupied in the VM
+        self.expand_mangle_fns(expr, &mut LinearMangler{ idx:2 })
     }
 }
 
@@ -173,17 +174,4 @@ fn try_get_var(sym: &Symbol, hm: &HashMap<Symbol, VarId>) -> Result<VarId, Parse
     hm.get(sym)
         .ok_or(ParseErr(format!("Variable {} is not defined.", sym)))
         .map(|v| v.clone())
-}
-
-/// Try to extract values from results in vector. Short circuit on the first failure. Note this
-/// does not return an iterator (because it folds).
-// TODO: For efficiency: fold_results(v: Vec<O>, f: Fn(O) -> Result<O,E>), map and fold in one pass
-fn fold_results<O,E>(v: Vec<Result<O, E>>) -> Result<Vec<O>, E> {
-    v.into_iter()
-     .try_fold(vec![], |mut inner_vec, r| { //inner_vec.push(v)))
-         let v = r?;
-         inner_vec.push(v);
-         Ok(inner_vec)
-     })
-    .map(|mut v| { v.reverse(); v })
 }
