@@ -23,6 +23,7 @@ pub enum ExpandedBuiltIn<E> {
     Vlen(E),
     Vappend(E, E),
     Vslice(E, E, E),
+    Hash(E),
     Load(HeapPos),
     Store(HeapPos),
 }
@@ -44,6 +45,7 @@ pub enum BuiltIn {
     Vlen(Expr),
     Vappend(Expr, Expr),
     Vslice(Expr, Expr, Expr),
+    Hash(Expr),
     // TODO: Remove these
     Load(Symbol),
     Store(Symbol),

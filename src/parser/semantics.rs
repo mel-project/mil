@@ -86,6 +86,7 @@ impl Env {
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
                 BuiltIn::Vempty => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty))),
+                BuiltIn::Hash(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Hash, mangler),
                 BuiltIn::Not(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler),
                 BuiltIn::Vlen(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Vlen, mangler),
                 BuiltIn::Add(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Add, mangler),

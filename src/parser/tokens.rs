@@ -65,6 +65,7 @@ fn unary_builtin<'a>(input: &'a str)
                         tag("load"),
                         tag("len"),
                         tag("not"),
+                        tag("hash"),
                     )),
                     expr),
                 |(s,e)| BuiltIn::from_uni_token(s, e)),

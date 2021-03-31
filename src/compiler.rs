@@ -34,6 +34,7 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
             ExpandedBuiltIn::Or(e1,e2)  => compile_op(b, 0x21, vec![e1,e2]),
             ExpandedBuiltIn::Xor(e1,e2) => compile_op(b, 0x22, vec![e1,e2]),
             ExpandedBuiltIn::Not(e)     => compile_op(b, 0x23, vec![e]),
+            ExpandedBuiltIn::Hash(e)     => compile_op(b, 0x30, vec![e]),
             ExpandedBuiltIn::Vref(e1,e2)    => compile_op(b, 0x50, vec![e1,e2]),
             ExpandedBuiltIn::Vappend(e1,e2) => compile_op(b, 0x51, vec![e1,e2]),
             ExpandedBuiltIn::Vempty         => compile_op::<MelExpr>(b, 0x52, vec![]),

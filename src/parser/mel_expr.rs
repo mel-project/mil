@@ -38,6 +38,9 @@ impl MemoryMap {
             UnrolledExpr::BuiltIn(b) => {
                 let mel_b = match *b {
                     ExpandedBuiltIn::Vempty => ExpandedBuiltIn::<MelExpr>::Vempty,
+                    ExpandedBuiltIn::Not(e) => ExpandedBuiltIn::<MelExpr>::Not(self.to_mel_expr(e)),
+                    ExpandedBuiltIn::Hash(e) => ExpandedBuiltIn::<MelExpr>::Hash(self.to_mel_expr(e)),
+                    ExpandedBuiltIn::Vlen(e) => ExpandedBuiltIn::<MelExpr>::Vlen(self.to_mel_expr(e)),
                     ExpandedBuiltIn::Add(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Add),
                     ExpandedBuiltIn::Sub(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Sub),
                     ExpandedBuiltIn::Mul(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Mul),
