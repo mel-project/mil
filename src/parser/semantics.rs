@@ -157,13 +157,31 @@ impl Env {
             },
             // Mangling happens here
             Expr::Let(binds, e) => {
-                let mangled_binds = fold_results(binds.iter()
-                    .map(|(sym, expr)| {
-                        let m_sym  = try_get_var(sym, &self.mangled)?;
-                        let m_expr = self.expand_mangle_fns(expr, mangler)?;
-                        Ok((m_sym, m_expr))
-                    }).collect())?;
-                let u_expr = self.expand_mangle_fns(expr, mangler)?;
+                // Generate mangled names for variables
+                let mangled_vars: Vec<VarId> = binds.iter().map(|_| mangler.next()).collect();
+                // Expand binding expressions
+                let expanded_bind_exprs = fold_results(binds.iter()
+                    .map(|(_, expr)| self.expand_mangle_fns(expr, mangler)).collect())?;
+                // Zip em together for later
+                let mangled_binds = mangled_vars.iter().cloned()
+                                                .zip(expanded_bind_exprs.iter().cloned())
+                                                .collect();
+
+                // Map between mangled and original variable names
+                let mangled_map: HashMap<Symbol, VarId>
+                    = binds.into_iter()
+                           .map(|(s,_)| s.clone())
+                           .zip(mangled_vars.into_iter().clone())
+                           .collect();
+
+                // Create a new env to expand the body and replace variables with the mangled version
+                let f_env = Env {
+                    // TODO: Make sure mangled_map overrides mangled
+                    mangled: self.mangled.clone().into_iter().chain(mangled_map).collect(),
+                    fns: self.fns.clone(),
+                };
+
+                let u_expr = f_env.expand_mangle_fns(e, mangler)?;
                 Ok(UnrolledExpr::Let(mangled_binds, Box::new(u_expr)))
             },
             Expr::Value(v) => match v {
