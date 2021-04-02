@@ -108,7 +108,7 @@ fn unary_builtin<'a>(input: &'a str)
 
 fn binary_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
-    let x = context("binary builtin",
+    context("binary builtin",
         // <tag> <expr> <expr>
         map_opt(list!(
             alt((
@@ -122,9 +122,7 @@ fn binary_builtin<'a>(input: &'a str)
             expr,
             expr),
             |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)))
-    .parse(input);
-    println!("bin builtin res: {:?}", x);
-    x
+    .parse(input)
 }
 
 /// Parse a symbol, which is any alphanumeric string.

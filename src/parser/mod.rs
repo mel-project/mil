@@ -77,5 +77,5 @@ fn fold_results<O,E>(v: Vec<Result<O, E>>) -> Result<Vec<O>, E> {
          inner_vec.push(v);
          Ok(inner_vec)
      })
-    .map(|mut v| { v.reverse(); v })
+    //.map(|mut v| { v.reverse(); v })
 }

@@ -181,7 +181,11 @@ impl Env {
                     fns: self.fns.clone(),
                 };
 
-                let expanded_es = fold_results(es.iter().map(|e| f_env.expand_mangle_fns(e, mangler)).collect())?;
+                // Expand body expressions
+                let expanded_es = fold_results(es.iter()
+                    .map(|e| f_env.expand_mangle_fns(e, mangler))
+                    .collect())?;
+
                 Ok(UnrolledExpr::Let(mangled_binds, expanded_es))
             },
             Expr::Value(v) => match v {
