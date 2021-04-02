@@ -1,14 +1,20 @@
 use mil::{
     parser, executor,
+    cmdline::BuildCmd,
     parser::mel_expr::MemoryMap,
     parser::semantics::Evaluator,
     compiler::{Compile, BinCode}};
 use std::fs::File;
 use std::io::prelude::*;
 use blkstructs::melvm::Covenant;
+use structopt::StructOpt;
 
 fn main() -> std::io::Result<()> {
-    let mut file = File::open("./examples/tmp.mil")?;
+    // Command line arguments
+    let cmd: BuildCmd = StructOpt::from_args();
+
+    //let mut file = File::open("./examples/tmp.mil")?;
+    let mut file = File::open(cmd.in_file)?;
     let mut code = String::new();
     file.read_to_string(&mut code)?;
 

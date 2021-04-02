@@ -2,8 +2,8 @@
 use crate::parser::{Defn, ParseErr};
 use primitive_types::U256;
 use crate::types::{Symbol, Value, BuiltIn, Expr};
-#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
-use nom::{call, IResult, Parser, branch::alt, bytes::complete::tag,
+//#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
+use nom::{IResult, Parser, branch::alt, bytes::complete::tag,
 character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
 character::{complete::char, is_hex_digit},
 combinator::{map_res, map_opt},
@@ -188,7 +188,7 @@ where F: Parser<&'a str, O, VerboseError<&'a str>>,
 pub fn root<'a>(input: &'a str)
 -> IResult<&'a str, (Vec<Defn>, Expr), VerboseError<&'a str>> {
     tuple((many0(defn),
-           expr)) // TODO: This should be many expressions since not all return a value (set)
+           expr))
     .parse(input)
 }
 

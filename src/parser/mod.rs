@@ -1,5 +1,4 @@
 pub mod tokens;
-pub mod syntax;
 pub mod semantics;
 pub mod mel_expr;
 
