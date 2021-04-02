@@ -1,16 +1,16 @@
-#[macro_use]
-use crate::PErr;
+#[macro_use] use crate::PErr;
 use crate::parser::{Defn, ParseErr};
 use primitive_types::U256;
-use crate::types::{Value, BuiltIn, Expr};
-use nom::{IResult, Parser, branch::alt, bytes::complete::tag,
+use crate::types::{Symbol, Value, BuiltIn, Expr};
+#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
+use nom::{call, IResult, Parser, branch::alt, bytes::complete::tag,
 character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
 character::{complete::char, is_hex_digit},
 combinator::{map_res, map_opt},
 error::{context, ParseError},
 error::VerboseError,
 multi::{separated_list1, many0, many1},
-sequence::{tuple, preceded, delimited}};
+sequence::{separated_pair, tuple, preceded, delimited}};
 
 /// Create a parser for an s-expression, where each element of the list is a parser.
 /// ```
@@ -24,6 +24,28 @@ macro_rules! list {
 }
 
 type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
+
+fn sym_binds<'a>(input: &'a str)
+-> IResult<&'a str, Vec<(Symbol, Expr)>, VerboseError<&'a str>>
+{
+    s_expr(separated_list1(
+        multispace1,
+        separated_pair(symbol, multispace1, expr)
+        ))(input)
+}
+
+fn let_bind<'a>(input: &'a str)
+-> IResult<&'a str, (Vec<(Symbol, Expr)>, Vec<Expr>), VerboseError<&'a str>>
+{
+    context("let binding",
+        list!(
+            tag("let"),
+            sym_binds,
+            many1(expr)
+            ))
+            .map(|(_,a,b)| (a,b))
+        .parse(input)
+}
 
 fn defn<'a>(input: &'a str)
 -> IResult<&'a str, Defn, VerboseError<&'a str>> {
@@ -86,7 +108,7 @@ fn unary_builtin<'a>(input: &'a str)
 
 fn binary_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
-    context("binary builtin",
+    let x = context("binary builtin",
         // <tag> <expr> <expr>
         map_opt(list!(
             alt((
@@ -100,7 +122,9 @@ fn binary_builtin<'a>(input: &'a str)
             expr,
             expr),
             |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)))
-    .parse(input)
+    .parse(input);
+    println!("bin builtin res: {:?}", x);
+    x
 }
 
 /// Parse a symbol, which is any alphanumeric string.
@@ -148,8 +172,12 @@ fn int<'a>(input: &'a str)
 /// Wrap a parser in surrounding parenthesis with whitespace.
 fn s_expr<'a, O, F>(parser: F)
 -> impl FnMut(&'a str) -> IResult<&'a str, O, VerboseError<&'a str>>
-where F: Parser<&'a str, O, VerboseError<&'a str>> {
-    context("list",
+//-> impl FnMut(&'a str) -> IResult<&'a str, O, E>
+where F: Parser<&'a str, O, VerboseError<&'a str>>,
+//where F: Parser<&'a str, O, E>,
+//      E: nom::error::ParseError<&'a str> + nom::error::ContextError<&'a str>
+{
+    context("S expression",
     delimited(
         ws(char('(')),
         parser,
@@ -183,7 +211,7 @@ pub fn expr<'a>(input: &'a str)
          empty_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          symbol.map(Expr::Var),
          set,
-         //let.map(Expr::Let),
+         let_bind.map(|(binds, exprs)| Expr::Let(binds, exprs)),
          app,
      )).parse(input)
 }

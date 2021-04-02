@@ -95,11 +95,17 @@ pub enum Expr {
     /// Application of a user-defined function to some arguments.
     App(Symbol, Vec<Expr>),
     /// Assign a value stored on the heap to a symbol
-    Set(Symbol, Box<Expr>),
+    Set(Symbol, Box<Expr>), // set!(x, 1)
     /// A variable is a pointer to a location on the heap.
     Var(Symbol),
     /// Bind a symbol to a value within the scope of a given expression.
-    Let(Vec<(Symbol, Expr)>, Box<Expr>),
+    Let(Vec<(Symbol, Expr)>, Vec<Expr>),
+    /*
+    /// If expression.
+    If(Box<Expr>, Box<Expr>, Box<Expr>),
+    /// Loop an expression n times. Value must be an Int.
+    Loop(Value, Box<Expr>)
+    */
 }
 
 /// An expression where all applications are on [BuiltIn] operators.
@@ -118,5 +124,5 @@ pub enum UnrolledExpr {
     /// The [VarId] represents a unique-mangled variable id.
     Var(VarId),
     /// Bind a symbol to a value within the scope of a given expression.
-    Let(Vec<(VarId, UnrolledExpr)>, Box<UnrolledExpr>),
+    Let(Vec<(VarId, UnrolledExpr)>, Vec<UnrolledExpr>),
 }

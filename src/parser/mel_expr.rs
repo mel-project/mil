@@ -67,7 +67,7 @@ impl MemoryMap {
                     mel_body,
                     MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Store(loc.clone())))])
             },
-            UnrolledExpr::Let(binds, body) => {
+            UnrolledExpr::Let(binds, exprs) => {
                 // For each binding, evaluate the expression (to push onto stack) and store in a new
                 // memory location.
                 // TODO: What happens when the binding expression is a 'set!'?
@@ -93,8 +93,9 @@ impl MemoryMap {
                 });
 
                 // Finally, evaluate the body
-                let mel_body = self.to_mel_expr(*body);
-                mel_binds.push(mel_body);
+                let mel_exprs = exprs.into_iter().map(|e| self.to_mel_expr(e));
+                //mel_binds.push(mel_body);
+                mel_binds.extend(mel_exprs);
 
                 MelExpr::Seq( mel_binds )
             },

@@ -106,7 +106,7 @@ impl Env {
                     Ok(UnrolledExpr::BuiltIn( Box::new(ExpandedBuiltIn::<UnrolledExpr>::Store(e)) ))
                 },
                 */
-                _ => unreachable!(), // TODO
+                _ => todo!("Not all builtins have been implemented"),
             },
             // A `set!` must operate on a bound variable; find it and also expand the assignment expression
             Expr::Set(s,e) => {
@@ -153,10 +153,10 @@ impl Env {
                                            .collect();
 
                 // Wrap our mangled body in let bindings
-                Ok(UnrolledExpr::Let(bindings, Box::new(mangled_body)))
+                Ok(UnrolledExpr::Let(bindings, vec![mangled_body]))
             },
             // Mangling happens here
-            Expr::Let(binds, e) => {
+            Expr::Let(binds, es) => {
                 // Generate mangled names for variables
                 let mangled_vars: Vec<VarId> = binds.iter().map(|_| mangler.next()).collect();
                 // Expand binding expressions
@@ -181,8 +181,8 @@ impl Env {
                     fns: self.fns.clone(),
                 };
 
-                let u_expr = f_env.expand_mangle_fns(e, mangler)?;
-                Ok(UnrolledExpr::Let(mangled_binds, Box::new(u_expr)))
+                let expanded_es = fold_results(es.iter().map(|e| f_env.expand_mangle_fns(e, mangler)).collect())?;
+                Ok(UnrolledExpr::Let(mangled_binds, expanded_es))
             },
             Expr::Value(v) => match v {
                 Value::Int(n) => Ok(UnrolledExpr::Value(Value::Int(n.clone()))),
