@@ -53,32 +53,22 @@ fn main() -> std::io::Result<()> {
     // Disassemble compiled binary
     println!("\nDisassembly: ");
     if let Some(ops) = script.to_ops() {
-        println!("{:?}", ops);
+        println!("{:?}\n", ops);
 
         // Dummy spender transaction calls the covenant
         let (pk, sk) = ed25519_keygen();
         let tx = Transaction::empty_test().sign_ed25519(sk);
 
-        let env = executor::ExecutionEnv::new(&tx, &ops);
-        for _ in env.iter_mut() {
-            println!("{:?}", it_e.executor.stack);
+        let mut env = executor::ExecutionEnv::new(&tx, &ops);
+        if let Some(final_state) = env.into_iter()
+            //.inspect(|(stack,heap)| println!("Stack\n{:?}", stack))
+            .last()
+        {
+            println!("Final stack\n--------\n{:?}", final_state.0);
         }
-        //let mut executor = executor::DbgExecutor::new(&tx, &ops);
-        // Run script to completion
-        //executor.take_while(|pc| pc.is_some());
-        /*
-        for _ in executor {
-            println!("{:?}", executor.executor.stack);
-        }
-        */
-        //executor.max();
-        //println!("Final stack\n--------\n{:?}", executor.executor.stack);
     } else {
         println!("FAILED");
     }
 
-    // Execute and print return value
-    //let v = executor::execute(bincode.clone());
-    //println!("Execution evaluated -> {}", v);
     Ok(())
 }
