@@ -72,7 +72,7 @@ fn tri_builtin<'a>(input: &'a str)
 /// Builtins without arguments aren't wrapped in s-expressions.
 fn empty_builtin<'a>(input: &'a str)
 -> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
-    context("unary builtin",
+    context("empty builtin",
         map_opt(ws(tag("nil")),
                 BuiltIn::from_empty_token))
     .parse(input)
@@ -193,7 +193,7 @@ pub fn root<'a>(input: &'a str)
 pub fn set<'a>(input: &'a str)
 -> IResult<&'a str, Expr, VerboseError<&'a str>> {
     // <tag> <symb> <expr>
-    list!(tag("set"), symbol, expr)
+    list!(tag("set!"), symbol, expr)
         .map(|(_,s,e)| Expr::Set(s,Box::new(e)))
         .parse(input)
 }

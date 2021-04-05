@@ -6,8 +6,9 @@ use mil::{
     compiler::{Compile, BinCode}};
 use std::fs::File;
 use std::io::prelude::*;
-use blkstructs::melvm::Covenant;
+use blkstructs::melvm::{Transaction, Covenant};
 use structopt::StructOpt;
+use tmelcrypt::ed25519_keygen;
 
 fn main() -> std::io::Result<()> {
     // Command line arguments
@@ -53,12 +54,31 @@ fn main() -> std::io::Result<()> {
     println!("\nDisassembly: ");
     if let Some(ops) = script.to_ops() {
         println!("{:?}", ops);
+
+        // Dummy spender transaction calls the covenant
+        let (pk, sk) = ed25519_keygen();
+        let tx = Transaction::empty_test().sign_ed25519(sk);
+
+        let env = executor::ExecutionEnv::new(&tx, &ops);
+        for _ in env.iter_mut() {
+            println!("{:?}", it_e.executor.stack);
+        }
+        //let mut executor = executor::DbgExecutor::new(&tx, &ops);
+        // Run script to completion
+        //executor.take_while(|pc| pc.is_some());
+        /*
+        for _ in executor {
+            println!("{:?}", executor.executor.stack);
+        }
+        */
+        //executor.max();
+        //println!("Final stack\n--------\n{:?}", executor.executor.stack);
     } else {
         println!("FAILED");
     }
 
     // Execute and print return value
-    let v = executor::execute(bincode.clone());
-    println!("Execution evaluated -> {}", v);
+    //let v = executor::execute(bincode.clone());
+    //println!("Execution evaluated -> {}", v);
     Ok(())
 }
