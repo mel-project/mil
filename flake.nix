@@ -14,8 +14,10 @@
     } @inputs:
     let rustOverlay = final: prev:
           let rustChannel = prev.rustChannelOf {
-            channel = "1.49.0";
-            sha256 = "sha256-KCh2UBGtdlBJ/4UOqZlxUtcyefv7MH1neoVNV4z0nWs=";
+            #channel = "1.49.0";
+            #sha256 = "sha256-KCh2UBGtdlBJ/4UOqZlxUtcyefv7MH1neoVNV4z0nWs=";
+            channel = "nightly";
+            sha256 = "sha256-yvUmasDp4hTmipedyiWEjFCAsZHuIiODCygBfdrTeqs";
           };
           in
           { inherit rustChannel;
