@@ -2,7 +2,7 @@ use mil::{
     parser, executor,
     cmdline::BuildCmd,
     parser::mel_expr::MemoryMap,
-    parser::semantics::Evaluator,
+    parser::expansion::Evaluator,
     compiler::{Compile, BinCode}};
 use std::fs::File;
 use std::io::prelude::*;
@@ -20,11 +20,11 @@ fn main() -> std::io::Result<()> {
     file.read_to_string(&mut code)?;
 
     // Parse to MelExpr ops
-    let mel_ops = parser::tokens::root(&code[..])
+    let mel_ops = parser::syntax::root(&code[..])
         .map(|(_, (fn_defs, ast))| {
             // First pass AST
             println!("Ast\n----\n{:?}\n", (fn_defs.clone(), ast.clone()));
-            let env = parser::semantics::Env::new(fn_defs);
+            let env = parser::expansion::Env::new(fn_defs);
 
             // Expand AST
             let expanded = env.expand_fns(&ast);

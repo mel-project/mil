@@ -1,11 +1,33 @@
-pub mod tokens;
-pub mod semantics;
+pub mod syntax;
+pub mod expansion;
 pub mod mel_expr;
 
-use crate::types::{Symbol, BuiltIn, Expr};
+use mel_expr::MemoryMap;
+use expansion::Evaluator;
+use crate::types::{MelExpr, Symbol, BuiltIn, Expr};
+
+/// Module-level aggregate error type. Unifies all parser-type errors.
+pub enum ParseError<E> {
+    Syntax(nom::Err<E>),
+    Expansion(ParseErr),
+}
 
 // TODO: hide underlying parse fns and provide a unified parser interface here.
-//pub fn parse(input: &str) -> Result<Expr, ?>
+pub fn parse(input: &str) -> Result<MelExpr, ParseError<nom::error::VerboseError<&str>>> {
+    // First pass AST
+    syntax::root(input)
+        .map_err(|verbose_err| ParseError::Syntax(verbose_err))
+        // Expand AST
+        .and_then(|(_, (fn_defs, ast))| {
+            let env = expansion::Env::new(fn_defs);
+            env.expand_fns(&ast)
+               .map_err(|e| ParseError::Expansion(e))
+        })
+        // Low-level MelExpr
+        .map(|expanded| {
+            let mut mem = MemoryMap::new();
+            mem.to_mel_expr(expanded)})
+}
 
 /// Syntax parser error type. May become may intricate later.
 #[derive(Debug, PartialEq, Eq)]
