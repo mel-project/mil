@@ -8,7 +8,6 @@ use blkstructs::{
 pub type ProgramCounter = usize;
 type Stack = Vec<Value>;
 type Heap  = HashMap<u16, Value>;
-//pub fn execute_on_tx(tx: &Transaction) -> 
 
 pub struct ExecutionEnv<'a> {
     /// A stack and heap environment.
@@ -21,7 +20,7 @@ impl<'a> ExecutionEnv<'a> {
     pub fn new(tx: &'a Transaction, ops: &'a [OpCode]) -> ExecutionEnv<'a> {
         // Pre-load the tx onto the heap
         let mut heap = std::collections::HashMap::new();
-        heap.insert(0, Value::from_tx(&tx));
+        heap.insert(0, Value::from(tx));
         heap.insert(1, Value::from_bytes(&tx.hash_nosigs()));
 
         ExecutionEnv {

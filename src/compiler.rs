@@ -102,18 +102,6 @@ fn write_vec(mut bin: BinCode, v: &Vec<Atom>) -> BinCode {
 }
 */
 
-/*
-impl Compile for Atom {
-    fn compile_onto(&self, b: BinCode) -> BinCode {
-        match self {
-            // PushI
-            Atom::Int(n) => write_pushi(b, n),
-            //Atom::Vec{members, ..} => write_vec(b, members),
-        }
-    }
-}
-*/
-
 impl Compile for MelExpr {
     fn compile_onto(&self, b: BinCode) -> BinCode {
         //println!("writing {:?} to {}", self, b);
@@ -180,7 +168,6 @@ mod test {
           .for_each(|(x,y)| assert_eq!(x, y))
     }
 
-    /*
     #[test]
     fn cons_a_vec() {
         let bin = compile("(cons 1 (nil))")
@@ -191,6 +178,7 @@ mod test {
             "f100000000000000000000000000000000000000000000000000000000000000015254");
     }
 
+    /*
     #[test]
     fn vec_len() {
         let ops = to_ops("(len (cons 2 (cons 1 (nil))))").unwrap();

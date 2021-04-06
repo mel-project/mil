@@ -84,7 +84,6 @@ fn unary_builtin<'a>(input: &'a str)
         alt((
             map_opt(
                 list!(alt((
-                        tag("load"),
                         tag("len"),
                         tag("not"),
                         tag("hash"),

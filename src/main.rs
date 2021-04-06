@@ -23,17 +23,17 @@ fn main() -> std::io::Result<()> {
     let mel_ops = parser::tokens::root(&code[..])
         .map(|(_, (fn_defs, ast))| {
             // First pass AST
-            println!("Ast\n----\n{:?}", (fn_defs.clone(), ast.clone()));
+            println!("Ast\n----\n{:?}\n", (fn_defs.clone(), ast.clone()));
             let env = parser::semantics::Env::new(fn_defs);
 
             // Expand AST
             let expanded = env.expand_fns(&ast);
-            println!("Expanded\n-----\n{:?}", expanded);
+            println!("Expanded\n-----\n{:?}\n", expanded);
 
             // Low-level MelExpr
             let mut mem  = MemoryMap::new();
             let mel_expr = mem.to_mel_expr(expanded.unwrap());
-            println!("MelVM\n-----\n{:?}", mel_expr);
+            println!("MelVM\n-----\n{:?}\n", mel_expr);
             mel_expr
         })
         .map_err(|e| match e {
