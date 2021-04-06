@@ -23,11 +23,11 @@ macro_rules! list {
     )
 }
 
+/// The result of a parser on strs with a VerboseError error type.
 type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
 fn sym_binds<'a>(input: &'a str)
--> IResult<&'a str, Vec<(Symbol, Expr)>, VerboseError<&'a str>>
-{
+-> ParseRes<Vec<(Symbol, Expr)>> {
     s_expr(separated_list1(
         multispace1,
         separated_pair(symbol, multispace1, expr)
@@ -35,8 +35,7 @@ fn sym_binds<'a>(input: &'a str)
 }
 
 fn let_bind<'a>(input: &'a str)
--> IResult<&'a str, (Vec<(Symbol, Expr)>, Vec<Expr>), VerboseError<&'a str>>
-{
+-> ParseRes<(Vec<(Symbol, Expr)>, Vec<Expr>)> {
     context("let binding",
         list!(
             tag("let"),
@@ -48,7 +47,7 @@ fn let_bind<'a>(input: &'a str)
 }
 
 fn defn<'a>(input: &'a str)
--> IResult<&'a str, Defn, VerboseError<&'a str>> {
+-> ParseRes<Defn> {
     context("defn",
         s_expr(
             preceded(ws(tag("fn")),
@@ -61,7 +60,7 @@ fn defn<'a>(input: &'a str)
 
 /// Parse a [BuiltIn] expression with three arguments.
 fn tri_builtin<'a>(input: &'a str)
--> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
+-> ParseRes<BuiltIn> {
     context("tri builtin",
         map_opt(
             list!(tag("slice"), expr, expr, expr),
@@ -71,7 +70,7 @@ fn tri_builtin<'a>(input: &'a str)
 
 /// Builtins without arguments aren't wrapped in s-expressions.
 fn empty_builtin<'a>(input: &'a str)
--> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
+-> ParseRes<BuiltIn> {
     context("empty builtin",
         map_opt(ws(tag("nil")),
                 BuiltIn::from_empty_token))
@@ -79,7 +78,7 @@ fn empty_builtin<'a>(input: &'a str)
 }
 
 fn unary_builtin<'a>(input: &'a str)
--> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
+-> ParseRes<BuiltIn> {
     context("unary builtin",
         alt((
             map_opt(
@@ -106,7 +105,7 @@ fn unary_builtin<'a>(input: &'a str)
 }
 
 fn binary_builtin<'a>(input: &'a str)
--> IResult<&'a str, BuiltIn, VerboseError<&'a str>> {
+-> ParseRes<BuiltIn> {
     context("binary builtin",
         // <tag> <expr> <expr>
         map_opt(list!(
@@ -126,7 +125,7 @@ fn binary_builtin<'a>(input: &'a str)
 
 /// Parse a symbol, which is any alphanumeric string.
 fn symbol<'a>(input: &'a str)
--> IResult<&'a str, String, VerboseError<&'a str>> {
+-> ParseRes<String> {
     context("symbol", alpha1.map(String::from))(input)
 }
 
@@ -148,7 +147,7 @@ fn from_hex(s: &str) -> Result<Vec<u8>, ParseErr> {
 }
 
 fn bytes<'a>(input: &'a str)
--> IResult<&'a str, Vec<u8>, VerboseError<&'a str>> {
+-> ParseRes<Vec<u8>> {
     let res = context("bytes",
         map_res(preceded(tag("0x"), hex_digit1),
                 from_hex))
@@ -158,7 +157,7 @@ fn bytes<'a>(input: &'a str)
 
 /// Parse a [U256] integer.
 fn int<'a>(input: &'a str)
--> IResult<&'a str, U256, VerboseError<&'a str>> {
+-> ParseRes<U256> {
     context("int",
         // TODO: Strange parsing behaviour when parsing directly n_str.parse::<U256>
         map_res(digit1, |n_str: &str| n_str.parse::<u64>())
@@ -183,14 +182,14 @@ where F: Parser<&'a str, O, VerboseError<&'a str>>,
 
 /// Top level of a program consists of a list of fn definitions and an expression.
 pub fn root<'a>(input: &'a str)
--> IResult<&'a str, (Vec<Defn>, Expr), VerboseError<&'a str>> {
+-> ParseRes<(Vec<Defn>, Expr)> {
     tuple((many0(defn),
            expr))
     .parse(input)
 }
 
 pub fn set<'a>(input: &'a str)
--> IResult<&'a str, Expr, VerboseError<&'a str>> {
+-> ParseRes<Expr> {
     // <tag> <symb> <expr>
     list!(tag("set!"), symbol, expr)
         .map(|(_,s,e)| Expr::Set(s,Box::new(e)))
@@ -199,7 +198,7 @@ pub fn set<'a>(input: &'a str)
 
 /// Top level parser returns any valid [Expr].
 pub fn expr<'a>(input: &'a str)
--> IResult<&'a str, Expr, VerboseError<&'a str>> {
+-> ParseRes<Expr> {
     alt((bytes.map(Value::Bytes).map(Expr::Value),
          int.map(Value::Int).map(Expr::Value),
          binary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
@@ -215,7 +214,7 @@ pub fn expr<'a>(input: &'a str)
 
 /// Parse a function call (application) to any non-[BuiltIn] function.
 pub fn app<'a>(input: &'a str)
--> IResult<&'a str, Expr, VerboseError<&'a str>> {
+-> ParseRes<Expr> {
     let args = separated_list1(multispace1, expr);
     context("Application",
         list!(symbol, args))
