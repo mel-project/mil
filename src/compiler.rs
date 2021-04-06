@@ -69,9 +69,9 @@ fn write_pushi(mut b: BinCode, n: &U256) -> BinCode {
     let idx = b.0.len();
 
     // Extend vec by 32 bytes to effeciently add U256
-    let B = 32;
-    b.0.reserve(B);
-    unsafe { b.0.set_len(idx + B); }
+    let b_size = 32;
+    b.0.reserve(b_size);
+    unsafe { b.0.set_len(idx + b_size); }
 
     n.to_big_endian(&mut b.0[idx..]);
 
@@ -129,12 +129,12 @@ impl Compile for HeapPos {
 
 /// Opcode mapping
 impl From<PushI> for u8 {
-    fn from(p: PushI) -> u8 {
+    fn from(_: PushI) -> u8 {
         0xf1
     }
 }
 impl From<PushB> for u8 {
-    fn from(p: PushB) -> u8 {
+    fn from(_: PushB) -> u8 {
         0xf0
     }
 }

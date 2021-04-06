@@ -1,4 +1,3 @@
-#[macro_use]
 use crate::PErr;
 use std::collections::HashMap;
 use crate::types::{Value, ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};

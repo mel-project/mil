@@ -1,11 +1,11 @@
-#[macro_use] use crate::PErr;
+use crate::PErr;
 use crate::parser::{Defn, ParseErr};
 use primitive_types::U256;
 use crate::types::{Symbol, Value, BuiltIn, Expr};
 //#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
 use nom::{IResult, Parser, branch::alt, bytes::complete::tag,
 character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
-character::{complete::char, is_hex_digit},
+character::complete::char,
 combinator::{map_res, map_opt},
 error::{context, ParseError},
 error::VerboseError,
