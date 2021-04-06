@@ -6,46 +6,71 @@ pub struct PushB;
 /// An index for a location on the MelVM heap.
 pub type HeapPos = u16;
 
+/// Primitive operations as the are represented internally in the AST.
+/// Most notably, symbols are replaced with locations in memory.
+/// ExpandedBuiltins are directly compilable to MelVM opcodes.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ExpandedBuiltIn<E> {
+    // Arithmetic
     Add(E, E),
     Sub(E, E),
     Mul(E, E),
     Div(E, E),
     Rem(E, E),
-    And(E, E),
-    Or(E, E),
-    Xor(E, E),
+    // Logical
     Not(E),
-    Vpush(E, E),
+    Or(E, E),
+    And(E, E),
+    Xor(E, E),
+    // Vectors
     Vempty,
-    Vref(E, E),
     Vlen(E),
+    Vref(E, E),
+    Vpush(E, E),
     Vappend(E, E),
     Vslice(E, E, E),
+    // Crypto
     Hash(E),
+    //Sigeok(E),
+    // Control flow
+    Bez(u16),
+    Bnz(u16),
+    Jmp(u16),
+    Loop(u16, E),
+    // Heap access
     Load(HeapPos),
     Store(HeapPos),
 }
 
+/// Primitive operations that are accessible in the mil language front-end.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BuiltIn {
+    // Arithmetic
     Add(Expr, Expr),
     Sub(Expr, Expr),
     Mul(Expr, Expr),
     Div(Expr, Expr),
     Rem(Expr, Expr),
+    // Logical
     And(Expr, Expr),
     Or(Expr, Expr),
     Xor(Expr, Expr),
     Not(Expr),
+    // Vectors
     Vpush(Expr, Expr),
     Vempty,
     Vref(Expr, Expr),
     Vlen(Expr),
     Vappend(Expr, Expr),
     Vslice(Expr, Expr, Expr),
+    // Crypto
     Hash(Expr),
+    //Sigeok(Expr),
+    // Control flow
+    //Bez(Expr),
+    //Bnz(Expr),
+    //Jmp(Expr),
+    //Loop(Expr, Expr),
     // TODO: Remove these
     Load(Symbol),
     Store(Symbol),
@@ -102,11 +127,12 @@ pub enum Expr {
     Let(Vec<(Symbol, Expr)>, Vec<Expr>),
     // Set a symbol to point to a location.
     //SetTo(Symbol, Box<Expr>),
-    /*
     /// If expression.
     If(Box<Expr>, Box<Expr>, Box<Expr>),
+    /*
     /// Loop an expression n times. Value must be an Int.
     Loop(Value, Box<Expr>)
+    For(Symbol, Box<Expr>, Box<Expr>)
     */
 }
 
@@ -127,4 +153,6 @@ pub enum UnrolledExpr {
     Var(VarId),
     /// Bind a symbol to a value within the scope of a given expression.
     Let(Vec<(VarId, UnrolledExpr)>, Vec<UnrolledExpr>),
+    /// If expression.
+    If(Box<UnrolledExpr>, Box<UnrolledExpr>, Box<UnrolledExpr>),
 }

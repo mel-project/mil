@@ -187,6 +187,13 @@ impl Env {
 
                 Ok(UnrolledExpr::Let(mangled_binds, expanded_es))
             },
+            Expr::If(pred, on_true, on_false) => {
+                let u_pred   = self.expand_mangle_fns(pred, mangler)?;
+                let on_true  = self.expand_mangle_fns(on_true, mangler)?;
+                let on_false = self.expand_mangle_fns(on_false, mangler)?;
+
+                Ok( UnrolledExpr::If(Box::new(u_pred), Box::new(on_true), Box::new(on_false)) )
+            },
             Expr::Value(v) => match v {
                 Value::Int(n) => Ok(UnrolledExpr::Value(Value::Int(n.clone()))),
                 Value::Bytes(b) => Ok(UnrolledExpr::Value(Value::Bytes(b.clone()))),

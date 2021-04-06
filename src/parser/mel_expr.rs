@@ -67,6 +67,26 @@ impl MemoryMap {
                     mel_body,
                     MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Store(loc.clone())))])
             },
+            UnrolledExpr::If(pred, on_true, on_false) => {
+                let mel_true = self.to_mel_expr(*on_true);
+                let num_true_insts = match &mel_true {
+                    MelExpr::Seq(ref v) => v.len(),
+                    _ => 1,
+                };
+                let mel_false = self.to_mel_expr(*on_false);
+                let num_false_insts = match &mel_false {
+                    MelExpr::Seq(ref v) => v.len(),
+                    _ => 1,
+                };
+
+                MelExpr::Seq(vec![
+                    self.to_mel_expr(*pred),
+                    MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Bez((num_true_insts + 1) as u16))),
+                    mel_true,
+                    MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Jmp(num_false_insts as u16))),
+                    mel_false,
+                ])
+            },
             UnrolledExpr::Let(binds, exprs) => {
                 // For each binding, evaluate the expression (to push onto stack) and store in a new
                 // memory location.

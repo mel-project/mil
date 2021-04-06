@@ -196,6 +196,24 @@ pub fn set<'a>(input: &'a str)
         .parse(input)
 }
 
+/// Parse a function call (application) to any non-[BuiltIn] function.
+pub fn app<'a>(input: &'a str)
+-> ParseRes<Expr> {
+    let args = separated_list1(multispace1, expr);
+    context("Application",
+        list!(symbol, args))
+            .map(|(s,a)| Expr::App(s,a))
+        .parse(input)
+}
+
+pub fn if_expr<'a>(input: &'a str)
+-> ParseRes<(Expr, Expr, Expr)> {
+    context("if expression",
+        list!(tag("if"), expr, expr, expr))
+        .map(|(_,e1,e2,e3)| (e1,e2,e3))
+        .parse(input)
+}
+
 /// Top level parser returns any valid [Expr].
 pub fn expr<'a>(input: &'a str)
 -> ParseRes<Expr> {
@@ -208,20 +226,10 @@ pub fn expr<'a>(input: &'a str)
          symbol.map(Expr::Var),
          set,
          let_bind.map(|(binds, exprs)| Expr::Let(binds, exprs)),
+         if_expr.map(|(p,t,f)| Expr::If(Box::new(p), Box::new(t), Box::new(f))),
          app,
      )).parse(input)
 }
-
-/// Parse a function call (application) to any non-[BuiltIn] function.
-pub fn app<'a>(input: &'a str)
--> ParseRes<Expr> {
-    let args = separated_list1(multispace1, expr);
-    context("Application",
-        list!(symbol, args))
-            .map(|(s,a)| Expr::App(s,a))
-        .parse(input)
-}
-
 
 /// Surrounding whitespace parser combinator
 fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)

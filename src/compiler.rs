@@ -35,16 +35,27 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
             ExpandedBuiltIn::Xor(e1,e2) => compile_op(b, 0x22, vec![e1,e2]),
             ExpandedBuiltIn::Not(e)     => compile_op(b, 0x23, vec![e]),
             ExpandedBuiltIn::Hash(e)     => compile_op(b, 0x30, vec![e]),
+            //ExpandedBuiltIn::Sigeok(e)     => compile_op(b, 0x32, vec![e]),
             ExpandedBuiltIn::Vref(e1,e2)    => compile_op(b, 0x50, vec![e1,e2]),
             ExpandedBuiltIn::Vappend(e1,e2) => compile_op(b, 0x51, vec![e1,e2]),
             ExpandedBuiltIn::Vempty         => compile_op::<MelExpr>(b, 0x52, vec![]),
             ExpandedBuiltIn::Vlen(e)        => compile_op(b, 0x53, vec![e]),
             ExpandedBuiltIn::Vpush(e1,e2)   => compile_op(b, 0x54, vec![e1,e2]),
             ExpandedBuiltIn::Vslice(e1,e2,e3) => compile_op(b, 0x55, vec![e1,e2,e3]),
+            ExpandedBuiltIn::Jmp(n)     => compile_u16op(b, 0xa0, n),
+            ExpandedBuiltIn::Bez(n)     => compile_u16op(b, 0xa1, n),
+            ExpandedBuiltIn::Bnz(n)     => compile_u16op(b, 0xa2, n),
+            ExpandedBuiltIn::Loop(n, e) => compile_loop(b, n, e),
             ExpandedBuiltIn::Store(idx) => compile_u16op(b, 0x43, idx),
             ExpandedBuiltIn::Load(idx)  => compile_u16op(b, 0x42, idx),
         }
     }
+}
+
+fn compile_loop<T: Compile>(mut b: BinCode, n: &u16, arg: &T) -> BinCode {
+    let mut b = arg.compile_onto(b);
+    b.0.push(0xb0);
+    n.compile_onto(b)
 }
 
 fn compile_u16op(mut b: BinCode, opcode: u8, idx: &HeapPos) -> BinCode {

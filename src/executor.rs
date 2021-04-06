@@ -127,4 +127,12 @@ mod tests {
 
         assert_eq!(state.0, vec![Value::Int(U256::from(6))]);
     }
+
+    #[test]
+    fn if_expression() {
+        let ops   = parse("(if (and 1 1) (* 2 2) 1)").unwrap();
+        let state = execution( compile(ops) ).unwrap();
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(4))]);
+    }
 }
