@@ -7,6 +7,7 @@ use expansion::Evaluator;
 use crate::types::{MelExpr, Symbol, BuiltIn, Expr};
 
 /// Module-level aggregate error type. Unifies all parser-type errors.
+#[derive(Debug)]
 pub enum ParseError<E> {
     Syntax(nom::Err<E>),
     Expansion(ParseErr),

@@ -168,6 +168,7 @@ mod test {
           .for_each(|(x,y)| assert_eq!(x, y))
     }
 
+    /*
     #[test]
     fn cons_a_vec() {
         let bin = compile("(cons 1 (nil))")
@@ -177,6 +178,7 @@ mod test {
             format!("{}", bin),
             "f100000000000000000000000000000000000000000000000000000000000000015254");
     }
+    */
 
     /*
     #[test]

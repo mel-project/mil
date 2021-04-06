@@ -72,3 +72,43 @@ pub fn execute(bincode: BinCode) -> bool {
 
     script.check(&tx)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser::parse;
+    use crate::types::MelExpr;
+    use crate::compiler::{Compile, BinCode};
+    use primitive_types::U256;
+
+    fn compile(ops: MelExpr) -> BinCode {
+        // Compile to binary
+        let empty = BinCode(Vec::new());
+        ops.compile_onto(empty)
+    }
+
+    fn execution(bincode: BinCode) -> Option<(Stack, Heap)> {
+        // Wrap in a covenant
+        let script = Covenant(bincode.0.clone());
+
+        // Disassemble compiled binary
+        //if let Some(ops) = script.to_ops() {
+        let ops = script.to_ops()?;
+
+        // Dummy spender transaction calls the covenant
+        let (pk, sk) = ed25519_keygen();
+        let tx = Transaction::empty_test().sign_ed25519(sk);
+
+        // Execute
+        let mut env = ExecutionEnv::new(&tx, &ops);
+        env.into_iter().last()
+    }
+
+    #[test]
+    fn add_numbers() {
+        let ops   = parse("(+ 1 2)").unwrap();
+        let state = execution( compile(ops) ).unwrap();
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(3))]);
+    }
+}
