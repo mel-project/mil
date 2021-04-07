@@ -168,10 +168,16 @@ mod tests {
                     63, 163, 212, 106, 36, 240, 111, 251, 98, 193]);
         } else {
             panic!();
-            //unreachable!();
         }
-        //let hash_bytes = Value::Bytes(state.0.iter().collect());
-
-        //assert_eq!(state.0.iter().collect::<Vec<u8>>(), vec![Value::Bytes(vec![
     }
+
+    /*
+    #[test]
+    fn sigeok_bytes() {
+        let ops   = parse("(sigeok 32 0xF0)").unwrap();
+        let state = execution( compile(ops) ).unwrap();
+
+        assert_eq!(state.0, );
+    }
+    */
 }

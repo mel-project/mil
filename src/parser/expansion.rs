@@ -82,6 +82,10 @@ impl Env {
                 let v = try_get_var(x, &self.mangled)?;
                 Ok(UnrolledExpr::Var(v))
             },
+            Expr::Reserved(r) => Ok(match r {
+                SpenderTx => UnrolledExpr::Var(0),
+                SpenderTxHash => UnrolledExpr::Var(1),
+            }),
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
                 BuiltIn::Vempty => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty))),

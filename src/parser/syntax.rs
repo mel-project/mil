@@ -1,7 +1,7 @@
 use crate::PErr;
 use crate::parser::{Defn, ParseErr};
 use primitive_types::U256;
-use crate::types::{Symbol, Value, BuiltIn, Expr};
+use crate::types::{Reserved, Symbol, Value, BuiltIn, Expr};
 //#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
 use nom::{IResult, Parser, branch::alt, bytes::complete::tag,
 character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
@@ -243,6 +243,14 @@ pub fn loop_expr<'a>(input: &'a str)
             .parse(input)
 }
 
+pub fn reserved<'a>(input: &'a str)
+-> ParseRes<Reserved> {
+    context("reserved identity",
+        alt((tag("SpenderTx").map(|_| Reserved::SpenderTx),
+             tag("SpenderTxHash").map(|_| Reserved::SpenderTxHash)),
+           ))(input)
+}
+
 /// Top level parser returns any valid [Expr].
 pub fn expr<'a>(input: &'a str)
 -> ParseRes<Expr> {
@@ -259,6 +267,7 @@ pub fn expr<'a>(input: &'a str)
          loop_expr.map(|(n,e)| Expr::Loop(n, Box::new(e))),
          hash.map(|(n,e)| Expr::Hash(n, Box::new(e))),
          sigeok.map(|(n,e1,e2,e3)| Expr::Sigeok(n, Box::new(e1), Box::new(e2), Box::new(e3))),
+         reserved.map(|r| Expr::Reserved(r)),
          app,
      )).parse(input)
 }

@@ -95,14 +95,19 @@ pub enum Value {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+/// Reserved identities for values available in every MelVM script.
+pub enum Reserved {
+    SpenderTx,
+    SpenderTxHash,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 /// The lower level representation of a program that is directly compilable into a binary for the
 /// MelVM.
 pub enum MelExpr {
     /// Fundamental data type.
     Value(Value),
-    //Int(U256),
-    // ByteString(.),
-    // Vector(Vec,
+    /// Builtin operations.
     BuiltIn(Box<ExpandedBuiltIn<MelExpr>>),
     /// A sequence of instructions.
     Seq(Vec<MelExpr>),
@@ -128,6 +133,8 @@ pub enum Expr {
     Set(Symbol, Box<Expr>),
     /// A variable is a pointer to a location on the heap.
     Var(Symbol),
+    /// Reserved identities for values available in every MelVM script.
+    Reserved(Reserved),
     /// Bind a symbol to a value within the scope of a given expression.
     Let(Vec<(Symbol, Expr)>, Vec<Expr>),
     // Set a symbol to point to a location.
