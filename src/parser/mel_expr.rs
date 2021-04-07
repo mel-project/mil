@@ -21,8 +21,6 @@ impl MemoryMap {
     }
 
     /// Translate an [UnrolledExpr] into a set of low-level [MelExpr] instructions.
-    // TODO: Does this really need to be a result?
-    //fn to_mel_expr(&mut self, expr: UnrolledExpr) -> Result<Vec<MelExpr>, ParseErr> {
     pub fn to_mel_expr(&mut self, expr: UnrolledExpr) -> MelExpr {
         match expr {
             UnrolledExpr::Value(v) => match v {
@@ -69,21 +67,13 @@ impl MemoryMap {
             },
             UnrolledExpr::If(pred, on_true, on_false) => {
                 let mel_true = self.to_mel_expr(*on_true);
-                let num_true_insts = match &mel_true {
-                    MelExpr::Seq(ref v) => v.len(),
-                    _ => 1,
-                };
                 let mel_false = self.to_mel_expr(*on_false);
-                let num_false_insts = match &mel_false {
-                    MelExpr::Seq(ref v) => v.len(),
-                    _ => 1,
-                };
 
                 MelExpr::Seq(vec![
                     self.to_mel_expr(*pred),
-                    MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Bez((num_true_insts + 1) as u16))),
+                    MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Bez((count_insts(&mel_true) + 1) as u16))),
                     mel_true,
-                    MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Jmp(num_false_insts as u16))),
+                    MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Jmp(count_insts(&mel_false) as u16))),
                     mel_false,
                 ])
             },
@@ -120,5 +110,42 @@ impl MemoryMap {
                 MelExpr::Seq( mel_binds )
             },
         }
+    }
+}
+
+/// Count the number of primitive instructions recursively from a [MelExpr].
+fn count_insts(e: &MelExpr) -> u32 {
+    match e {
+        MelExpr::Seq(v) => v.iter().map(count_insts).reduce(|a,b| a+b).unwrap_or(0),
+        MelExpr::Value(val) => match val {
+            //Value::Vec(v) => v.len(),
+            Value::Int(_) => 1,
+            Value::Bytes(_) => 1,
+        },
+        MelExpr::BuiltIn(b) => match &**b {
+            ExpandedBuiltIn::Add(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Sub(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Mul(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Div(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Rem(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::And(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Or(e1,e2)  => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Xor(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Not(e)     => 1 + count_insts(&e),
+            ExpandedBuiltIn::Hash(e)     => 1 + count_insts(&e),
+            //ExpandedBuiltIn::Sigeok(e)   
+            ExpandedBuiltIn::Vref(e1,e2)    => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Vappend(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Vempty         => 1,
+            ExpandedBuiltIn::Vlen(e)        => 1 + count_insts(&e),
+            ExpandedBuiltIn::Vpush(e1,e2)   => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Vslice(e1,e2,e3) => 1 + count_insts(&e1) + count_insts(&e2) + count_insts(&e3),
+            ExpandedBuiltIn::Jmp(n)     => 1,
+            ExpandedBuiltIn::Bez(n)     => 1,
+            ExpandedBuiltIn::Bnz(n)     => 1,
+            ExpandedBuiltIn::Loop(n, e) => 1 + count_insts(&e),
+            ExpandedBuiltIn::Store(idx) => 1,
+            ExpandedBuiltIn::Load(idx)  => 1,
+        },
     }
 }

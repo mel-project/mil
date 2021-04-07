@@ -129,10 +129,18 @@ mod tests {
     }
 
     #[test]
-    fn if_expression() {
+    fn if_true_branch() {
         let ops   = parse("(if (and 1 1) (* 2 2) 1)").unwrap();
         let state = execution( compile(ops) ).unwrap();
 
         assert_eq!(state.0, vec![Value::Int(U256::from(4))]);
+    }
+
+    #[test]
+    fn if_false_branch() {
+        let ops   = parse("(if 0 (* 2 2) 1)").unwrap();
+        let state = execution( compile(ops) ).unwrap();
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
 }
