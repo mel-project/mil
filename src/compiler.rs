@@ -34,7 +34,7 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
             ExpandedBuiltIn::Or(e1,e2)  => compile_op(b, 0x21, vec![e1,e2]),
             ExpandedBuiltIn::Xor(e1,e2) => compile_op(b, 0x22, vec![e1,e2]),
             ExpandedBuiltIn::Not(e)     => compile_op(b, 0x23, vec![e]),
-            ExpandedBuiltIn::Hash(e)     => compile_op(b, 0x30, vec![e]),
+            //ExpandedBuiltIn::Hash(n, e) => compile_u16_expr_op(b, 0x30, n, e),
             //ExpandedBuiltIn::Sigeok(e)     => compile_op(b, 0x32, vec![e]),
             ExpandedBuiltIn::Vref(e1,e2)    => compile_op(b, 0x50, vec![e1,e2]),
             ExpandedBuiltIn::Vappend(e1,e2) => compile_op(b, 0x51, vec![e1,e2]),
@@ -45,16 +45,16 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
             ExpandedBuiltIn::Jmp(n)     => compile_u16op(b, 0xa0, n),
             ExpandedBuiltIn::Bez(n)     => compile_u16op(b, 0xa1, n),
             ExpandedBuiltIn::Bnz(n)     => compile_u16op(b, 0xa2, n),
-            ExpandedBuiltIn::Loop(n, e) => compile_loop(b, n, e),
+            ExpandedBuiltIn::Loop(n, e) => compile_u16_expr_op(b, 0xb0, n, e),
             ExpandedBuiltIn::Store(idx) => compile_u16op(b, 0x43, idx),
             ExpandedBuiltIn::Load(idx)  => compile_u16op(b, 0x42, idx),
         }
     }
 }
 
-fn compile_loop<T: Compile>(mut b: BinCode, n: &u16, arg: &T) -> BinCode {
+fn compile_u16_expr_op<T: Compile>(mut b: BinCode, opcode: u8, n: &u16, arg: &T) -> BinCode {
     let mut b = arg.compile_onto(b);
-    b.0.push(0xb0);
+    b.0.push(opcode);
     n.compile_onto(b)
 }
 
@@ -126,6 +126,12 @@ impl Compile for MelExpr {
     fn compile_onto(&self, b: BinCode) -> BinCode {
         //println!("writing {:?} to {}", self, b);
         match self {
+            MelExpr::Hash(n,e) => compile_u16_expr_op(b, 0x30, n, &**e),
+            MelExpr::Sigeok(n,e1,e2,e3) => {
+                let mut b = e3.compile_onto(e2.compile_onto(e1.compile_onto(b)));
+                b.0.push(0x32);
+                n.compile_onto(b)
+            },
             MelExpr::Loop(n,e) => write_loop(b, n, e),
             // Integers evaluate to themselves (push onto stack)
             MelExpr::Value(v) => match v {

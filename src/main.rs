@@ -46,7 +46,7 @@ fn main() -> std::io::Result<()> {
     let bincode = mel_ops.compile_onto(empty);
     // Write to file
     std::fs::write("script.mvm", &bincode.0[..])?;
-    println!("Binary: b{}", bincode);
+    println!("Binary: 0x{}", bincode);
 
     // Wrap in a covenant
     let script = Covenant(bincode.0.clone());

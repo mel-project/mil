@@ -49,6 +49,7 @@ macro_rules! PErr {
 /// and cannot be nested.
 pub type Defn = (Symbol, (Vec<Symbol>, Expr));
 
+// TODO: Inline this logic into parser combinators. Its redundant here and can leave mismatches unchecked.
 impl BuiltIn {
     fn from_bin_token(s: &str, e1: Expr, e2: Expr) -> Option<BuiltIn> {
         match s {

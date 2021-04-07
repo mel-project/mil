@@ -30,7 +30,7 @@ pub enum ExpandedBuiltIn<E> {
     Vappend(E, E),
     Vslice(E, E, E),
     // Crypto
-    Hash(E),
+    //Hash(u16, E),
     //Sigeok(E),
     // Control flow
     Bez(u16),
@@ -64,7 +64,7 @@ pub enum BuiltIn {
     Vappend(Expr, Expr),
     Vslice(Expr, Expr, Expr),
     // Crypto
-    Hash(Expr),
+    //Hash(u16, Expr),
     //Sigeok(Expr),
     // Control flow
     //Bez(Expr),
@@ -108,6 +108,10 @@ pub enum MelExpr {
     Seq(Vec<MelExpr>),
     /// Loop an expression a specified number of  times.
     Loop(u16, Box<MelExpr>),
+    /// Hash the return value of an expression.
+    Hash(u16, Box<MelExpr>),
+    /// Sign a message with a public key and check that it matches a signature.
+    Sigeok(u16, Box<MelExpr>, Box<MelExpr>, Box<MelExpr>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -116,7 +120,6 @@ pub enum MelExpr {
 pub enum Expr {
     /// Fundamental data type.
     Value(Value),
-    //Int(U256),
     /// Builtin operations.
     BuiltIn(Box<BuiltIn>),
     /// Application of a user-defined function to some arguments.
@@ -133,6 +136,10 @@ pub enum Expr {
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     /// Loop an expression a specified number of  times.
     Loop(u16, Box<Expr>),
+    /// Hash the return value of an expression.
+    Hash(u16, Box<Expr>),
+    /// Sign a message with a public key and check that it matches a signature.
+    Sigeok(u16, Box<Expr>, Box<Expr>, Box<Expr>),
 }
 
 /// An expression where all applications are on [BuiltIn] operators.
@@ -155,4 +162,8 @@ pub enum UnrolledExpr {
     If(Box<UnrolledExpr>, Box<UnrolledExpr>, Box<UnrolledExpr>),
     /// Loop an expression a specified number of  times.
     Loop(u16, Box<UnrolledExpr>),
+    /// Hash the return value of an expression.
+    Hash(u16, Box<UnrolledExpr>),
+    /// Sign a message with a public key and check that it matches a signature.
+    Sigeok(u16, Box<UnrolledExpr>, Box<UnrolledExpr>, Box<UnrolledExpr>),
 }

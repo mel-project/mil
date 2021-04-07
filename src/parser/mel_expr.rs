@@ -37,7 +37,6 @@ impl MemoryMap {
                 let mel_b = match *b {
                     ExpandedBuiltIn::Vempty => ExpandedBuiltIn::<MelExpr>::Vempty,
                     ExpandedBuiltIn::Not(e) => ExpandedBuiltIn::<MelExpr>::Not(self.to_mel_expr(e)),
-                    ExpandedBuiltIn::Hash(e) => ExpandedBuiltIn::<MelExpr>::Hash(self.to_mel_expr(e)),
                     ExpandedBuiltIn::Vlen(e) => ExpandedBuiltIn::<MelExpr>::Vlen(self.to_mel_expr(e)),
                     ExpandedBuiltIn::Add(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Add),
                     ExpandedBuiltIn::Sub(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Sub),
@@ -110,6 +109,11 @@ impl MemoryMap {
                 MelExpr::Seq( mel_binds )
             },
             UnrolledExpr::Loop(n, expr) => MelExpr::Loop(n, Box::new(self.to_mel_expr(*expr))),
+            UnrolledExpr::Hash(n, expr) => MelExpr::Hash(n, Box::new(self.to_mel_expr(*expr))),
+            UnrolledExpr::Sigeok(n, e1,e2,e3) =>
+                MelExpr::Sigeok(n, Box::new(self.to_mel_expr(*e1)),
+                                   Box::new(self.to_mel_expr(*e2)),
+                                   Box::new(self.to_mel_expr(*e3))),
         }
     }
 }
@@ -119,6 +123,8 @@ pub fn count_insts(e: &MelExpr) -> u16 {
     match e {
         MelExpr::Seq(v) => v.iter().map(count_insts).reduce(|a,b| a+b).unwrap_or(0),
         MelExpr::Loop(_,e) => 1 + count_insts(e),
+        MelExpr::Hash(_,e) => 1 + count_insts(e),
+        MelExpr::Sigeok(_,e1,e2,e3) => 1 + count_insts(e1) + count_insts(e2) + count_insts(e3),
         MelExpr::Value(val) => match val {
             //Value::Vec(v) => v.len(),
             Value::Int(_) => 1,
@@ -134,8 +140,6 @@ pub fn count_insts(e: &MelExpr) -> u16 {
             ExpandedBuiltIn::Or(e1,e2)  => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Xor(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Not(e)     => 1 + count_insts(&e),
-            ExpandedBuiltIn::Hash(e)     => 1 + count_insts(&e),
-            //ExpandedBuiltIn::Sigeok(e)   
             ExpandedBuiltIn::Vref(e1,e2)    => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Vappend(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Vempty         => 1,

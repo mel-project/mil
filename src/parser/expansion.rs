@@ -85,7 +85,6 @@ impl Env {
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
                 BuiltIn::Vempty => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty))),
-                BuiltIn::Hash(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Hash, mangler),
                 BuiltIn::Not(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler),
                 BuiltIn::Vlen(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Vlen, mangler),
                 BuiltIn::Add(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Add, mangler),
@@ -117,7 +116,7 @@ impl Env {
             Expr::App(f,es) => {
                 // Get the fn definition from the env
                 let (params, body) = self.fns.get(f)
-                    .ok_or(ParseErr(format!("Function {} was called but is not defined.", f)))?;
+                    .ok_or(ParseErr(format!("Function '{}' was called but is not defined.", f)))?;
 
                 // Check that args length macthes params to fn
                 if params.len() != es.len() {
@@ -193,6 +192,16 @@ impl Env {
                 let on_false = self.expand_mangle_fns(on_false, mangler)?;
 
                 Ok( UnrolledExpr::If(Box::new(u_pred), Box::new(on_true), Box::new(on_false)) )
+            },
+            Expr::Hash(n, expr) => {
+                let u_expr = self.expand_mangle_fns(expr, mangler)?;
+                Ok( UnrolledExpr::Hash(*n, Box::new(u_expr)) )
+            },
+            Expr::Sigeok(n, e1, e2, e3) => {
+                let u_e1 = self.expand_mangle_fns(e1, mangler)?;
+                let u_e2 = self.expand_mangle_fns(e2, mangler)?;
+                let u_e3 = self.expand_mangle_fns(e3, mangler)?;
+                Ok( UnrolledExpr::Sigeok(*n, Box::new(u_e1), Box::new(u_e2), Box::new(u_e3)) )
             },
             Expr::Loop(n, expr) => {
                 let u_expr = self.expand_mangle_fns(expr, mangler)?;

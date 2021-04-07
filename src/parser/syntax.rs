@@ -85,7 +85,6 @@ fn unary_builtin<'a>(input: &'a str)
                 list!(alt((
                         tag("len"),
                         tag("not"),
-                        tag("hash"),
                     )),
                     expr),
                 |(s,e)| BuiltIn::from_uni_token(s, e)),
@@ -214,6 +213,26 @@ pub fn if_expr<'a>(input: &'a str)
         .parse(input)
 }
 
+pub fn sigeok<'a>(input: &'a str)
+-> ParseRes<(u16, Expr, Expr, Expr)> {
+    context("sigeok operation",
+        list!(tag("sigeok"),
+              map_res(digit1, |n_str: &str| n_str.parse::<u16>()),
+              expr, expr, expr)
+            .map(|(_, n, e1, e2, e3)| (n,e1,e2,e3)))
+            .parse(input)
+}
+
+pub fn hash<'a>(input: &'a str)
+-> ParseRes<(u16, Expr)> {
+    context("hash operation",
+        list!(tag("hash"),
+              map_res(digit1, |n_str: &str| n_str.parse::<u16>()),
+              expr)
+            .map(|(_, n, e)| (n,e)))
+            .parse(input)
+}
+
 pub fn loop_expr<'a>(input: &'a str)
 -> ParseRes<(u16, Expr)> {
     context("loop expression",
@@ -238,6 +257,8 @@ pub fn expr<'a>(input: &'a str)
          let_bind.map(|(binds, exprs)| Expr::Let(binds, exprs)),
          if_expr.map(|(p,t,f)| Expr::If(Box::new(p), Box::new(t), Box::new(f))),
          loop_expr.map(|(n,e)| Expr::Loop(n, Box::new(e))),
+         hash.map(|(n,e)| Expr::Hash(n, Box::new(e))),
+         sigeok.map(|(n,e1,e2,e3)| Expr::Sigeok(n, Box::new(e1), Box::new(e2), Box::new(e3))),
          app,
      )).parse(input)
 }

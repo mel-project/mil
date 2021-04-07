@@ -156,4 +156,22 @@ mod tests {
                  Value::Int(U256::from(3)),
                  Value::Int(U256::from(3))]);
     }
+
+    #[test]
+    fn hash_bytes() {
+        let ops   = parse("(hash 1 0xF0)").unwrap();
+        let mut state = execution( compile(ops) ).unwrap();
+        if let blkstructs::melvm::Value::Bytes(im_bytes) = state.0.pop().unwrap() {
+            assert_eq!(im_bytes.into_iter().collect::<Vec<u8>>(), vec![
+                    233, 131, 224, 169, 229, 83, 12, 43, 119, 20, 230,
+                    120, 233, 61, 188, 129, 150, 148, 124, 190, 111, 195,
+                    63, 163, 212, 106, 36, 240, 111, 251, 98, 193]);
+        } else {
+            panic!();
+            //unreachable!();
+        }
+        //let hash_bytes = Value::Bytes(state.0.iter().collect());
+
+        //assert_eq!(state.0.iter().collect::<Vec<u8>>(), vec![Value::Bytes(vec![
+    }
 }
