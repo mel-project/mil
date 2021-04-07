@@ -106,6 +106,8 @@ pub enum MelExpr {
     BuiltIn(Box<ExpandedBuiltIn<MelExpr>>),
     /// A sequence of instructions.
     Seq(Vec<MelExpr>),
+    /// Loop an expression a specified number of  times.
+    Loop(u16, Box<MelExpr>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -129,11 +131,8 @@ pub enum Expr {
     //SetTo(Symbol, Box<Expr>),
     /// If expression.
     If(Box<Expr>, Box<Expr>, Box<Expr>),
-    /*
-    /// Loop an expression n times. Value must be an Int.
-    Loop(Value, Box<Expr>)
-    For(Symbol, Box<Expr>, Box<Expr>)
-    */
+    /// Loop an expression a specified number of  times.
+    Loop(u16, Box<Expr>),
 }
 
 /// An expression where all applications are on [BuiltIn] operators.
@@ -143,7 +142,6 @@ pub enum Expr {
 pub enum UnrolledExpr {
     /// Fundamental data type.
     Value(Value),
-    //Int(U256),
     /// Builtin operations.
     BuiltIn(Box<ExpandedBuiltIn<UnrolledExpr>>),
     /// Assign a value stored on the heap to a symbol
@@ -155,4 +153,6 @@ pub enum UnrolledExpr {
     Let(Vec<(VarId, UnrolledExpr)>, Vec<UnrolledExpr>),
     /// If expression.
     If(Box<UnrolledExpr>, Box<UnrolledExpr>, Box<UnrolledExpr>),
+    /// Loop an expression a specified number of  times.
+    Loop(u16, Box<UnrolledExpr>),
 }

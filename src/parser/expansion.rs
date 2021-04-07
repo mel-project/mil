@@ -117,7 +117,7 @@ impl Env {
             Expr::App(f,es) => {
                 // Get the fn definition from the env
                 let (params, body) = self.fns.get(f)
-                    .ok_or(ParseErr(format!("Function {} was called but is not deifned.", f)))?;
+                    .ok_or(ParseErr(format!("Function {} was called but is not defined.", f)))?;
 
                 // Check that args length macthes params to fn
                 if params.len() != es.len() {
@@ -193,6 +193,10 @@ impl Env {
                 let on_false = self.expand_mangle_fns(on_false, mangler)?;
 
                 Ok( UnrolledExpr::If(Box::new(u_pred), Box::new(on_true), Box::new(on_false)) )
+            },
+            Expr::Loop(n, expr) => {
+                let u_expr = self.expand_mangle_fns(expr, mangler)?;
+                Ok( UnrolledExpr::Loop(*n, Box::new(u_expr)) )
             },
             Expr::Value(v) => match v {
                 Value::Int(n) => Ok(UnrolledExpr::Value(Value::Int(n.clone()))),

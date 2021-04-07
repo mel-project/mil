@@ -109,14 +109,16 @@ impl MemoryMap {
 
                 MelExpr::Seq( mel_binds )
             },
+            UnrolledExpr::Loop(n, expr) => MelExpr::Loop(n, Box::new(self.to_mel_expr(*expr))),
         }
     }
 }
 
 /// Count the number of primitive instructions recursively from a [MelExpr].
-fn count_insts(e: &MelExpr) -> u32 {
+pub fn count_insts(e: &MelExpr) -> u16 {
     match e {
         MelExpr::Seq(v) => v.iter().map(count_insts).reduce(|a,b| a+b).unwrap_or(0),
+        MelExpr::Loop(_,e) => 1 + count_insts(e),
         MelExpr::Value(val) => match val {
             //Value::Vec(v) => v.len(),
             Value::Int(_) => 1,

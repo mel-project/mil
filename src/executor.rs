@@ -143,4 +143,17 @@ mod tests {
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
+
+    #[test]
+    fn loop_add_expr_4_times() {
+        let ops   = parse("(loop 4 (+ 1 2))").unwrap();
+        let state = execution( compile(ops) ).unwrap();
+
+        assert_eq!(
+            state.0,
+            vec![Value::Int(U256::from(3)),
+                 Value::Int(U256::from(3)),
+                 Value::Int(U256::from(3)),
+                 Value::Int(U256::from(3))]);
+    }
 }

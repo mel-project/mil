@@ -99,6 +99,15 @@ fn write_pushb(mut b: BinCode, bytes: &Vec<u8>) -> BinCode {
     b
 }
 
+/// Compile a loop expression onto a bincode.
+fn write_loop(mut b: BinCode, n: &u16, e: &MelExpr) -> BinCode {
+    b.0.push(0xb0);
+    let op_cnt: u16 = crate::parser::mel_expr::count_insts(e);
+    let b = n.compile_onto(b);
+    let b = op_cnt.compile_onto(b);
+    e.compile_onto(b)
+}
+
 /*
 fn write_vec(mut bin: BinCode, v: &Vec<Atom>) -> BinCode {
     // Write v.len() vpush opcodes
@@ -117,6 +126,7 @@ impl Compile for MelExpr {
     fn compile_onto(&self, b: BinCode) -> BinCode {
         //println!("writing {:?} to {}", self, b);
         match self {
+            MelExpr::Loop(n,e) => write_loop(b, n, e),
             // Integers evaluate to themselves (push onto stack)
             MelExpr::Value(v) => match v {
                 Value::Int(n) => write_pushi(b, n),
@@ -133,7 +143,8 @@ impl Compile for MelExpr {
 
 impl Compile for HeapPos {
     fn compile_onto(&self, mut b: BinCode) -> BinCode {
-        b.0.extend(self.to_be_bytes().iter());
+        //b.0.extend(self.to_be_bytes().iter());
+        b.0.extend_from_slice(&self.to_be_bytes());
         b
     }
 }

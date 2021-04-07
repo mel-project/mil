@@ -214,6 +214,16 @@ pub fn if_expr<'a>(input: &'a str)
         .parse(input)
 }
 
+pub fn loop_expr<'a>(input: &'a str)
+-> ParseRes<(u16, Expr)> {
+    context("loop expression",
+        list!(tag("loop"),
+              map_res(digit1, |n_str: &str| n_str.parse::<u16>()),
+              expr)
+            .map(|(_, n, e)| (n,e)))
+            .parse(input)
+}
+
 /// Top level parser returns any valid [Expr].
 pub fn expr<'a>(input: &'a str)
 -> ParseRes<Expr> {
@@ -227,6 +237,7 @@ pub fn expr<'a>(input: &'a str)
          set,
          let_bind.map(|(binds, exprs)| Expr::Let(binds, exprs)),
          if_expr.map(|(p,t,f)| Expr::If(Box::new(p), Box::new(t), Box::new(f))),
+         loop_expr.map(|(n,e)| Expr::Loop(n, Box::new(e))),
          app,
      )).parse(input)
 }
