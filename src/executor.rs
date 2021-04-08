@@ -144,6 +144,16 @@ mod tests {
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
 
+    /*
+    #[test]
+    fn empty_string_is_empty_bytes() {
+        let ops   = parse("(let (x \"\") x)").unwrap();
+        let state = execution( compile(ops) ).unwrap();
+
+        assert_eq!(state.0, vec![Value::Bytes(vec![])]);
+    }
+    */
+
     #[test]
     fn loop_add_expr_4_times() {
         let ops   = parse("(loop 4 (+ 1 2))").unwrap();

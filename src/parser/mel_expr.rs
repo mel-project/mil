@@ -88,8 +88,8 @@ impl MemoryMap {
                 let mut mel_binds = vec![];
                 binds.into_iter().for_each(|(var_id, expr)| {
                     // Make sure the variable is not somehow already there
-                    //self.memory_store.get(&var_id)
-                        //.expect("Variable id in let binding should not already be defined, this is a bug.");
+                    self.memory_store.get(&var_id)
+                        .map(|_| panic!("Variable id in let binding should not already be defined, this is a bug."));
 
                     // Assign the variable a memory location
                     // TODO: For simplicity, just converting the id into an address. This

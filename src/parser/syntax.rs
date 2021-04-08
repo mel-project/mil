@@ -3,14 +3,7 @@ use crate::parser::{Defn, ParseErr};
 use primitive_types::U256;
 use crate::types::{Reserved, Symbol, Value, BuiltIn, Expr};
 //#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
-use nom::{IResult, Parser, branch::alt, bytes::complete::tag,
-character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
-character::complete::char,
-combinator::{map_res, map_opt},
-error::{context, ParseError},
-error::VerboseError,
-multi::{separated_list1, separated_list0, many0, many1},
-sequence::{terminated, separated_pair, tuple, preceded, delimited}};
+use nom::{IResult, Parser, branch::alt, bytes::complete::tag, character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1}, character::complete::{alphanumeric0, char}, combinator::{map_res, map_opt}, error::{context, ParseError}, error::VerboseError, multi::{separated_list1, separated_list0, many0, many1}, sequence::{terminated, separated_pair, tuple, preceded, delimited}};
 
 /// Create a parser for an s-expression, where each element of the list is a parser.
 /// ```
@@ -161,9 +154,14 @@ fn from_hex(s: &str) -> Result<Vec<u8>, ParseErr> {
 fn bytes<'a>(input: &'a str)
 -> ParseRes<Vec<u8>> {
     let res = context("bytes",
-        map_res(preceded(tag("0x"), hex_digit1),
-                from_hex))
+        alt((
+            // TODO: Support whitespace in strings
+            delimited(tag("\""), alphanumeric0.map(|s: &str| s.as_bytes().into()), tag("\"")),
+            map_res(preceded(tag("0x"), hex_digit1),
+                from_hex),
+           )))
         .parse(input);
+    println!("Tried bytes\n{:?}\n{:?}\n", input, res);
     res
 }
 

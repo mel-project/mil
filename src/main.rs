@@ -46,14 +46,13 @@ fn main() -> std::io::Result<()> {
     let bincode = mel_ops.compile_onto(empty);
     // Write to file
     std::fs::write("script.mvm", &bincode.0[..])?;
-    println!("Binary: 0x{}", bincode);
+    println!("Binary: 0x{}\n", bincode);
 
     // Wrap in a covenant
     let script = Covenant(bincode.0.clone());
     // Disassemble compiled binary
-    println!("\nDisassembly: ");
     if let Some(ops) = script.to_ops() {
-        println!("{:?}\n", ops);
+        println!("Disassembly:\n{:?}\n", ops);
 
         // Dummy spender transaction calls the covenant
         let (pk, sk) = ed25519_keygen();
@@ -62,12 +61,14 @@ fn main() -> std::io::Result<()> {
         let mut env = executor::ExecutionEnv::new(&tx, &ops);
         if let Some(final_state) = env.into_iter()
             //.inspect(|(stack,heap)| println!("Stack\n{:?}", stack))
-            .last()
-        {
+            .last() {
+            println!("Successful execution.\n");
             println!("Final stack\n--------\n{:?}", final_state.0);
+        } else {
+            println!("Execution failed.");
         }
     } else {
-        println!("FAILED");
+        println!("Disassembly failed!");
     }
 
     Ok(())
