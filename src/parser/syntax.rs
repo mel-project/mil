@@ -35,6 +35,7 @@ macro_rules! list {
 /// The result of a parser on strs with a VerboseError error type.
 type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
+/// Parse a list of symbol->expr binding pairs.
 fn sym_binds<'a>(input: &'a str)
 -> ParseRes<Vec<(Symbol, Expr)>> {
     s_expr(separated_list1(
@@ -45,7 +46,6 @@ fn sym_binds<'a>(input: &'a str)
 
 fn let_bind<'a>(input: &'a str)
 -> ParseRes<(Vec<(Symbol, Expr)>, Vec<Expr>)> {
-    println!("Checking let binding on {:?}", input);
     context("let binding",
         list!(
             tag("let"),
@@ -59,12 +59,15 @@ fn let_bind<'a>(input: &'a str)
 fn defn<'a>(input: &'a str)
 -> ParseRes<Defn> {
     context("defn",
-        s_expr(
-            preceded(ws(tag("fn")),
-                     tuple((ws(alpha1),
-                            ws(s_expr(separated_list1(multispace1, symbol))),
-                            expr)))))
-        .map(|(name, params, body)| (name.to_string(), (params, body)))
+        list!(
+            tag("fn"),
+            // Fn name
+            alpha1,
+            // Parameters
+            s_expr(separated_list1(multispace1, symbol)),
+            // Body
+            expr))
+        .map(|(_, name, params, body)| (name.to_string(), (params, body)))
         .parse(input)
 }
 
@@ -174,7 +177,7 @@ fn int<'a>(input: &'a str)
             .parse(input)
 }
 
-/// Wrap a parser in surrounding parenthesis with whitespace.
+/// Wrap a parser in surrounding parenthesis with optional internal whitespace.
 fn s_expr<'a, O, F>(parser: F)
 -> impl FnMut(&'a str) -> IResult<&'a str, O, VerboseError<&'a str>>
 //-> impl FnMut(&'a str) -> IResult<&'a str, O, E>
@@ -184,18 +187,16 @@ where F: Parser<&'a str, O, VerboseError<&'a str>>,
 {
     context("S expression",
     delimited(
-        //ws(char('(')),
-        char('('),
+        char('(').and(multispace0),
         parser,
-        char(')')))
-        //ws(char(')')).and(many0(line_ending))))
+        multispace0.and(char(')'))))
 }
 
 /// Top level of a program consists of a list of fn definitions and an expression.
 pub fn root<'a>(input: &'a str)
 -> ParseRes<(Vec<Defn>, Expr)> {
-    tuple((many0(defn),
-           expr))
+    tuple((separated_list0(multispace1, defn),
+           preceded(multispace0, expr)))
     .parse(input)
 }
 
@@ -258,20 +259,22 @@ pub fn loop_expr<'a>(input: &'a str)
 pub fn reserved<'a>(input: &'a str)
 -> ParseRes<Reserved> {
     context("reserved identity",
-        alt((tag("SpenderTx").map(|_| Reserved::SpenderTx),
-             tag("SpenderTxHash").map(|_| Reserved::SpenderTxHash)),
+        alt((tag("SpenderTxHash").map(|_| Reserved::SpenderTx),
+             tag("SpenderTx").map(|_| Reserved::SpenderTxHash)),
            ))(input)
 }
 
 /// Top level parser returns any valid [Expr].
 pub fn expr<'a>(input: &'a str)
 -> ParseRes<Expr> {
+    // The order is important
     alt((bytes.map(Value::Bytes).map(Expr::Value),
          int.map(Value::Int).map(Expr::Value),
          binary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          unary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          tri_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          empty_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
+         reserved.map(|r| Expr::Reserved(r)),
          symbol.map(Expr::Var),
          set,
          let_bind.map(|(binds, exprs)| Expr::Let(binds, exprs)),
@@ -279,7 +282,6 @@ pub fn expr<'a>(input: &'a str)
          loop_expr.map(|(n,e)| Expr::Loop(n, Box::new(e))),
          hash.map(|(n,e)| Expr::Hash(n, Box::new(e))),
          sigeok.map(|(n,e1,e2,e3)| Expr::Sigeok(n, Box::new(e1), Box::new(e2), Box::new(e3))),
-         reserved.map(|r| Expr::Reserved(r)),
          app,
      )).parse(input)
 }
@@ -294,19 +296,5 @@ fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
     multispace0.and(many0(line_ending)),
     inner,
     multispace0.and(many0(line_ending)),
-  )
-}
-
-/// Surrounding whitespace (atleast 1 space) parser combinator.
-/// TODO: 1 space or 1 line ending?
-fn ws_1<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
--> impl Parser<&'a str, O, E>
-  where
-  F: FnMut(&'a str) -> IResult<&'a str, O, E>,
-{
-  delimited(
-    multispace1.and(many0(line_ending)),
-    inner,
-    multispace1.and(many0(line_ending)),
   )
 }

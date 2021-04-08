@@ -1,6 +1,6 @@
 use crate::PErr;
 use std::collections::HashMap;
-use crate::types::{Value, ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
+use crate::types::{Reserved, Value, ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
 use crate::parser::{fold_results, ParseErr, Defn};
 
 /// A list of a function's parameters and its body.
@@ -83,8 +83,8 @@ impl Env {
                 Ok(UnrolledExpr::Var(v))
             },
             Expr::Reserved(r) => Ok(match r {
-                SpenderTx => UnrolledExpr::Var(0),
-                SpenderTxHash => UnrolledExpr::Var(1),
+                Reserved::SpenderTx => UnrolledExpr::Var(0),
+                Reserved::SpenderTxHash => UnrolledExpr::Var(1),
             }),
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {

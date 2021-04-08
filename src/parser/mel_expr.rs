@@ -7,7 +7,12 @@ pub struct MemoryMap {
 
 impl MemoryMap {
     pub fn new() -> Self {
-        MemoryMap { memory_store: HashMap::new() }
+        let mut hm = HashMap::new();
+        // Reserved mappings provided in MelVM
+        hm.insert(0,0);
+        hm.insert(1,1);
+
+        MemoryMap { memory_store: hm }
     }
 
     // Abstraction for repetition
