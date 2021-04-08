@@ -9,8 +9,8 @@ character::complete::char,
 combinator::{map_res, map_opt},
 error::{context, ParseError},
 error::VerboseError,
-multi::{separated_list1, many0, many1},
-sequence::{separated_pair, tuple, preceded, delimited}};
+multi::{separated_list1, separated_list0, many0, many1},
+sequence::{terminated, separated_pair, tuple, preceded, delimited}};
 
 /// Create a parser for an s-expression, where each element of the list is a parser.
 /// ```
@@ -18,9 +18,18 @@ sequence::{separated_pair, tuple, preceded, delimited}};
 /// list!(symbol, expr, expr);
 /// ```
 macro_rules! list {
-    ($($parser:expr),+) => (
-        s_expr(tuple(($(ws($parser)),+)))
-    )
+    (@as_expr $($tuple:expr),+) => {
+        s_expr(tuple($($tuple),+))
+    };
+    (@accum ($($tuple:expr),*) $parser:expr) => {
+        list!(@as_expr ($($tuple),*, $parser))
+    };
+    (@accum ($($tuple:expr),*) $parser:expr, $($tail:tt)*) => {
+        list!(@accum ($($tuple),*, terminated($parser, multispace1)) $($tail)*)
+    };
+    ($parser:expr, $($tail:tt)*) => {
+        list!(@accum (terminated($parser, multispace1)) $($tail)*)
+    };
 }
 
 /// The result of a parser on strs with a VerboseError error type.
@@ -36,11 +45,12 @@ fn sym_binds<'a>(input: &'a str)
 
 fn let_bind<'a>(input: &'a str)
 -> ParseRes<(Vec<(Symbol, Expr)>, Vec<Expr>)> {
+    println!("Checking let binding on {:?}", input);
     context("let binding",
         list!(
             tag("let"),
             sym_binds,
-            many1(expr)
+            separated_list1(multispace1, expr)
             ))
             .map(|(_,a,b)| (a,b))
         .parse(input)
@@ -174,9 +184,11 @@ where F: Parser<&'a str, O, VerboseError<&'a str>>,
 {
     context("S expression",
     delimited(
-        ws(char('(')),
+        //ws(char('(')),
+        char('('),
         parser,
-        ws(char(')')).and(many0(line_ending))))
+        char(')')))
+        //ws(char(')')).and(many0(line_ending))))
 }
 
 /// Top level of a program consists of a list of fn definitions and an expression.
@@ -272,7 +284,7 @@ pub fn expr<'a>(input: &'a str)
      )).parse(input)
 }
 
-/// Surrounding whitespace parser combinator
+/// Surrounding whitespace parser combinator.
 fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
 -> impl Parser<&'a str, O, E>
   where
@@ -282,5 +294,19 @@ fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
     multispace0.and(many0(line_ending)),
     inner,
     multispace0.and(many0(line_ending)),
+  )
+}
+
+/// Surrounding whitespace (atleast 1 space) parser combinator.
+/// TODO: 1 space or 1 line ending?
+fn ws_1<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
+-> impl Parser<&'a str, O, E>
+  where
+  F: FnMut(&'a str) -> IResult<&'a str, O, E>,
+{
+  delimited(
+    multispace1.and(many0(line_ending)),
+    inner,
+    multispace1.and(many0(line_ending)),
   )
 }
