@@ -153,16 +153,14 @@ fn from_hex(s: &str) -> Result<Vec<u8>, ParseErr> {
 
 fn bytes<'a>(input: &'a str)
 -> ParseRes<Vec<u8>> {
-    let res = context("bytes",
+    context("bytes",
         alt((
             // TODO: Support whitespace in strings
             delimited(tag("\""), alphanumeric0.map(|s: &str| s.as_bytes().into()), tag("\"")),
             map_res(preceded(tag("0x"), hex_digit1),
                 from_hex),
            )))
-        .parse(input);
-    println!("Tried bytes\n{:?}\n{:?}\n", input, res);
-    res
+        .parse(input)
 }
 
 /// Parse a [U256] integer.

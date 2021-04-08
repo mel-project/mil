@@ -59,9 +59,9 @@ fn main() -> std::io::Result<()> {
         let tx = Transaction::empty_test().sign_ed25519(sk);
 
         let mut env = executor::ExecutionEnv::new(&tx, &ops);
-        if let Some(final_state) = env.into_iter()
+        if let Ok(final_state) = executor::execute(bincode) {//env.into_iter()
             //.inspect(|(stack,heap)| println!("Stack\n{:?}", stack))
-            .last() {
+            //.last() {
             println!("Successful execution.\n");
             println!("Final stack\n--------\n{:?}", final_state.0);
         } else {
