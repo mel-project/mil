@@ -48,18 +48,16 @@ fn main() -> std::io::Result<()> {
     std::fs::write("script.mvm", &bincode.0[..])?;
     println!("Binary: 0x{}\n", bincode);
 
-    // Wrap in a covenant
-    let script = Covenant(bincode.0.clone());
     // Disassemble compiled binary
-    if let Some(ops) = script.to_ops() {
+    if let Some(ops) = executor::disassemble(bincode) {
         println!("Disassembly:\n{:?}\n", ops);
 
         // Dummy spender transaction calls the covenant
         let (pk, sk) = ed25519_keygen();
         let tx = Transaction::empty_test().sign_ed25519(sk);
 
-        let mut env = executor::ExecutionEnv::new(&tx, &ops);
-        if let Ok(final_state) = executor::execute(bincode) {//env.into_iter()
+        let env = executor::ExecutionEnv::new(&tx, &ops);
+        if let Ok(final_state) = executor::execute(env) {//env.into_iter()
             //.inspect(|(stack,heap)| println!("Stack\n{:?}", stack))
             //.last() {
             println!("Successful execution.\n");

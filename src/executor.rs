@@ -34,11 +34,11 @@ impl<'a> ExecutionEnv<'a> {
     }
 }
 
-impl<'a> IntoIterator for &'a mut ExecutionEnv<'a> {
+impl<'a,'b> IntoIterator for &'b mut ExecutionEnv<'a> {
     type Item = Option<(Stack, Heap)>;
-    type IntoIter = ExecutorIter<'a>;
+    type IntoIter = ExecutorIter<'a,'b>;
 
-    fn into_iter(self) -> ExecutorIter<'a> {
+    fn into_iter(self) -> ExecutorIter<'a,'b> {
         ExecutorIter {
             env: self,
             pc: 0,
@@ -46,8 +46,8 @@ impl<'a> IntoIterator for &'a mut ExecutionEnv<'a> {
     }
 }
 
-pub struct ExecutorIter<'a> {
-    env: &'a mut ExecutionEnv<'a>,
+pub struct ExecutorIter<'a,'b> {
+    env: &'b mut ExecutionEnv<'a>,
     /// Tracks the next instruction to be executed.
     pc: ProgramCounter,
 }
@@ -55,8 +55,9 @@ pub struct ExecutorIter<'a> {
 /// Iterate over program instructions in an [ExecutionEnv], returning an optional
 /// view into the environment state each time. If the inner optional is none, the
 /// program failed execution. If the outer optional is none, execution finished
-/// successfully.
-impl<'a> Iterator for ExecutorIter<'a> {
+/// successfully. If the inner optional is not checked, this iterator may be
+/// non-terminating.
+impl<'a,'b> Iterator for ExecutorIter<'a,'b> {
     type Item = Option<(Stack, Heap)>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -86,20 +87,18 @@ pub fn execute(bincode: BinCode) -> bool {
 }
 */
 
-pub fn execute(bincode: BinCode) -> Result<(Stack, Heap), ()> {
+/// Disassemble a binary code using the MelVM disassembler.
+pub fn disassemble(bin: BinCode) -> Option<Vec<OpCode>> {
     // Wrap in a covenant
-    let script = Covenant(bincode.0.clone());
-
+    let script = Covenant(bin.0.clone());
     // Disassemble compiled binary
-    //if let Some(ops) = script.to_ops() {
-    let ops = script.to_ops().ok_or(())?;
+    script.to_ops()
+}
 
-    // Dummy spender transaction calls the covenant
-    let (pk, sk) = ed25519_keygen();
-    let tx = Transaction::empty_test().sign_ed25519(sk);
-
+//pub fn execute(bincode: BinCode) -> Result<(Stack, Heap), ()> {
+pub fn execute(mut env: ExecutionEnv) -> Result<(Stack, Heap), ()> {
     // Execute
-    let mut env = ExecutionEnv::new(&tx, &ops);
+    //let mut env = ExecutionEnv::new(&tx, &ops);
     /*
     let final_state = env.into_iter()
         .take_while(|x| x.is_some())
@@ -107,12 +106,15 @@ pub fn execute(bincode: BinCode) -> Result<(Stack, Heap), ()> {
         //.last();
     */
     let mut final_state = (vec![], HashMap::new());
-    for x in env.into_iter() {
+    {
+    let e = &mut env;
+    for x in e.into_iter() {
         match x {
             None => return Err(()),
             Some(state) => final_state = state,
         }
     };
+    }
 
     Ok(final_state)
 }
@@ -124,6 +126,7 @@ mod tests {
     use crate::types::MelExpr;
     use crate::compiler::{Compile, BinCode};
     use primitive_types::U256;
+    use tmelcrypt::{Ed25519PK, Ed25519SK};
 
     fn compile(ops: MelExpr) -> BinCode {
         // Compile to binary
@@ -131,10 +134,18 @@ mod tests {
         ops.compile_onto(empty)
     }
 
+    fn key_and_empty_tx() -> (Ed25519PK, Ed25519SK, Transaction) {
+        let (pk, sk) = ed25519_keygen();
+        let tx       = Transaction::empty_test().sign_ed25519(sk);
+        (pk, sk, tx)
+    }
+
     #[test]
     fn add_numbers() {
         let ops   = parse("(+ 1 2)").unwrap();
-        let state = execute( compile(ops) ).unwrap();
+        let (pk, sk, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(state.0, vec![Value::Int(U256::from(3))]);
     }
@@ -142,7 +153,9 @@ mod tests {
     #[test]
     fn set_value() {
         let ops   = parse("(let (x 1) (set! x 2) x)").unwrap();
-        let state = execute( compile(ops) ).unwrap();
+        let (pk, sk, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(state.0, vec![Value::Int(U256::from(2))]);
     }
@@ -150,7 +163,9 @@ mod tests {
     #[test]
     fn nested_lets() {
         let ops   = parse("(let (x 3) (let (y 2) (* x y)))").unwrap();
-        let state = execute( compile(ops) ).unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(state.0, vec![Value::Int(U256::from(6))]);
     }
@@ -158,7 +173,9 @@ mod tests {
     #[test]
     fn if_true_branch() {
         let ops   = parse("(if (and 1 1) (* 2 2) 1)").unwrap();
-        let state = execute( compile(ops) ).unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(state.0, vec![Value::Int(U256::from(4))]);
     }
@@ -166,7 +183,9 @@ mod tests {
     #[test]
     fn if_false_branch() {
         let ops   = parse("(if 0 (* 2 2) 1)").unwrap();
-        let state = execute( compile(ops) ).unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
@@ -184,7 +203,9 @@ mod tests {
     #[test]
     fn loop_add_expr_4_times() {
         let ops   = parse("(loop 4 (+ 1 2))").unwrap();
-        let state = execute( compile(ops) ).unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(
             state.0,
@@ -197,7 +218,10 @@ mod tests {
     #[test]
     fn hash_bytes() {
         let ops   = parse("(hash 1 0xF0)").unwrap();
-        let mut state = execute( compile(ops) ).unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let mut state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
         if let blkstructs::melvm::Value::Bytes(im_bytes) = state.0.pop().unwrap() {
             assert_eq!(im_bytes.into_iter().collect::<Vec<u8>>(), vec![
                     233, 131, 224, 169, 229, 83, 12, 43, 119, 20, 230,
@@ -208,13 +232,18 @@ mod tests {
         }
     }
 
-    /*
     #[test]
     fn sigeok_bytes() {
-        let ops   = parse("(sigeok 32 0xF0)").unwrap();
-        let state = execute( compile(ops) ).unwrap();
+        let (pk, _, tx) = key_and_empty_tx();
+        let ops   = parse(&format!("
+                (sigeok 32
+                    (get (get SpenderTx 6) 0)
+                    \"{}\"
+                    SpenderTxHash)", hex::encode(&pk.0))).unwrap();
 
-        assert_eq!(state.0, );
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).expect("Execution failed.");
+
+        //assert_eq!(state.0, vec![Value::Int(1)]);
     }
-    */
 }
