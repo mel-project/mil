@@ -238,7 +238,7 @@ mod tests {
         let ops   = parse(&format!("
                 (sigeok 32
                     (get 0 (get 6 SpenderTx))
-                    \"{}\"
+                    0x{}
                     SpenderTxHash)", hex::encode(&pk.0))).unwrap();
 
         let dis = disassemble(compile(ops)).unwrap();
