@@ -237,13 +237,14 @@ mod tests {
         let (pk, _, tx) = key_and_empty_tx();
         let ops   = parse(&format!("
                 (sigeok 32
-                    (get (get SpenderTx 6) 0)
+                    (get 0 (get 6 SpenderTx))
                     \"{}\"
                     SpenderTxHash)", hex::encode(&pk.0))).unwrap();
 
         let dis = disassemble(compile(ops)).unwrap();
-        let state = execute(ExecutionEnv::new(&tx, &dis)).expect("Execution failed.");
+        let state = execute(ExecutionEnv::new(&tx, &dis))
+            .expect(&format!("Execution failed:\n{:?}", dis));
 
-        //assert_eq!(state.0, vec![Value::Int(1)]);
+        assert_eq!(state.0, vec![Value::Int(U256::one())]);
     }
 }

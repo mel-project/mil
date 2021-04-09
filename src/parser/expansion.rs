@@ -83,8 +83,9 @@ impl Env {
                 Ok(UnrolledExpr::Var(v))
             },
             Expr::Reserved(r) => Ok(match r {
-                Reserved::SpenderTx => UnrolledExpr::Var(0),
-                Reserved::SpenderTxHash => UnrolledExpr::Var(1),
+                // TODO: Why are these reversed??
+                Reserved::SpenderTx => UnrolledExpr::Var(1),
+                Reserved::SpenderTxHash => UnrolledExpr::Var(0),
             }),
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
