@@ -127,6 +127,7 @@ mod tests {
     use crate::compiler::{Compile, BinCode};
     use primitive_types::U256;
     use tmelcrypt::{Ed25519PK, Ed25519SK};
+    use im::vector;
 
     fn compile(ops: MelExpr) -> BinCode {
         // Compile to binary
@@ -154,6 +155,37 @@ mod tests {
     fn set_value() {
         let ops   = parse("(let (x 1) (set! x 2) x)").unwrap();
         let (pk, sk, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(2))]);
+    }
+
+    #[test]
+    fn cons_nil_1() {
+        let ops   = parse("(cons 1 nil)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::one())])]);
+    }
+
+    #[test]
+    fn concat_vectors() {
+        let ops   = parse("(concat (cons 2 nil) (cons 1 nil))").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Vector(
+                vector![Value::Int(U256::one()), Value::Int(U256::from(2))])]);
+    }
+
+    #[test]
+    fn ref_vector() {
+        let ops   = parse("(get 1 (concat (cons 2 nil) (cons 1 nil)))").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
         let dis = disassemble(compile(ops)).unwrap();
         let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 

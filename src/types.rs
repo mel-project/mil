@@ -57,10 +57,15 @@ pub enum BuiltIn {
     Xor(Expr, Expr),
     Not(Expr),
     // Vectors
+    /// (cons 1 nil)
     Vpush(Expr, Expr),
+    /// nil
     Vempty,
+    /// (get 0 v)
     Vref(Expr, Expr),
+    /// (vlen v)
     Vlen(Expr),
+    /// (concat (cons 2 nil) (cons 1 nil)) => [1 2]
     Vappend(Expr, Expr),
     Vslice(Expr, Expr, Expr),
     // Crypto

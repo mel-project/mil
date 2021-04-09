@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 nom = "6.1.2"
 hex = "0.4.3"
+im = "15.0.0"
 blkstructs = { git = "https://github.com/themeliolabs/themelio-core" }
 tmelcrypt = { git = "https://github.com/themeliolabs/themelio-core" }
 #blkstructs = { path = "../themelio-core/libs/blkstructs" }
