@@ -3,7 +3,14 @@ use crate::parser::{Defn, ParseErr};
 use primitive_types::U256;
 use crate::types::{Reserved, Symbol, Value, BuiltIn, Expr};
 //#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
-use nom::{IResult, Parser, branch::alt, bytes::complete::tag, character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1}, character::complete::{alphanumeric0, char}, combinator::{map_res, map_opt}, error::{context, ParseError}, error::VerboseError, multi::{separated_list1, separated_list0, many0, many1}, sequence::{terminated, separated_pair, tuple, preceded, delimited}};
+use nom::{IResult, Parser, branch::alt,
+bytes::complete::{is_not, tag},
+character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
+character::complete::{alphanumeric0, char},
+combinator::{opt, cut, not, map_res, map_opt},
+error::{context, ParseError},
+error::VerboseError, multi::{separated_list1, separated_list0, many0, many1},
+sequence::{terminated, separated_pair, tuple, preceded, delimited}};
 
 /// Create a parser for an s-expression, where each element of the list is a parser.
 /// ```
@@ -15,13 +22,18 @@ macro_rules! list {
         s_expr(tuple($($tuple),+))
     };
     (@accum ($($tuple:expr),*) $parser:expr) => {
-        list!(@as_expr ($($tuple),*, $parser))
+        list!(@as_expr ($($tuple),*, opt(preceded(multispace0, comment))
+                .flat_map(|_| preceded(multispace1, $parser))))
     };
     (@accum ($($tuple:expr),*) $parser:expr, $($tail:tt)*) => {
-        list!(@accum ($($tuple),*, terminated($parser, multispace1)) $($tail)*)
+        list!(@accum ($($tuple),*,
+                      opt(preceded(multispace0, comment))
+                          .flat_map(|_| preceded(multispace1, $parser)))
+                  $($tail)*)
     };
     ($parser:expr, $($tail:tt)*) => {
-        list!(@accum (terminated($parser, multispace1)) $($tail)*)
+        list!(@accum (opt(comment)
+                          .flat_map(|_| preceded(multispace0, $parser))) $($tail)*)
     };
 }
 
@@ -51,7 +63,7 @@ fn let_bind<'a>(input: &'a str)
 
 fn defn<'a>(input: &'a str)
 -> ParseRes<Defn> {
-    context("defn",
+    context("function definition",
         list!(
             tag("fn"),
             // Fn name
@@ -94,18 +106,18 @@ fn unary_builtin<'a>(input: &'a str)
                     )),
                     expr),
                 |(s,e)| BuiltIn::from_uni_token(s, e)),
-                // <tag> <symb>
-                // TODO: Probably take these out since theyre very low level and redundant w/ let/set
-                alt((
-                    list!(
-                        tag("store"),
-                        symbol)
-                    .map(|(_,s)| BuiltIn::Store(s)),
-                    list!(
-                        tag("load"),
-                        symbol)
-                    .map(|(_,s)| BuiltIn::Load(s)),
-                )))))
+            // <tag> <symb>
+            // TODO: Probably take these out since theyre very low level and redundant w/ let/set
+            alt((
+                list!(
+                    tag("store"),
+                    symbol)
+                .map(|(_,s)| BuiltIn::Store(s)),
+                list!(
+                    tag("load"),
+                    symbol)
+                .map(|(_,s)| BuiltIn::Load(s)),
+            )))))
     .parse(input)
 }
 
@@ -188,6 +200,14 @@ where F: Parser<&'a str, O, VerboseError<&'a str>>,
         multispace0.and(char(')'))))
 }
 
+/// Parse a comment.
+pub fn comment<'a>(input: &'a str)
+-> ParseRes<&'a str> {
+    context("Comment",
+        preceded(tag(";"), cut(is_not("\r\n"))))
+        (input)
+}
+
 /// Top level of a program consists of a list of fn definitions and an expression.
 pub fn root<'a>(input: &'a str)
 -> ParseRes<(Vec<Defn>, Expr)> {
@@ -207,9 +227,9 @@ pub fn set<'a>(input: &'a str)
 /// Parse a function call (application) to any non-[BuiltIn] function.
 pub fn app<'a>(input: &'a str)
 -> ParseRes<Expr> {
-    let args = separated_list1(multispace1, expr);
+    //let args = separated_list1(multispace1, expr);
     context("Application",
-        list!(symbol, args))
+        list!(symbol, separated_list1(multispace1, expr)))
             .map(|(s,a)| Expr::App(s,a))
         .parse(input)
 }

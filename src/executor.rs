@@ -222,15 +222,29 @@ mod tests {
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
 
-    /*
+    #[test]
+    fn inlined_comments() {
+        let ops   = parse("
+        (if ; this is just
+            0 ;for tests
+            (* 2 2); dont mind me
+            1)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+    }
+
     #[test]
     fn empty_string_is_empty_bytes() {
         let ops   = parse("(let (x \"\") x)").unwrap();
-        let state = execute( compile(ops) ).unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
-        assert_eq!(state.0, vec![Value::Bytes(vec![])]);
+        assert_eq!(state.0, vec![Value::Bytes(vector![])]);
     }
-    */
 
     #[test]
     fn loop_add_expr_4_times() {
