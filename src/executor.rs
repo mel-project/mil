@@ -20,7 +20,7 @@ impl<'a> ExecutionEnv<'a> {
     pub fn new(tx: &'a Transaction, ops: &'a [OpCode]) -> ExecutionEnv<'a> {
         // Pre-load the tx onto the heap
         let mut heap = std::collections::HashMap::new();
-        heap.insert(0, Value::from(tx));
+        heap.insert(0, Value::from(tx.clone()));
         heap.insert(1, Value::from_bytes(&tx.hash_nosigs()));
 
         ExecutionEnv {
@@ -220,6 +220,16 @@ mod tests {
         let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+    }
+
+    #[test]
+    fn vset() {
+        let ops   = parse("(vfrom (cons 1 nil) 0 2)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::from(2))])]);
     }
 
     #[test]

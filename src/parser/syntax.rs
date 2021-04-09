@@ -81,7 +81,7 @@ fn tri_builtin<'a>(input: &'a str)
 -> ParseRes<BuiltIn> {
     context("tri builtin",
         map_opt(
-            list!(tag("slice"), expr, expr, expr),
+            list!(alt((tag("vfrom"), tag("slice"))), expr, expr, expr),
             |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
     .parse(input)
 }
@@ -98,7 +98,7 @@ fn empty_builtin<'a>(input: &'a str)
 fn unary_builtin<'a>(input: &'a str)
 -> ParseRes<BuiltIn> {
     context("unary builtin",
-        alt((
+        //alt((
             map_opt(
                 list!(alt((
                         tag("len"),
@@ -108,6 +108,7 @@ fn unary_builtin<'a>(input: &'a str)
                 |(s,e)| BuiltIn::from_uni_token(s, e)),
             // <tag> <symb>
             // TODO: Probably take these out since theyre very low level and redundant w/ let/set
+            /*
             alt((
                 list!(
                     tag("store"),
@@ -117,7 +118,9 @@ fn unary_builtin<'a>(input: &'a str)
                     tag("load"),
                     symbol)
                 .map(|(_,s)| BuiltIn::Load(s)),
-            )))))
+            */
+            //)))))
+            )
     .parse(input)
 }
 
@@ -132,7 +135,7 @@ fn binary_builtin<'a>(input: &'a str)
                 tag("%"), tag("and"),
                 tag("or"), tag("xor"),
                 tag("cons"), tag("get"),
-                tag("concat"),
+                tag("concat"), tag("="),
             )),
             expr,
             expr),

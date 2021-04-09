@@ -65,7 +65,18 @@ impl Env {
         Ok(UnrolledExpr::BuiltIn( Box::new(op(e1, e2)) ))
     }
 
-    fn expand_uniop<F>(&self, e: &Expr, op: F, mangler: &mut LinearMangler)
+    fn expand_triop<F>(&self, e1: &Expr, e2: &Expr, e3: &Expr, op: F, mangler: &mut LinearMangler)
+    -> Result<UnrolledExpr, ParseErr>
+        where F: Fn(UnrolledExpr, UnrolledExpr, UnrolledExpr) -> ExpandedBuiltIn<UnrolledExpr>
+    {
+        let e1 = self.expand_mangle_fns(&e1, mangler)?;
+        let e2 = self.expand_mangle_fns(&e2, mangler)?;
+        let e3 = self.expand_mangle_fns(&e3, mangler)?;
+
+        Ok(UnrolledExpr::BuiltIn( Box::new(op(e1, e2, e3)) ))
+    }
+
+    fn expand_monop<F>(&self, e: &Expr, op: F, mangler: &mut LinearMangler)
     -> Result<UnrolledExpr, ParseErr>
         where F: Fn(UnrolledExpr) -> ExpandedBuiltIn<UnrolledExpr>
     {
@@ -90,26 +101,29 @@ impl Env {
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
                 BuiltIn::Vempty => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty))),
-                BuiltIn::Not(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler),
-                BuiltIn::Vlen(e) => self.expand_uniop(e, ExpandedBuiltIn::<UnrolledExpr>::Vlen, mangler),
+                BuiltIn::Not(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler),
+                BuiltIn::Vlen(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Vlen, mangler),
                 BuiltIn::Add(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Add, mangler),
                 BuiltIn::Sub(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Sub, mangler),
                 BuiltIn::Mul(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Mul, mangler),
                 BuiltIn::Div(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Div, mangler),
                 BuiltIn::Rem(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Rem, mangler),
                 BuiltIn::And(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::And, mangler),
+                BuiltIn::Eql(e1,e2)  => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Eql, mangler),
                 BuiltIn::Or(e1,e2)  => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Or, mangler),
                 BuiltIn::Xor(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Xor, mangler),
                 BuiltIn::Vref(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vref, mangler),
                 BuiltIn::Vappend(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vappend, mangler),
                 BuiltIn::Vpush(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vpush, mangler),
+                BuiltIn::Vslice(e1,e2,e3) => self.expand_triop(e1, e2, e3, ExpandedBuiltIn::<UnrolledExpr>::Vslice, mangler),
+                BuiltIn::Vset(e1,e2,e3) => self.expand_triop(e1, e2, e3, ExpandedBuiltIn::<UnrolledExpr>::Vset, mangler),
                 /*
                 BuiltIn::Store(e) => {
                     let e = self.expand_mangle_fns(&e, mangler)?;
                     Ok(UnrolledExpr::BuiltIn( Box::new(ExpandedBuiltIn::<UnrolledExpr>::Store(e)) ))
                 },
                 */
-                _ => todo!("Not all builtins have been implemented"),
+                //_ => todo!("Not all builtins have been implemented"),
             },
             // A `set!` must operate on a bound variable; find it and also expand the assignment expression
             Expr::Set(s,e) => {

@@ -22,6 +22,7 @@ pub enum ExpandedBuiltIn<E> {
     Or(E, E),
     And(E, E),
     Xor(E, E),
+    Eql(E, E),
     // Vectors
     Vempty,
     Vlen(E),
@@ -29,14 +30,11 @@ pub enum ExpandedBuiltIn<E> {
     Vpush(E, E),
     Vappend(E, E),
     Vslice(E, E, E),
-    // Crypto
-    //Hash(u16, E),
-    //Sigeok(E),
+    Vset(E, E, E),
     // Control flow
     Bez(u16),
     Bnz(u16),
     Jmp(u16),
-    Loop(u16, E),
     // Heap access
     Load(HeapPos),
     Store(HeapPos),
@@ -46,17 +44,30 @@ pub enum ExpandedBuiltIn<E> {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BuiltIn {
     // Arithmetic
+    /// (+ 4 2)
     Add(Expr, Expr),
+    /// (- 4 2)
     Sub(Expr, Expr),
+    /// (* 2 2)
     Mul(Expr, Expr),
+    /// (/ 10 3)
     Div(Expr, Expr),
+    /// (% 10 3)
     Rem(Expr, Expr),
     // Logical
+    // ---------
+    /// (and 1 0)
     And(Expr, Expr),
+    /// (or 1 0)
     Or(Expr, Expr),
+    /// (xor 0 1)
     Xor(Expr, Expr),
+    /// (not 0)
     Not(Expr),
+    /// (= 1 1)
+    Eql(Expr, Expr),
     // Vectors
+    // ---------
     /// (cons 1 nil)
     Vpush(Expr, Expr),
     /// nil
@@ -68,19 +79,21 @@ pub enum BuiltIn {
     /// (concat (cons 2 nil) (cons 1 nil)) => [1 2]
     Vappend(Expr, Expr),
     Vslice(Expr, Expr, Expr),
-    // Crypto
-    //Hash(u16, Expr),
-    //Sigeok(Expr),
+    /// (vfrom v 0 2) ; Create a new vector/bytes like v but the 0th element is 2
+    Vset(Expr, Expr, Expr),
     // Control flow
+    // ---------
     //Bez(Expr),
     //Bnz(Expr),
     //Jmp(Expr),
-    //Loop(Expr, Expr),
     // TODO: Remove these
-    Load(Symbol),
-    Store(Symbol),
+    // Unimplemented
+    //Load(Symbol),
+    // Unimplemented
+    //Store(Symbol),
 }
 
+    // ---------
 /// Symbolic name for an expression
 pub type Symbol = String;
 /// Internal data type for tracking variable ids.

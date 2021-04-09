@@ -53,6 +53,7 @@ pub type Defn = (Symbol, (Vec<Symbol>, Expr));
 impl BuiltIn {
     fn from_bin_token(s: &str, e1: Expr, e2: Expr) -> Option<BuiltIn> {
         match s {
+            "=" => Some(BuiltIn::Eql(e1, e2)),
             "+" => Some(BuiltIn::Add(e1, e2)),
             "-" => Some(BuiltIn::Sub(e1, e2)),
             "*" => Some(BuiltIn::Mul(e1, e2)),
@@ -70,6 +71,7 @@ impl BuiltIn {
     fn from_tri_token(s: &str, e1: Expr, e2: Expr, e3: Expr) -> Option<BuiltIn> {
         match s {
             "slice" => Some(BuiltIn::Vslice(e1, e2, e3)),
+            "vfrom" => Some(BuiltIn::Vset(e1, e2, e3)),
             _ => None,
         }
     }
