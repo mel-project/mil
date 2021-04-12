@@ -7,10 +7,10 @@ use nom::{IResult, Parser, branch::alt,
 bytes::complete::{is_not, tag},
 character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
 character::complete::{alphanumeric0, char},
-combinator::{opt, cut, not, map_res, map_opt},
+combinator::{opt, cut, map_res, map_opt},
 error::{context, ParseError},
 error::VerboseError, multi::{separated_list1, separated_list0, many0, many1},
-sequence::{terminated, separated_pair, tuple, preceded, delimited}};
+sequence::{separated_pair, tuple, preceded, delimited}};
 
 /// Create a parser for an s-expression, where each element of the list is a parser.
 /// ```
