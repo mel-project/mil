@@ -223,13 +223,23 @@ mod tests {
     }
 
     #[test]
-    fn vset() {
-        let ops   = parse("(vfrom (cons 1 nil) 0 2)").unwrap();
+    fn vset_vector() {
+        let ops   = parse("(vfrom 2 0 (cons 1 nil))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let dis = disassemble(compile(ops)).unwrap();
         let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::from(2))])]);
+    }
+
+    #[test]
+    fn vset_bytes() {
+        let ops   = parse("(vfrom 2 0 0x00)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Bytes(vector![2])]);
     }
 
     #[test]

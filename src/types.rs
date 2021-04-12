@@ -79,7 +79,7 @@ pub enum BuiltIn {
     /// (concat (cons 2 nil) (cons 1 nil)) => [1 2]
     Vappend(Expr, Expr),
     Vslice(Expr, Expr, Expr),
-    /// (vfrom v 0 2) ; Create a new vector/bytes like v but the 0th element is 2
+    /// (vfrom 2 0 v) ; Create a new vector/bytes like v but the 0th element is 2
     Vset(Expr, Expr, Expr),
     // Control flow
     // ---------
