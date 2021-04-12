@@ -188,6 +188,18 @@ fn int<'a>(input: &'a str)
             .parse(input)
 }
 
+/// Parse a native vector type.
+// TODO: Integrate this into list! macro so that vectors can have comments etc..
+fn vector<'a>(input: &'a str)
+-> ParseRes<Vec<Expr>> {
+    context("vector",
+        delimited(
+            char('[').and(multispace0),
+            separated_list0(multispace1, expr),
+            multispace0.and(char(']'))))
+        (input)
+}
+
 /// Wrap a parser in surrounding parenthesis with optional internal whitespace.
 fn s_expr<'a, O, F>(parser: F)
 -> impl FnMut(&'a str) -> IResult<&'a str, O, VerboseError<&'a str>>
@@ -289,6 +301,7 @@ pub fn expr<'a>(input: &'a str)
     // The order is important
     alt((bytes.map(Value::Bytes).map(Expr::Value),
          int.map(Value::Int).map(Expr::Value),
+         vector.map(Expr::Vector),
          binary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          unary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          tri_builtin.map(|b| Expr::BuiltIn(Box::new(b))),

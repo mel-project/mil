@@ -152,6 +152,26 @@ mod tests {
     }
 
     #[test]
+    fn test_eql() {
+        let ops   = parse("(= 1 1)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+    }
+
+    #[test]
+    fn test_not_eql() {
+        let ops   = parse("(= (+ 2 2) 1)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(0))]);
+    }
+
+    #[test]
     fn set_value() {
         let ops   = parse("(let (x 1) (set! x 2) x)").unwrap();
         let (pk, sk, tx) = key_and_empty_tx();
@@ -264,6 +284,19 @@ mod tests {
         let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
 
         assert_eq!(state.0, vec![Value::Bytes(vector![])]);
+    }
+
+    #[test]
+    fn init_vec_native() {
+        let ops   = parse("(let (v [1 2 3]) v)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let dis = disassemble(compile(ops)).unwrap();
+        let state = execute(ExecutionEnv::new(&tx, &dis)).unwrap();
+
+        assert_eq!(state.0, vec![Value::Vector(vector![
+            Value::Int(U256::from(1)),
+            Value::Int(U256::from(2)),
+            Value::Int(U256::from(3))])]);
     }
 
     #[test]

@@ -104,12 +104,6 @@ pub type VarId = i32;
 pub enum Value {
     Int(U256),
     Bytes(Vec<u8>),
-    /*
-    Vec {
-        members: Vec<Atom>,
-        is_struct: bool
-    },
-    */
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -143,6 +137,9 @@ pub enum MelExpr {
 pub enum Expr {
     /// Fundamental data type.
     Value(Value),
+    /// Another fundamental data type in MelVM, but not a variant of [Value]
+    /// because it is unrolled to vector operations in the AST.
+    Vector(Vec<Expr>),
     /// Builtin operations.
     BuiltIn(Box<BuiltIn>),
     /// Application of a user-defined function to some arguments.

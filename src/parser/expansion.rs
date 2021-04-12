@@ -93,6 +93,23 @@ impl Env {
                 let v = try_get_var(x, &self.mangled)?;
                 Ok(UnrolledExpr::Var(v))
             },
+            Expr::Vector(v) => {
+                let exp_v = fold_results(v.iter()
+                    .map(|e| self.expand_mangle_fns(e, mangler))
+                    .collect())?;
+
+                fn as_cons(mut v: Vec<UnrolledExpr>) -> UnrolledExpr {
+                    if v.is_empty() {
+                        UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty))
+                    } else {
+                        UnrolledExpr::BuiltIn(Box::new(
+                                ExpandedBuiltIn::<UnrolledExpr>::Vpush(v.pop()
+                                    .expect("Vector should not be empty"), as_cons(v))))
+                    }
+                }
+
+                Ok( as_cons(exp_v) )
+            }
             Expr::Reserved(r) => Ok(match r {
                 // TODO: Why are these reversed??
                 Reserved::SpenderTx => UnrolledExpr::Var(1),
