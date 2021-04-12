@@ -54,8 +54,8 @@ fn let_bind<'a>(input: &'a str)
     context("let binding",
         list!(
             tag("let"),
-            sym_binds,
-            separated_list1(multispace1, expr)
+            cut(sym_binds),
+            cut(separated_list1(multispace1, expr))
             ))
             .map(|(_,a,b)| (a,b))
         .parse(input)
@@ -67,11 +67,11 @@ fn defn<'a>(input: &'a str)
         list!(
             tag("fn"),
             // Fn name
-            alpha1,
+            cut(alpha1),
             // Parameters
-            s_expr(separated_list1(multispace1, symbol)),
+            cut(s_expr(separated_list1(multispace1, symbol))),
             // Body
-            expr))
+            cut(expr)))
         .map(|(_, name, params, body)| (name.to_string(), (params, body)))
         .parse(input)
 }
@@ -81,7 +81,7 @@ fn tri_builtin<'a>(input: &'a str)
 -> ParseRes<BuiltIn> {
     context("tri builtin",
         map_opt(
-            list!(alt((tag("vfrom"), tag("slice"))), expr, expr, expr),
+            list!(alt((tag("vfrom"), tag("slice"))), cut(expr), cut(expr), cut(expr)),
             |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
     .parse(input)
 }
@@ -104,7 +104,7 @@ fn unary_builtin<'a>(input: &'a str)
                         tag("len"),
                         tag("not"),
                     )),
-                    expr),
+                    cut(expr)),
                 |(s,e)| BuiltIn::from_uni_token(s, e)),
             // <tag> <symb>
             // TODO: Probably take these out since theyre very low level and redundant w/ let/set
@@ -137,8 +137,8 @@ fn binary_builtin<'a>(input: &'a str)
                 tag("cons"), tag("get"),
                 tag("concat"), tag("="),
             )),
-            expr,
-            expr),
+            cut(expr),
+            cut(expr)),
             |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)))
     .parse(input)
 }
@@ -172,7 +172,7 @@ fn bytes<'a>(input: &'a str)
         alt((
             // TODO: Support whitespace in strings
             delimited(tag("\""), alphanumeric0.map(|s: &str| s.as_bytes().into()), tag("\"")),
-            map_res(preceded(tag("0x"), hex_digit1),
+            map_res(preceded(tag("0x"), cut(hex_digit1)),
                 from_hex),
            )))
         .parse(input)
@@ -195,7 +195,7 @@ fn vector<'a>(input: &'a str)
     context("vector",
         delimited(
             char('[').and(multispace0),
-            separated_list0(multispace1, expr),
+            cut(separated_list0(multispace1, expr)),
             multispace0.and(char(']'))))
         (input)
 }
@@ -234,7 +234,7 @@ pub fn root<'a>(input: &'a str)
 pub fn set<'a>(input: &'a str)
 -> ParseRes<Expr> {
     // <tag> <symb> <expr>
-    list!(tag("set!"), symbol, expr)
+    list!(tag("set!"), cut(symbol), cut(expr))
         .map(|(_,s,e)| Expr::Set(s,Box::new(e)))
         .parse(input)
 }
@@ -252,7 +252,7 @@ pub fn app<'a>(input: &'a str)
 pub fn if_expr<'a>(input: &'a str)
 -> ParseRes<(Expr, Expr, Expr)> {
     context("if expression",
-        list!(tag("if"), expr, expr, expr))
+        list!(tag("if"), cut(expr), cut(expr), cut(expr)))
         .map(|(_,e1,e2,e3)| (e1,e2,e3))
         .parse(input)
 }
@@ -261,7 +261,7 @@ pub fn sigeok<'a>(input: &'a str)
 -> ParseRes<(u16, Expr, Expr, Expr)> {
     context("sigeok operation",
         list!(tag("sigeok"),
-              map_res(digit1, |n_str: &str| n_str.parse::<u16>()),
+              cut(map_res(digit1, |n_str: &str| n_str.parse::<u16>())),
               expr, expr, expr)
             .map(|(_, n, e1, e2, e3)| (n,e1,e2,e3)))
             .parse(input)
@@ -271,7 +271,7 @@ pub fn hash<'a>(input: &'a str)
 -> ParseRes<(u16, Expr)> {
     context("hash operation",
         list!(tag("hash"),
-              map_res(digit1, |n_str: &str| n_str.parse::<u16>()),
+              cut(map_res(digit1, |n_str: &str| n_str.parse::<u16>())),
               expr)
             .map(|(_, n, e)| (n,e)))
             .parse(input)
@@ -281,7 +281,7 @@ pub fn loop_expr<'a>(input: &'a str)
 -> ParseRes<(u16, Expr)> {
     context("loop expression",
         list!(tag("loop"),
-              map_res(digit1, |n_str: &str| n_str.parse::<u16>()),
+              cut(map_res(digit1, |n_str: &str| n_str.parse::<u16>())),
               expr)
             .map(|(_, n, e)| (n,e)))
             .parse(input)
