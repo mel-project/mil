@@ -291,8 +291,9 @@ pub fn reserved<'a>(input: &'a str)
 -> ParseRes<Reserved> {
     context("reserved identity",
         alt((tag("SpenderTxHash").map(|_| Reserved::SpenderTx),
-             tag("SpenderTx").map(|_| Reserved::SpenderTxHash)),
-           ))(input)
+             tag("SpenderTx").map(|_| Reserved::SpenderTxHash),
+             tag("CovHash").map(|_| Reserved::CovHash),
+        )))(input)
 }
 
 /// Top level parser returns any valid [Expr].

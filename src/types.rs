@@ -106,11 +106,18 @@ pub enum Value {
     Bytes(Vec<u8>),
 }
 
+// TODO: Why are SpenderTx and SpenderTxHash reversed??
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[repr(u8)]
 /// Reserved identities for values available in every MelVM script.
+/// u8 represents the corresponding location on the heap.
 pub enum Reserved {
-    SpenderTx,
-    SpenderTxHash,
+    /// The transaction spending the covenant script's output, as a value.
+    SpenderTx = 1,
+    /// Hash of the spender transaction.
+    SpenderTxHash = 0,
+    /// Hash of the covenant script.
+    CovHash = 2,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

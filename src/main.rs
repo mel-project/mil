@@ -48,6 +48,7 @@ fn main() -> std::io::Result<()> {
     std::fs::write("script.mvm", &bincode.0[..])?;
     println!("Binary: 0x{}\n", bincode);
 
+    let cov_hash = &tmelcrypt::hash_single(&bincode.0);
     // Disassemble compiled binary
     if let Some(ops) = executor::disassemble(bincode) {
         println!("Disassembly:\n{:?}\n", ops);
@@ -56,7 +57,7 @@ fn main() -> std::io::Result<()> {
         let (pk, sk) = ed25519_keygen();
         let tx = Transaction::empty_test().sign_ed25519(sk);
 
-        let env = executor::ExecutionEnv::new(&tx, &ops);
+        let env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
         if let Ok(final_state) = executor::execute(env) {//env.into_iter()
             //.inspect(|(stack,heap)| println!("Stack\n{:?}", stack))
             //.last() {
