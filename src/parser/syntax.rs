@@ -43,7 +43,7 @@ type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 /// Parse a list of symbol->expr binding pairs.
 fn sym_binds<'a>(input: &'a str)
 -> ParseRes<Vec<(Symbol, Expr)>> {
-    s_expr(separated_list1(
+    s_expr(separated_list0(
         multispace1,
         separated_pair(symbol, multispace1, expr)
         ))(input)
@@ -90,7 +90,7 @@ fn tri_builtin<'a>(input: &'a str)
 fn empty_builtin<'a>(input: &'a str)
 -> ParseRes<BuiltIn> {
     context("empty builtin",
-        map_opt(ws(tag("nil")),
+        map_opt(alt((tag("nil"), tag("bnil"))),
                 BuiltIn::from_empty_token))
     .parse(input)
 }
@@ -103,6 +103,8 @@ fn unary_builtin<'a>(input: &'a str)
                 list!(alt((
                         tag("len"),
                         tag("not"),
+                        tag("btoi"),
+                        tag("itob"),
                     )),
                     cut(expr)),
                 |(s,e)| BuiltIn::from_uni_token(s, e)),

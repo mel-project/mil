@@ -28,11 +28,27 @@ fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
 }
 
 /*
-fn execute_on_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
-    if let Some(fp) = cmd.text_txs {
-        let l = read_txs(fp)?;
-        l.txs.iter()
-            .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ))
+fn execute_on_txs(txs: TestTxs, bin: &BinCode) {
+    let cov_hash = &tmelcrypt::hash_single(&bincode.0);
+    // Disassemble compiled binary
+    if let Some(ops) = executor::disassemble(bincode) {
+        //println!("Disassembly:\n{:?}\n", ops);
+
+        //if let Some(fp) = cmd.test_txs {
+            //let l = read_txs(fp)?;
+            let execs = txs.iter()
+                .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ));
+
+            execs.for_each(|res| match res {
+                Some(final_state) => {
+                    println!("Successful execution.\n");
+                    println!("Final stack\n--------\n{:?}", final_state.0);
+                },
+                None => {
+                    println!("Execution failed.");
+                },
+            });
+        }
     }
 }
 */
@@ -95,21 +111,34 @@ fn main() -> anyhow::Result<()> {
                 },
             });
         }
-        /*
-        // Dummy spender transaction calls the covenant
+
         let (pk, sk) = ed25519_keygen();
         let tx = Transaction::empty_test().sign_ed25519(sk);
 
-        let env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
-        if let Ok(final_state) = executor::execute(env) {//env.into_iter()
-            //.inspect(|(stack,heap)| println!("Stack\n{:?}", stack))
-            //.last() {
-            println!("Successful execution.\n");
-            println!("Final stack\n--------\n{:?}", final_state.0);
+        // Execute on a dummy transaction
+        let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
+
+        if cmd.debug {
+            // Display every step in debug mode
+            env.into_iter()
+                .take_while(|r| r.is_some())
+                .inspect(|res| match res {
+                    Some((stack,heap)) =>
+                        println!("-----\nStack\n{:?}\n\nHeap\n{:?}\n", stack, heap),
+                    None => (),
+                })
+                .last();
         } else {
-            println!("Execution failed.");
+            // Just display the final state
+            if let Some(final_state) = executor::execute(env) {//env.into_iter()
+                //.inspect(|(stack,heap)| println!("Stack\n{:?}", stack))
+                //.last() {
+                println!("Successful execution.\n");
+                println!("Final stack\n--------\n{:?}", final_state.0);
+            } else {
+                println!("Execution failed.");
+            }
         }
-        */
     } else {
         println!("Disassembly failed!");
     }

@@ -35,6 +35,9 @@ pub enum ExpandedBuiltIn<E> {
     Bez(u16),
     Bnz(u16),
     Jmp(u16),
+    // Type casts
+    //ItoB(E),
+    //BtoI(E),
     // Heap access
     Load(HeapPos),
     Store(HeapPos),
@@ -81,11 +84,13 @@ pub enum BuiltIn {
     Vslice(Expr, Expr, Expr),
     /// (vfrom 2 0 v) ; Create a new vector/bytes like v but the 0th element is 2
     Vset(Expr, Expr, Expr),
-    // Control flow
-    // ---------
-    //Bez(Expr),
-    //Bnz(Expr),
-    //Jmp(Expr),
+    // Type casts
+    // Integer to bytes
+    //ItoB(Expr),
+    // First 32 bytes of a Bytes to an integer
+    //BtoI(Expr),
+    // bnil
+    //Bempty,
     // TODO: Remove these
     // Unimplemented
     //Load(Symbol),
@@ -93,7 +98,6 @@ pub enum BuiltIn {
     //Store(Symbol),
 }
 
-    // ---------
 /// Symbolic name for an expression
 pub type Symbol = String;
 /// Internal data type for tracking variable ids.

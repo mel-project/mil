@@ -4,6 +4,9 @@ use std::path::PathBuf;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "Mil", about="Mil compiler")]
 pub struct BuildCmd {
+    /// Display VM state at each step of execution.
+    #[structopt(short, long)]
+    pub debug: bool,
     /// File containing the .mil program to compile.
     pub in_file: PathBuf,
     /// Where to write the compiled binary.
