@@ -112,10 +112,11 @@ fn main() -> anyhow::Result<()> {
             });
         }
 
+        // Execute on a dummy transaction
+        // ------------------------------
+
         let (pk, sk) = ed25519_keygen();
         let tx = Transaction::empty_test().sign_ed25519(sk);
-
-        // Execute on a dummy transaction
         let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
 
         if cmd.debug {
@@ -123,16 +124,14 @@ fn main() -> anyhow::Result<()> {
             env.into_iter()
                 .take_while(|r| r.is_some())
                 .inspect(|res| match res {
-                    Some((stack,heap)) =>
-                        println!("-----\nStack\n{:?}\n\nHeap\n{:?}\n", stack, heap),
+                    Some((stack,heap,pc)) =>
+                        println!("-----\nExecuted instruction: {:?}\nStack\n{:?}\n\nHeap\n{:?}\n", ops[*pc], stack, heap),
                     None => (),
                 })
                 .last();
         } else {
             // Just display the final state
-            if let Some(final_state) = executor::execute(env) {//env.into_iter()
-                //.inspect(|(stack,heap)| println!("Stack\n{:?}", stack))
-                //.last() {
+            if let Some(final_state) = executor::execute(env) {
                 println!("Successful execution.\n");
                 println!("Final stack\n--------\n{:?}", final_state.0);
             } else {

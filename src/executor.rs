@@ -45,7 +45,7 @@ impl<'a> ExecutionEnv<'a> {
 }
 
 impl<'a,'b> IntoIterator for &'b mut ExecutionEnv<'a> {
-    type Item = Option<(Stack, Heap)>;
+    type Item = Option<(Stack, Heap, ProgramCounter)>;
     type IntoIter = ExecutorIter<'a,'b>;
 
     fn into_iter(self) -> ExecutorIter<'a,'b> {
@@ -68,14 +68,15 @@ pub struct ExecutorIter<'a,'b> {
 /// successfully. If the inner optional is not checked, this iterator may be
 /// non-terminating.
 impl<'a,'b> Iterator for ExecutorIter<'a,'b> {
-    type Item = Option<(Stack, Heap)>;
+    type Item = Option<(Stack, Heap, ProgramCounter)>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.env.ops.get(self.pc) {
             Some(op_next) => match self.env.executor.do_op(op_next, self.pc as u32) {
                 Some(pc_new) => {
                     self.pc = pc_new as usize;
-                    Some( Some(self.env.view()) )
+                    let view = self.env.view();
+                    Some( Some((view.0, view.1, self.pc)) )
                 },
                 None => Some(None),
             },
@@ -92,21 +93,13 @@ pub fn disassemble(bin: BinCode) -> Option<Vec<OpCode>> {
     script.to_ops()
 }
 
-//pub fn execute(mut env: ExecutionEnv) -> Result<(Stack, Heap), ()> {
-pub fn execute(mut env: ExecutionEnv) -> Option<(Stack, Heap)> {
-    // Execute
-    //let mut env = ExecutionEnv::new(&tx, &ops);
-    /*
-    let final_state = env.into_iter()
-        .take_while(|x| x.is_some())
-        .map(|x| x.unwrap());
-        //.last();
-    */
-    let mut final_state = (vec![], HashMap::new());
+/// Execute the given environment to completion or failure.
+pub fn execute(mut env: ExecutionEnv) -> Option<(Stack, Heap, ProgramCounter)> {
+    let mut final_state = (vec![], HashMap::new(), 0);
     let e = &mut env;
     for x in e.into_iter() {
         match x {
-            None => return None,//return Err(()),
+            None => return None,
             Some(state) => final_state = state,
         }
     };
