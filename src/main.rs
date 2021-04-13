@@ -115,7 +115,7 @@ fn main() -> anyhow::Result<()> {
         // Execute on a dummy transaction
         // ------------------------------
 
-        let (pk, sk) = ed25519_keygen();
+        let (_, sk) = ed25519_keygen();
         let tx = Transaction::empty_test().sign_ed25519(sk);
         let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
 
@@ -125,7 +125,11 @@ fn main() -> anyhow::Result<()> {
                 .take_while(|r| r.is_some())
                 .inspect(|res| match res {
                     Some((stack,heap,pc)) =>
-                        println!("-----\nExecuted instruction: {:?}\nStack\n{:?}\n\nHeap\n{:?}\n", ops[*pc], stack, heap),
+                        println!("-----\n\
+                            Executed instruction: {:?}\n\n\
+                                Stack\n{:?}\n\n\
+                                Heap\n{:?}\n",
+                            ops[*pc-1], stack, heap),
                     None => (),
                 })
                 .last();
