@@ -84,7 +84,7 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 [[package]]
 name = "autosmt"
 version = "0.1.0"
-source = "git+https://github.com/themeliolabs/themelio-core#e455a510d7a6e20671ce62d34626eaf1fb558c87"
+source = "git+https://github.com/themeliolabs/themelio-core#c3cf8e2369a322dbe6ba1b6f2e6a2f7fc1680ea3"
 dependencies = [
  "bitvec 0.17.4",
  "blake3",
@@ -199,7 +199,7 @@ dependencies = [
 [[package]]
 name = "blkstructs"
 version = "0.1.0"
-source = "git+https://github.com/themeliolabs/themelio-core#e455a510d7a6e20671ce62d34626eaf1fb558c87"
+source = "git+https://github.com/themeliolabs/themelio-core#c3cf8e2369a322dbe6ba1b6f2e6a2f7fc1680ea3"
 dependencies = [
  "anyhow",
  "arbitrary",
@@ -958,7 +958,7 @@ dependencies = [
 [[package]]
 name = "melpow"
 version = "0.1.0"
-source = "git+https://github.com/themeliolabs/themelio-core#e455a510d7a6e20671ce62d34626eaf1fb558c87"
+source = "git+https://github.com/themeliolabs/themelio-core#c3cf8e2369a322dbe6ba1b6f2e6a2f7fc1680ea3"
 dependencies = [
  "im",
  "tmelcrypt",
@@ -983,11 +983,14 @@ dependencies = [
 name = "mil"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "blkstructs",
  "hex",
  "im",
  "nom",
  "primitive-types",
+ "serde",
+ "serde_json",
  "structopt",
  "tmelcrypt",
 ]
@@ -1613,7 +1616,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "stdcode"
 version = "0.1.0"
-source = "git+https://github.com/themeliolabs/themelio-core#e455a510d7a6e20671ce62d34626eaf1fb558c87"
+source = "git+https://github.com/themeliolabs/themelio-core#c3cf8e2369a322dbe6ba1b6f2e6a2f7fc1680ea3"
 dependencies = [
  "bincode",
  "hex",
@@ -1737,7 +1740,7 @@ dependencies = [
 [[package]]
 name = "tmelcrypt"
 version = "0.1.0"
-source = "git+https://github.com/themeliolabs/themelio-core#e455a510d7a6e20671ce62d34626eaf1fb558c87"
+source = "git+https://github.com/themeliolabs/themelio-core#c3cf8e2369a322dbe6ba1b6f2e6a2f7fc1680ea3"
 dependencies = [
  "arbitrary",
  "base32",

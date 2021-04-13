@@ -5,16 +5,43 @@ use mil::{
     parser::expansion::Evaluator,
     compiler::{Compile, BinCode}};
 use std::fs::File;
+use std::path::PathBuf;
+use serde::Deserialize;
 use std::io::prelude::*;
-use blkstructs::melvm::{Transaction, Covenant};
 use structopt::StructOpt;
 use tmelcrypt::ed25519_keygen;
+use blkstructs::melvm::{Transaction, Covenant};
 
-fn main() -> std::io::Result<()> {
+#[derive(Deserialize)]
+struct TestTxs {
+    pub txs: Vec<Transaction>,
+}
+
+fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
+    let mut file = File::open(fp)?;
+    let mut str_txs = String::new();
+    file.read_to_string(&mut str_txs)?;
+
+    // TODO: Don't expect here
+    Ok(serde_json::from_str(&str_txs)
+        .expect("Failed to parse transactions as json."))
+}
+
+/*
+fn execute_on_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
+    if let Some(fp) = cmd.text_txs {
+        let l = read_txs(fp)?;
+        l.txs.iter()
+            .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ))
+    }
+}
+*/
+
+//fn main() -> std::io::Result<()> {
+fn main() -> anyhow::Result<()> {
     // Command line arguments
     let cmd: BuildCmd = StructOpt::from_args();
 
-    //let mut file = File::open("./examples/tmp.mil")?;
     let mut file = File::open(cmd.in_file)?;
     let mut code = String::new();
     file.read_to_string(&mut code)?;
@@ -53,6 +80,22 @@ fn main() -> std::io::Result<()> {
     if let Some(ops) = executor::disassemble(bincode) {
         println!("Disassembly:\n{:?}\n", ops);
 
+        if let Some(fp) = cmd.test_txs {
+            let l = read_txs(fp)?;
+            let execs = l.txs.iter()
+                .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ));
+
+            execs.for_each(|res| match res {
+                Some(final_state) => {
+                    println!("Successful execution.\n");
+                    println!("Final stack\n--------\n{:?}", final_state.0);
+                },
+                None => {
+                    println!("Execution failed.");
+                },
+            });
+        }
+        /*
         // Dummy spender transaction calls the covenant
         let (pk, sk) = ed25519_keygen();
         let tx = Transaction::empty_test().sign_ed25519(sk);
@@ -66,6 +109,7 @@ fn main() -> std::io::Result<()> {
         } else {
             println!("Execution failed.");
         }
+        */
     } else {
         println!("Disassembly failed!");
     }

@@ -92,7 +92,8 @@ pub fn disassemble(bin: BinCode) -> Option<Vec<OpCode>> {
     script.to_ops()
 }
 
-pub fn execute(mut env: ExecutionEnv) -> Result<(Stack, Heap), ()> {
+//pub fn execute(mut env: ExecutionEnv) -> Result<(Stack, Heap), ()> {
+pub fn execute(mut env: ExecutionEnv) -> Option<(Stack, Heap)> {
     // Execute
     //let mut env = ExecutionEnv::new(&tx, &ops);
     /*
@@ -105,12 +106,12 @@ pub fn execute(mut env: ExecutionEnv) -> Result<(Stack, Heap), ()> {
     let e = &mut env;
     for x in e.into_iter() {
         match x {
-            None => return Err(()),
+            None => return None,//return Err(()),
             Some(state) => final_state = state,
         }
     };
 
-    Ok(final_state)
+    Some(final_state)
 }
 
 #[cfg(test)]
