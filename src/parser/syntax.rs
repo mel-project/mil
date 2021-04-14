@@ -244,9 +244,10 @@ pub fn set<'a>(input: &'a str)
 /// Parse a function call (application) to any non-[BuiltIn] function.
 pub fn app<'a>(input: &'a str)
 -> ParseRes<Expr> {
-    //let args = separated_list1(multispace1, expr);
     context("Application",
-        list!(symbol, separated_list1(multispace1, expr)))
+        list!(symbol, separated_list1(multispace1,
+              opt(preceded(multispace0, comment))
+                  .flat_map(|_| expr))))
             .map(|(s,a)| Expr::App(s,a))
         .parse(input)
 }

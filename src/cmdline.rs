@@ -10,7 +10,9 @@ pub struct BuildCmd {
     /// File containing the .mil program to compile.
     pub in_file: PathBuf,
     /// Where to write the compiled binary.
+    #[structopt(long = "out")]
     pub out_file: Option<PathBuf>,
-    /// File containing a list of transactions as json to test the compiled script on.
+    /// File containing a list of transactions as json to test the compiled script.
+    #[structopt(long)]
     pub test_txs: Option<PathBuf>,
 }

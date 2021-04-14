@@ -129,7 +129,7 @@ mod tests {
         (pk, sk, tx)
     }
 
-    fn exec(tx: &Transaction, ops: MelExpr) -> (Stack, Heap) {
+    fn exec(tx: &Transaction, ops: MelExpr) -> (Stack, Heap, ProgramCounter) {
         let bin = compile(ops);
         let cov_hash = tmelcrypt::hash_single(&bin.0);
         let dis = disassemble(bin).expect("Failed to disassemble");
@@ -162,6 +162,15 @@ mod tests {
         let state = exec(&tx, ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(0))]);
+    }
+
+    #[test]
+    fn fn_application() {
+        let ops   = parse("(fn f (x y) (* x y)) (f 2 3)").unwrap();
+        let (pk, sk, tx) = key_and_empty_tx();
+        let state = exec(&tx, ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(6))]);
     }
 
     #[test]

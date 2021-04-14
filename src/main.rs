@@ -10,14 +10,18 @@ use serde::Deserialize;
 use std::io::prelude::*;
 use structopt::StructOpt;
 use tmelcrypt::ed25519_keygen;
+use primitive_types::U256;
 use blkstructs::melvm::{Transaction, Covenant};
 
+/*
 #[derive(Deserialize)]
 struct TestTxs {
     pub txs: Vec<Transaction>,
 }
+*/
 
-fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
+/// Read a list of transactions from a JSON file.
+fn read_txs(fp: PathBuf) -> anyhow::Result<Vec<Transaction>> {
     let mut file = File::open(fp)?;
     let mut str_txs = String::new();
     file.read_to_string(&mut str_txs)?;
@@ -98,7 +102,7 @@ fn main() -> anyhow::Result<()> {
 
         if let Some(fp) = cmd.test_txs {
             let l = read_txs(fp)?;
-            let execs = l.txs.iter()
+            let execs = l.iter()
                 .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ));
 
             execs.for_each(|res| match res {
@@ -117,6 +121,7 @@ fn main() -> anyhow::Result<()> {
 
         let (_, sk) = ed25519_keygen();
         let tx = Transaction::empty_test().sign_ed25519(sk);
+        //println!("{:?}", serde_json::to_string(&tx));
         let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
 
         if cmd.debug {
@@ -126,10 +131,11 @@ fn main() -> anyhow::Result<()> {
                 .inspect(|res| match res {
                     Some((stack,heap,pc)) =>
                         println!("-----\n\
-                            Executed instruction: {:?}\n\n\
+                            Executed instruction: {:?}\n\
+                            Next instruction: {:?}\n\n\
                                 Stack\n{:?}\n\n\
                                 Heap\n{:?}\n",
-                            ops[*pc-1], stack, heap),
+                            ops[*pc-1], ops.get(*pc), stack, heap),
                     None => (),
                 })
                 .last();
