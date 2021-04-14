@@ -4,7 +4,7 @@ use primitive_types::U256;
 use crate::types::{Reserved, Symbol, Value, BuiltIn, Expr};
 //#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
 use nom::{IResult, Parser, branch::alt,
-bytes::complete::{is_not, tag},
+bytes::complete::{take_while, is_not, tag},
 character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
 character::complete::{alphanumeric0, char},
 combinator::{opt, cut, map_res, map_opt},
@@ -145,10 +145,22 @@ fn binary_builtin<'a>(input: &'a str)
     .parse(input)
 }
 
-/// Parse a symbol, which is any alphanumeric string.
+/// Parse a symbol, which is an alphanumeric string with underscores allowed.
 fn symbol<'a>(input: &'a str)
 -> ParseRes<String> {
-    context("symbol", alpha1.map(String::from))(input)
+    let concat = |(a,b): (&str,&str)| -> Result<String, ParseErr> {
+        let mut s = String::from(a);
+        s.push_str(b);
+        Ok(s)
+    };
+
+    context("symbol", map_res(
+        tuple((alpha1, take_while(|c|
+            match c {
+                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => true,
+                _ => false,
+            }))), concat))
+        .parse(input)
 }
 
 // This function assumes an ascii encoding
