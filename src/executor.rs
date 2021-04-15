@@ -212,6 +212,53 @@ mod tests {
     }
 
     #[test]
+    fn two_gt_one() {
+        let ops   = parse("(> 2 1)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+    }
+
+    #[test]
+    fn one_lt_two() {
+        let ops   = parse("(< 1 2)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+    }
+
+    #[test]
+    fn btoi_1() {
+        let ops   = parse("(btoi 0x0000000000000000000000000000000000000000000000000000000000000001)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+    }
+
+    #[test]
+    fn btoi_max() {
+        let ops   = parse("(btoi 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::max_value())]);
+    }
+
+    #[test]
+    fn itob_1() {
+        // TODO: Can't yet parse this
+        //let ops = parse(&format!("(itob {})", U256::max_value())).unwrap();
+        let ops = parse(&format!("(itob {})", U256::one())).unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, ops);
+
+        assert_eq!(state.0, vec![Value::Bytes(vector![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]);
+    }
+
+    #[test]
     fn nested_lets() {
         let ops   = parse("(let (x 3) (let (y 2) (* x y)))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
@@ -236,6 +283,15 @@ mod tests {
         let state = exec(&tx, ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+    }
+
+    #[test]
+    fn vfrom_bytes() {
+        let ops   = parse("(vfrom 2 0 (cons 1 bnil))").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, ops);
+
+        assert_eq!(state.0, vec![Value::Bytes(vector![2])]);
     }
 
     #[test]
