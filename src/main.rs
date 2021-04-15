@@ -6,11 +6,9 @@ use mil::{
     compiler::{Compile, BinCode}};
 use std::fs::File;
 use std::path::PathBuf;
-use serde::Deserialize;
 use std::io::prelude::*;
 use structopt::StructOpt;
 use tmelcrypt::ed25519_keygen;
-use primitive_types::U256;
 use blkstructs::melvm::{Transaction, Covenant};
 
 /*
@@ -100,52 +98,81 @@ fn main() -> anyhow::Result<()> {
     if let Some(ops) = executor::disassemble(bincode) {
         println!("Disassembly:\n{:?}\n", ops);
 
-        if let Some(fp) = cmd.test_txs {
-            let l = read_txs(fp)?;
-            let execs = l.iter()
-                .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ));
+        // Execute script on provided transactions
+        // ---------------------------------------
 
-            execs.for_each(|res| match res {
-                Some(final_state) => {
-                    println!("Successful execution.\n");
-                    println!("Final stack\n--------\n{:?}", final_state.0);
-                },
-                None => {
-                    println!("Execution failed.");
-                },
-            });
+        if let Some(fp) = cmd.test_txs.clone() {
+            let l = read_txs(fp)?;
+
+            if cmd.debug {
+                l.iter().enumerate().for_each(|(i,tx)| {
+                    println!("Debug execution log for tx#{}", i);
+                    println!("{:?}", serde_json::to_string(&tx));
+
+                    let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
+                    // Display every step in debug mode
+                    env.into_iter()
+                        .take_while(|r| r.is_some())
+                        .inspect(|res| match res {
+                            Some((stack,heap,pc)) =>
+                                println!("-----\n\
+                                    Executed instruction: {:?}\n\
+                                    Next instruction: {:?}\n\n\
+                                        Stack\n{:?}\n\n\
+                                        Heap\n{:?}\n",
+                                    ops[*pc-1], ops.get(*pc), stack, heap),
+                            None => (),
+                        })
+                        .last();
+                });
+            } else {
+                let execs = l.iter()
+                    .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ));
+
+                execs.for_each(|res| match res {
+                    Some(final_state) => {
+                        println!("Successful execution.\n");
+                        println!("Final stack\n--------\n{:?}", final_state.0);
+                    },
+                    None => {
+                        println!("Execution failed.");
+                    },
+                });
+            }
         }
 
-        // Execute on a dummy transaction
-        // ------------------------------
+        // Execute on a dummy transaction if none provided
+        // -----------------------------------------------
 
-        let (_, sk) = ed25519_keygen();
-        let tx = Transaction::empty_test().sign_ed25519(sk);
-        //println!("{:?}", serde_json::to_string(&tx));
-        let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
+        if cmd.test_txs.is_none() {
+            let (_, sk) = ed25519_keygen();
+            let tx = Transaction::empty_test().sign_ed25519(sk);
+            //println!("{:?}", serde_json::to_string(&tx));
+            let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
 
-        if cmd.debug {
-            // Display every step in debug mode
-            env.into_iter()
-                .take_while(|r| r.is_some())
-                .inspect(|res| match res {
-                    Some((stack,heap,pc)) =>
-                        println!("-----\n\
-                            Executed instruction: {:?}\n\
-                            Next instruction: {:?}\n\n\
-                                Stack\n{:?}\n\n\
-                                Heap\n{:?}\n",
-                            ops[*pc-1], ops.get(*pc), stack, heap),
-                    None => (),
-                })
-                .last();
-        } else {
-            // Just display the final state
-            if let Some(final_state) = executor::execute(env) {
-                println!("Successful execution.\n");
-                println!("Final stack\n--------\n{:?}", final_state.0);
+            if cmd.debug {
+                // Display every step in debug mode
+                env.into_iter()
+                    .take_while(|r| r.is_some())
+                    .inspect(|res| match res {
+                        Some((stack,heap,pc)) =>
+                            println!("-----\n\
+                                Executed instruction: {:?}\n\
+                                Next instruction: {:?}\n\n\
+                                    Stack\n{:?}\n\n\
+                                    Heap\n{:?}\n",
+                                ops[*pc-1], ops.get(*pc), stack, heap),
+                        None => (),
+                    })
+                    .last();
             } else {
-                println!("Execution failed.");
+                // Just display the final state
+                if let Some(final_state) = executor::execute(env) {
+                    println!("Successful execution.\n");
+                    println!("Final stack\n--------\n{:?}", final_state.0);
+                } else {
+                    println!("Execution failed.");
+                }
             }
         }
     } else {

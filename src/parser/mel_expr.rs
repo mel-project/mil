@@ -11,6 +11,7 @@ impl MemoryMap {
         // Reserved mappings provided in MelVM
         hm.insert(0,0);
         hm.insert(1,1);
+        hm.insert(2,2);
 
         MemoryMap { memory_store: hm }
     }
@@ -41,6 +42,7 @@ impl MemoryMap {
             UnrolledExpr::BuiltIn(b) => {
                 let mel_b = match *b {
                     ExpandedBuiltIn::Vempty => ExpandedBuiltIn::<MelExpr>::Vempty,
+                    ExpandedBuiltIn::Bempty => ExpandedBuiltIn::<MelExpr>::Vempty,
                     ExpandedBuiltIn::Bez(n) => ExpandedBuiltIn::<MelExpr>::Bez(n),
                     ExpandedBuiltIn::Bnz(n) => ExpandedBuiltIn::<MelExpr>::Bnz(n),
                     ExpandedBuiltIn::Jmp(n) => ExpandedBuiltIn::<MelExpr>::Jmp(n),
@@ -48,12 +50,16 @@ impl MemoryMap {
                     ExpandedBuiltIn::Store(p) => ExpandedBuiltIn::<MelExpr>::Store(p),
                     ExpandedBuiltIn::Not(e) => ExpandedBuiltIn::<MelExpr>::Not(self.to_mel_expr(e)),
                     ExpandedBuiltIn::Vlen(e) => ExpandedBuiltIn::<MelExpr>::Vlen(self.to_mel_expr(e)),
+                    ExpandedBuiltIn::BtoI(e) => ExpandedBuiltIn::<MelExpr>::BtoI(self.to_mel_expr(e)),
+                    ExpandedBuiltIn::ItoB(e) => ExpandedBuiltIn::<MelExpr>::ItoB(self.to_mel_expr(e)),
                     ExpandedBuiltIn::Add(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Add),
                     ExpandedBuiltIn::Sub(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Sub),
                     ExpandedBuiltIn::Mul(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Mul),
                     ExpandedBuiltIn::Div(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Div),
                     ExpandedBuiltIn::Rem(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Rem),
                     ExpandedBuiltIn::Eql(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Eql),
+                    ExpandedBuiltIn::Lt(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Lt),
+                    ExpandedBuiltIn::Gt(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Gt),
                     ExpandedBuiltIn::And(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::And),
                     ExpandedBuiltIn::Or(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Or),
                     ExpandedBuiltIn::Xor(e1,e2) => self.binop(e1,e2, ExpandedBuiltIn::<MelExpr>::Xor),
@@ -155,13 +161,18 @@ pub fn count_insts(e: &MelExpr) -> u16 {
             ExpandedBuiltIn::Div(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Rem(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Eql(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Lt(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Gt(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::And(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Or(e1,e2)  => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Xor(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Not(e)     => 1 + count_insts(&e),
+            ExpandedBuiltIn::BtoI(e)     => 1 + count_insts(&e),
+            ExpandedBuiltIn::ItoB(e)     => 1 + count_insts(&e),
             ExpandedBuiltIn::Vref(e1,e2)    => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Vappend(e1,e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Vempty         => 1,
+            ExpandedBuiltIn::Bempty         => 1,
             ExpandedBuiltIn::Vlen(e)        => 1 + count_insts(&e),
             ExpandedBuiltIn::Vpush(e1,e2)   => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Vslice(e1,e2,e3) => 1 + count_insts(&e1) + count_insts(&e2) + count_insts(&e3),
@@ -169,7 +180,6 @@ pub fn count_insts(e: &MelExpr) -> u16 {
             ExpandedBuiltIn::Jmp(_)     => 1,
             ExpandedBuiltIn::Bez(_)     => 1,
             ExpandedBuiltIn::Bnz(_)     => 1,
-            //ExpandedBuiltIn::Loop(n, e) => 1 + count_insts(&e),
             ExpandedBuiltIn::Store(_) => 1,
             ExpandedBuiltIn::Load(_)  => 1,
         },

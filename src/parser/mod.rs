@@ -58,6 +58,8 @@ impl BuiltIn {
             "-" => Some(BuiltIn::Sub(e1, e2)),
             "*" => Some(BuiltIn::Mul(e1, e2)),
             "/" => Some(BuiltIn::Div(e1, e2)),
+            "<" => Some(BuiltIn::Lt(e1, e2)),
+            ">" => Some(BuiltIn::Gt(e1, e2)),
             "%" => Some(BuiltIn::Rem(e1, e2)),
             "and" => Some(BuiltIn::And(e1, e2)),
             "or" => Some(BuiltIn::Or(e1, e2)),
@@ -79,7 +81,7 @@ impl BuiltIn {
     fn from_empty_token(s: &str) -> Option<BuiltIn> {
         match s {
             "nil" => Some(BuiltIn::Vempty),
-            //"bnil" => Some(BuiltIn::Bempty),
+            "bnil" => Some(BuiltIn::Bempty),
             _ => None,
         }
     }
@@ -89,8 +91,8 @@ impl BuiltIn {
             //"load" => Some(BuiltIn::Load(e)),
             "not" => Some(BuiltIn::Not(e)),
             "len" => Some(BuiltIn::Vlen(e)),
-            //"btoi" => Some(BuiltIn::BtoI(e)),
-            //"itob" => Some(BuiltIn::ItoB(e)),
+            "btoi" => Some(BuiltIn::BtoI(e)),
+            "itob" => Some(BuiltIn::ItoB(e)),
             _ => None,
         }
     }

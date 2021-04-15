@@ -23,8 +23,11 @@ pub enum ExpandedBuiltIn<E> {
     And(E, E),
     Xor(E, E),
     Eql(E, E),
+    Lt(E, E),
+    Gt(E, E),
     // Vectors
     Vempty,
+    Bempty,
     Vlen(E),
     Vref(E, E),
     Vpush(E, E),
@@ -36,8 +39,8 @@ pub enum ExpandedBuiltIn<E> {
     Bnz(u16),
     Jmp(u16),
     // Type casts
-    //ItoB(E),
-    //BtoI(E),
+    ItoB(E),
+    BtoI(E),
     // Heap access
     Load(HeapPos),
     Store(HeapPos),
@@ -69,12 +72,18 @@ pub enum BuiltIn {
     Not(Expr),
     /// (= 1 1)
     Eql(Expr, Expr),
+    /// (< x y) ; x < y
+    Lt(Expr, Expr),
+    /// (> x y) ; x > y
+    Gt(Expr, Expr),
     // Vectors
     // ---------
     /// (cons 1 nil)
     Vpush(Expr, Expr),
     /// nil
     Vempty,
+    /// bnil
+    Bempty,
     /// (get 0 v)
     Vref(Expr, Expr),
     /// (vlen v)
@@ -85,12 +94,10 @@ pub enum BuiltIn {
     /// (vfrom 2 0 v) ; Create a new vector/bytes like v but the 0th element is 2
     Vset(Expr, Expr, Expr),
     // Type casts
-    // Integer to bytes
-    //ItoB(Expr),
-    // First 32 bytes of a Bytes to an integer
-    //BtoI(Expr),
-    // bnil
-    //Bempty,
+    /// Integer to bytes
+    ItoB(Expr),
+    /// First 32 bytes of a Bytes to an integer
+    BtoI(Expr),
     // TODO: Remove these
     // Unimplemented
     //Load(Symbol),

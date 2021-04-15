@@ -134,6 +134,7 @@ fn binary_builtin<'a>(input: &'a str)
             alt((
                 tag("+"), tag("-"),
                 tag("*"), tag("/"),
+                tag("<"), tag(">"),
                 tag("%"), tag("and"),
                 tag("or"), tag("xor"),
                 tag("cons"), tag("get"),

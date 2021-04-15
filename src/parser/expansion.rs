@@ -114,8 +114,11 @@ impl Env {
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
                 BuiltIn::Vempty => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty))),
+                BuiltIn::Bempty => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Bempty))),
                 BuiltIn::Not(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler),
                 BuiltIn::Vlen(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Vlen, mangler),
+                BuiltIn::BtoI(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::BtoI, mangler),
+                BuiltIn::ItoB(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::ItoB, mangler),
                 BuiltIn::Add(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Add, mangler),
                 BuiltIn::Sub(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Sub, mangler),
                 BuiltIn::Mul(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Mul, mangler),
@@ -123,6 +126,8 @@ impl Env {
                 BuiltIn::Rem(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Rem, mangler),
                 BuiltIn::And(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::And, mangler),
                 BuiltIn::Eql(e1,e2)  => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Eql, mangler),
+                BuiltIn::Lt(e1,e2)  => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Lt, mangler),
+                BuiltIn::Gt(e1,e2)  => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Gt, mangler),
                 BuiltIn::Or(e1,e2)  => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Or, mangler),
                 BuiltIn::Xor(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Xor, mangler),
                 BuiltIn::Vref(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vref, mangler),

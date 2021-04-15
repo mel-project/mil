@@ -31,6 +31,7 @@ impl<'a> ExecutionEnv<'a> {
         let mut heap = std::collections::HashMap::new();
         heap.insert(0, Value::from(tx.clone()));
         heap.insert(1, Value::from_bytes(&tx.hash_nosigs()));
+        println!("cov hash: {:?}", &tmelcrypt::hash_single(cov_hash));
         heap.insert(2, Value::from_bytes(&tmelcrypt::hash_single(cov_hash)));
 
         ExecutionEnv {
