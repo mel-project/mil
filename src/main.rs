@@ -68,17 +68,17 @@ fn main() -> anyhow::Result<()> {
     let mel_ops = parser::syntax::root(&code[..])
         .map(|(_, (fn_defs, ast))| {
             // First pass AST
-            println!("Ast\n----\n{:?}\n", (fn_defs.clone(), ast.clone()));
+            //println!("Ast\n----\n{:?}\n", (fn_defs.clone(), ast.clone()));
             let env = parser::expansion::Env::new(fn_defs);
 
             // Expand AST
             let expanded = env.expand_fns(&ast);
-            println!("Expanded\n-----\n{:?}\n", expanded);
+            //println!("Expanded\n-----\n{:?}\n", expanded);
 
             // Low-level MelExpr
             let mut mem  = MemoryMap::new();
             let mel_expr = mem.to_mel_expr(expanded.unwrap());
-            println!("MelVM\n-----\n{:?}\n", mel_expr);
+            //println!("MelVM\n-----\n{:?}\n", mel_expr);
             mel_expr
         })
         .map_err(|e| match e {
@@ -91,7 +91,7 @@ fn main() -> anyhow::Result<()> {
     let bincode = mel_ops.compile_onto(empty);
     // Write to file
     std::fs::write("script.mvm", &bincode.0[..])?;
-    println!("Binary: 0x{}\n", bincode);
+    println!("Binary as hex\n-------------\n{}\n", bincode);
 
     let cov_hash = &tmelcrypt::hash_single(&bincode.0);
     // Disassemble compiled binary
@@ -107,7 +107,7 @@ fn main() -> anyhow::Result<()> {
             if cmd.debug {
                 l.iter().enumerate().for_each(|(i,tx)| {
                     println!("Debug execution log for tx#{}", i);
-                    println!("{:?}", serde_json::to_string(&tx));
+                    //println!("{:?}", serde_json::to_string(&tx));
 
                     let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
                     // Display every step in debug mode
@@ -129,14 +129,17 @@ fn main() -> anyhow::Result<()> {
                 let execs = l.iter()
                     .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ));
 
-                execs.for_each(|res| match res {
-                    Some(final_state) => {
-                        println!("Successful execution.\n");
-                        println!("Final stack\n--------\n{:?}", final_state.0);
-                    },
-                    None => {
-                        println!("Execution failed.");
-                    },
+                execs.enumerate().for_each(|(i,res)| {
+                    print!("tx#{} - ", i);
+                    match res {
+                        Some(final_state) => {
+                            println!("Successful execution.\n");
+                            println!("Final stack\n--------\n{:?}", final_state.0);
+                        },
+                        None => {
+                            println!("Execution failed.");
+                        },
+                    }
                 });
             }
         }
@@ -147,7 +150,6 @@ fn main() -> anyhow::Result<()> {
         if cmd.test_txs.is_none() {
             let (_, sk) = ed25519_keygen();
             let tx = Transaction::empty_test().sign_ed25519(sk);
-            //println!("{:?}", serde_json::to_string(&tx));
             let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
 
             if cmd.debug {

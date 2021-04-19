@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn btoi_1() {
-        let ops   = parse("(btoi 0x0000000000000000000000000000000000000000000000000000000000000001)").unwrap();
+        let ops   = parse("(bytes->u256 0x0000000000000000000000000000000000000000000000000000000000000001)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     fn btoi_max() {
-        let ops   = parse("(btoi 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)").unwrap();
+        let ops   = parse("(bytes->u256 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
@@ -251,7 +251,7 @@ mod tests {
     fn itob_1() {
         // TODO: Can't yet parse this
         //let ops = parse(&format!("(itob {})", U256::max_value())).unwrap();
-        let ops = parse(&format!("(itob {})", U256::one())).unwrap();
+        let ops = parse(&format!("(u256->bytes {})", U256::one())).unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
@@ -381,9 +381,9 @@ mod tests {
         let (pk, _, tx) = key_and_empty_tx();
         let ops   = parse(&format!("
                 (sigeok 32
-                    (get 0 (get 6 SpenderTx))
+                    (get 0 (get 6 SPENDER-TX))
                     0x{}
-                    SpenderTxHash)", hex::encode(&pk.0))).unwrap();
+                    SPENDER-TX-HASH)", hex::encode(&pk.0))).unwrap();
 
         let state = exec(&tx, ops);
 

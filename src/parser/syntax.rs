@@ -43,10 +43,11 @@ type ParseRes<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 /// Parse a list of symbol->expr binding pairs.
 fn sym_binds<'a>(input: &'a str)
 -> ParseRes<Vec<(Symbol, Expr)>> {
+    context("symbol bindings",
     s_expr(separated_list0(
         multispace1,
         separated_pair(symbol, multispace1, expr)
-        ))(input)
+        )))(input)
 }
 
 fn let_bind<'a>(input: &'a str)
@@ -103,8 +104,8 @@ fn unary_builtin<'a>(input: &'a str)
                 list!(alt((
                         tag("len"),
                         tag("not"),
-                        tag("btoi"),
-                        tag("itob"),
+                        tag("bytes->u256"),
+                        tag("u256->bytes"),
                     )),
                     cut(expr)),
                 |(s,e)| BuiltIn::from_uni_token(s, e)),
@@ -306,9 +307,9 @@ pub fn loop_expr<'a>(input: &'a str)
 pub fn reserved<'a>(input: &'a str)
 -> ParseRes<Reserved> {
     context("reserved identity",
-        alt((tag("SpenderTxHash").map(|_| Reserved::SpenderTx),
-             tag("SpenderTx").map(|_| Reserved::SpenderTxHash),
-             tag("CovHash").map(|_| Reserved::CovHash),
+        alt((tag("SPENDER-TX-HASH").map(|_| Reserved::SpenderTx),
+             tag("SPENDER-TX").map(|_| Reserved::SpenderTxHash),
+             tag("COV-HASH").map(|_| Reserved::CovHash),
         )))(input)
 }
 
@@ -319,8 +320,8 @@ pub fn expr<'a>(input: &'a str)
     alt((bytes.map(Value::Bytes).map(Expr::Value),
          int.map(Value::Int).map(Expr::Value),
          vector.map(Expr::Vector),
-         binary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          unary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
+         binary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          tri_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          empty_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          reserved.map(|r| Expr::Reserved(r)),
@@ -333,17 +334,4 @@ pub fn expr<'a>(input: &'a str)
          sigeok.map(|(n,e1,e2,e3)| Expr::Sigeok(n, Box::new(e1), Box::new(e2), Box::new(e3))),
          app,
      )).parse(input)
-}
-
-/// Surrounding whitespace parser combinator.
-fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(inner: F)
--> impl Parser<&'a str, O, E>
-  where
-  F: FnMut(&'a str) -> IResult<&'a str, O, E>,
-{
-  delimited(
-    multispace0.and(many0(line_ending)),
-    inner,
-    multispace0.and(many0(line_ending)),
-  )
 }

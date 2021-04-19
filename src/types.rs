@@ -90,6 +90,7 @@ pub enum BuiltIn {
     Vlen(Expr),
     /// (concat (cons 2 nil) (cons 1 nil)) => [1 2]
     Vappend(Expr, Expr),
+    /// (slice 64 32 v) ; [32..64]
     Vslice(Expr, Expr, Expr),
     /// (vfrom 2 0 v) ; Create a new vector/bytes like v but the 0th element is 2
     Vset(Expr, Expr, Expr),

@@ -91,8 +91,8 @@ impl BuiltIn {
             //"load" => Some(BuiltIn::Load(e)),
             "not" => Some(BuiltIn::Not(e)),
             "len" => Some(BuiltIn::Vlen(e)),
-            "btoi" => Some(BuiltIn::BtoI(e)),
-            "itob" => Some(BuiltIn::ItoB(e)),
+            "bytes->u256" => Some(BuiltIn::BtoI(e)),
+            "u256->bytes" => Some(BuiltIn::ItoB(e)),
             _ => None,
         }
     }
