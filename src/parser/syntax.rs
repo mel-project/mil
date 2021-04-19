@@ -159,7 +159,7 @@ fn symbol<'a>(input: &'a str)
     context("symbol", map_res(
         tuple((alpha1, take_while(|c|
             match c {
-                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => true,
+                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' => true,
                 _ => false,
             }))), concat))
         .parse(input)
