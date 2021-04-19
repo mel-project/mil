@@ -78,21 +78,21 @@ pub enum BuiltIn {
     Gt(Expr, Expr),
     // Vectors
     // ---------
-    /// (cons 1 nil)
+    /// (cons nil 1) ; construct a vector from a push to the back
     Vpush(Expr, Expr),
     /// nil
     Vempty,
     /// bnil
     Bempty,
-    /// (get 0 v)
+    /// (get v 0)
     Vref(Expr, Expr),
     /// (vlen v)
     Vlen(Expr),
-    /// (concat (cons 2 nil) (cons 1 nil)) => [1 2]
+    /// (concat (cons 2 nil) (cons 1 nil)) => [2 1]
     Vappend(Expr, Expr),
-    /// (slice 64 32 v) ; [32..64]
+    /// (slice v 32 64) ; [32..64]
     Vslice(Expr, Expr, Expr),
-    /// (vfrom 2 0 v) ; Create a new vector/bytes like v but the 0th element is 2
+    /// (vfrom v 0 2) ; Create a new vector/bytes like v but the 0th element is 2
     Vset(Expr, Expr, Expr),
     // Type casts
     /// Integer to bytes

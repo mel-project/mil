@@ -56,7 +56,7 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
     }
 }
 
-fn compile_u16_expr_op<T: Compile>(mut b: BinCode, opcode: u8, n: &u16, arg: &T) -> BinCode {
+fn compile_u16_expr_op<T: Compile>(b: BinCode, opcode: u8, n: &u16, arg: &T) -> BinCode {
     let mut b = arg.compile_onto(b);
     b.0.push(opcode);
     n.compile_onto(b)
@@ -70,7 +70,7 @@ fn compile_u16op(mut b: BinCode, opcode: u8, idx: &HeapPos) -> BinCode {
 
 // Compile the args, then append the op (postfix)
 fn compile_op<T: Compile>(b: BinCode, opcode: u8, args: Vec<&T>) -> BinCode {
-    let mut b = args.iter().fold(b, |b_acc, arg|
+    let mut b = args.iter().rev().fold(b, |b_acc, arg|
             arg.compile_onto(b_acc));
     b.0.push(opcode);
     b

@@ -185,7 +185,7 @@ mod tests {
 
     #[test]
     fn cons_nil_1() {
-        let ops   = parse("(cons 1 nil)").unwrap();
+        let ops   = parse("(cons nil 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
@@ -194,21 +194,21 @@ mod tests {
 
     #[test]
     fn concat_vectors() {
-        let ops   = parse("(concat (cons 2 nil) (cons 1 nil))").unwrap();
+        let ops   = parse("(concat (cons nil 2) (cons nil 1))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
         assert_eq!(state.0, vec![Value::Vector(
-                vector![Value::Int(U256::one()), Value::Int(U256::from(2))])]);
+                vector![Value::Int(U256::from(2)), Value::Int(U256::one())])]);
     }
 
     #[test]
     fn ref_vector() {
-        let ops   = parse("(get 1 (concat (cons 2 nil) (cons 1 nil)))").unwrap();
+        let ops   = parse("(get (concat (cons nil 2) (cons nil 1)) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(2))]);
+        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
 
     #[test]
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn vfrom_bytes() {
-        let ops   = parse("(vfrom 2 0 (cons 1 bnil))").unwrap();
+        let ops   = parse("(vfrom (cons bnil 1) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
@@ -296,7 +296,7 @@ mod tests {
 
     #[test]
     fn vset_vector() {
-        let ops   = parse("(vfrom 2 0 (cons 1 nil))").unwrap();
+        let ops   = parse("(vfrom (cons nil 1) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
@@ -305,7 +305,7 @@ mod tests {
 
     #[test]
     fn vset_bytes() {
-        let ops   = parse("(vfrom 2 0 0x00)").unwrap();
+        let ops   = parse("(vfrom 0x00 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, ops);
 
@@ -381,7 +381,7 @@ mod tests {
         let (pk, _, tx) = key_and_empty_tx();
         let ops   = parse(&format!("
                 (sigeok 32
-                    (get 0 (get 6 SPENDER-TX))
+                    (get (get SPENDER-TX 6) 0)
                     0x{}
                     SPENDER-TX-HASH)", hex::encode(&pk.0))).unwrap();
 

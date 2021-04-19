@@ -104,10 +104,14 @@ impl Env {
                 fn as_cons(mut v: Vec<UnrolledExpr>) -> UnrolledExpr {
                     if v.is_empty() {
                         UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty))
+                    } else if v.len() == 1 {
+                        UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vpush(
+                                    UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Vempty)),
+                                    v.pop().expect("Vector should not be empty"))))
                     } else {
+                        let x = v.pop().expect("Vector should not be empty");
                         UnrolledExpr::BuiltIn(Box::new(
-                                ExpandedBuiltIn::<UnrolledExpr>::Vpush(v.pop()
-                                    .expect("Vector should not be empty"), as_cons(v))))
+                                ExpandedBuiltIn::<UnrolledExpr>::Vpush(as_cons(v), x)))
                     }
                 }
 
