@@ -130,6 +130,8 @@ pub enum Reserved {
     SpenderTxHash = 0,
     /// Hash of the covenant script.
     CovHash = 2,
+    /// Arbitrary bytes as input to a UTXO.
+    SelfInput = 3,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

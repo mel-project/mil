@@ -159,7 +159,7 @@ fn symbol<'a>(input: &'a str)
     context("symbol", map_res(
         tuple((alpha1, take_while(|c|
             match c {
-                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' => true,
+                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '?' => true,
                 _ => false,
             }))), concat))
         .parse(input)
@@ -310,6 +310,7 @@ pub fn reserved<'a>(input: &'a str)
         alt((tag("SPENDER-TX-HASH").map(|_| Reserved::SpenderTx),
              tag("SPENDER-TX").map(|_| Reserved::SpenderTxHash),
              tag("COV-HASH").map(|_| Reserved::CovHash),
+             tag("SELF-INPUT").map(|_| Reserved::SelfInput),
         )))(input)
 }
 

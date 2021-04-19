@@ -12,6 +12,7 @@ impl MemoryMap {
         hm.insert(0,0);
         hm.insert(1,1);
         hm.insert(2,2);
+        hm.insert(3,3);
 
         MemoryMap { memory_store: hm }
     }

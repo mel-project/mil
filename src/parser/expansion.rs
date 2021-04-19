@@ -6,6 +6,8 @@ use crate::parser::{fold_results, ParseErr, Defn};
 /// A list of a function's parameters and its body.
 type FnInfo = (Vec<Symbol>, Expr);
 
+const FIRST_UNRESERVED: i32 = 3;
+
 /// Evaluate a Mil [Expr], tracking symbols and unrolling fns.
 pub trait Evaluator {
     //fn eval(UnrolledExpr) -> MelExpr;
@@ -49,7 +51,7 @@ impl Evaluator for Env {
     /// Return the new expression as an [UnrolledExpr].
     fn expand_fns(&self, expr: &Expr) -> Result<UnrolledExpr, ParseErr> {
         // Start from 2 bcs 0 and 1 memory locations are occupied in the VM
-        self.expand_mangle_fns(expr, &mut LinearMangler{ idx:2 })
+        self.expand_mangle_fns(expr, &mut LinearMangler{ idx:FIRST_UNRESERVED })
     }
 }
 
