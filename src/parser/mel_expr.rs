@@ -9,10 +9,9 @@ impl MemoryMap {
     pub fn new() -> Self {
         let mut hm = HashMap::new();
         // Reserved mappings provided in MelVM
-        hm.insert(0,0);
-        hm.insert(1,1);
-        hm.insert(2,2);
-        hm.insert(3,3);
+        for i in 0..crate::parser::NUM_RESERVED {
+            hm.insert(i as i32, i as u16);
+        }
 
         MemoryMap { memory_store: hm }
     }

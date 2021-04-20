@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::compiler::BinCode;
 use tmelcrypt::ed25519_keygen;
 use blkstructs::{
-    Transaction,
+    Transaction, CoinDataHeight, CoinID, CoinData,
     melvm::{Value, Executor, Covenant, OpCode}};
 
 pub type ProgramCounter = usize;
@@ -17,25 +17,16 @@ pub struct ExecutionEnv<'a> {
 }
 
 impl<'a> ExecutionEnv<'a> {
-    /*
-    pub fn from_bin(tx: &'a Transaction, bin: BinCode) -> Option<ExecutionEnv<'a>> {
-        let cov_hash = &tmelcrypt::hash_single(&bin.0);
-        // Disassemble binary
-        let ops = disassemble(bin)?;
-        Some( ExecutionEnv::new(tx, ops, cov_hash) )
-    }
-    */
-
-    pub fn new(tx: &Transaction, ops: &'a [OpCode], cov_hash: &[u8]) -> ExecutionEnv<'a> {
-        // Pre-load the tx onto the heap
-        let mut heap = std::collections::HashMap::new();
-        heap.insert(0, Value::from(tx.clone()));
-        heap.insert(1, Value::from_bytes(&tx.hash_nosigs()));
-        println!("cov hash: {:?}", &tmelcrypt::hash_single(cov_hash));
-        heap.insert(2, Value::from_bytes(&tmelcrypt::hash_single(cov_hash)));
+    pub fn new(
+        spending_tx: Transaction,
+        coin_data: CoinDataHeight,
+        coin_id: CoinID,
+        ops: &'a [OpCode]) -> ExecutionEnv<'a>
+    {
+        println!("cov hash: {:?}", coin_data.coin_data.covhash);
 
         ExecutionEnv {
-            executor: Executor::new(heap),
+            executor: Executor::from(spending_tx, coin_id, coin_data),
             ops,
         }
     }
@@ -130,11 +121,25 @@ mod tests {
         (pk, sk, tx)
     }
 
-    fn exec(tx: &Transaction, ops: MelExpr) -> (Stack, Heap, ProgramCounter) {
+    fn exec(tx: &Transaction, input: &[u8], ops: MelExpr) -> (Stack, Heap, ProgramCounter) {
         let bin = compile(ops);
         let cov_hash = tmelcrypt::hash_single(&bin.0);
         let dis = disassemble(bin).expect("Failed to disassemble");
-        execute(ExecutionEnv::new(&tx, &dis, &cov_hash))
+        let empty_ci = CoinID {
+            txhash: tmelcrypt::HashVal::default(),
+            index: 0,
+        };
+        let empty_cdh = CoinDataHeight {
+            coin_data: CoinData {
+                covhash: tmelcrypt::HashVal::default(),
+                value: 0,
+                denom: vec![],
+                additional_data: vec![],
+            },
+            height: 0,
+        };
+
+        execute(ExecutionEnv::new(tx.clone(), empty_cdh, empty_ci, &dis))
             .expect(&format!("Failed to execute: {:?}", dis))
     }
 
@@ -142,7 +147,7 @@ mod tests {
     fn add_numbers() {
         let ops   = parse("(+ 1 2)").unwrap();
         let (pk, sk, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(3))]);
     }
@@ -151,7 +156,7 @@ mod tests {
     fn test_eql() {
         let ops   = parse("(= 1 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
@@ -160,7 +165,7 @@ mod tests {
     fn test_not_eql() {
         let ops   = parse("(= (+ 2 2) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(0))]);
     }
@@ -169,7 +174,7 @@ mod tests {
     fn fn_application() {
         let ops   = parse("(fn f (x y) (* x y)) (f 2 3)").unwrap();
         let (pk, sk, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(6))]);
     }
@@ -178,7 +183,7 @@ mod tests {
     fn set_value() {
         let ops   = parse("(let (x 1) (set! x 2) x)").unwrap();
         let (pk, sk, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(2))]);
     }
@@ -187,7 +192,7 @@ mod tests {
     fn cons_nil_1() {
         let ops   = parse("(cons nil 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::one())])]);
     }
@@ -196,7 +201,7 @@ mod tests {
     fn concat_vectors() {
         let ops   = parse("(concat (cons nil 2) (cons nil 1))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Vector(
                 vector![Value::Int(U256::from(2)), Value::Int(U256::one())])]);
@@ -206,7 +211,7 @@ mod tests {
     fn ref_vector() {
         let ops   = parse("(get (concat (cons nil 2) (cons nil 1)) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
@@ -215,7 +220,7 @@ mod tests {
     fn two_gt_one() {
         let ops   = parse("(> 2 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
@@ -224,7 +229,7 @@ mod tests {
     fn one_lt_two() {
         let ops   = parse("(< 1 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
@@ -233,7 +238,7 @@ mod tests {
     fn btoi_1() {
         let ops   = parse("(bytes->u256 0x0000000000000000000000000000000000000000000000000000000000000001)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
@@ -242,7 +247,7 @@ mod tests {
     fn btoi_max() {
         let ops   = parse("(bytes->u256 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::max_value())]);
     }
@@ -253,7 +258,7 @@ mod tests {
         //let ops = parse(&format!("(itob {})", U256::max_value())).unwrap();
         let ops = parse(&format!("(u256->bytes {})", U256::one())).unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Bytes(vector![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]);
     }
@@ -262,7 +267,7 @@ mod tests {
     fn nested_lets() {
         let ops   = parse("(let (x 3) (let (y 2) (* x y)))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(6))]);
     }
@@ -271,7 +276,7 @@ mod tests {
     fn if_true_branch() {
         let ops   = parse("(if (and 1 1) (* 2 2) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(4))]);
     }
@@ -280,7 +285,7 @@ mod tests {
     fn if_false_branch() {
         let ops   = parse("(if 0 (* 2 2) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
@@ -289,7 +294,7 @@ mod tests {
     fn vfrom_bytes() {
         let ops   = parse("(vfrom (cons bnil 1) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Bytes(vector![2])]);
     }
@@ -298,7 +303,7 @@ mod tests {
     fn vset_vector() {
         let ops   = parse("(vfrom (cons nil 1) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::from(2))])]);
     }
@@ -307,7 +312,7 @@ mod tests {
     fn vset_bytes() {
         let ops   = parse("(vfrom 0x00 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Bytes(vector![2])]);
     }
@@ -320,7 +325,7 @@ mod tests {
             (* 2 2); dont mind me
             1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
     }
@@ -329,7 +334,7 @@ mod tests {
     fn empty_string_is_empty_bytes() {
         let ops   = parse("(let (x \"\") x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Bytes(vector![])]);
     }
@@ -338,7 +343,7 @@ mod tests {
     fn init_vec_native() {
         let ops   = parse("(let (v [1 2 3]) v)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Vector(vector![
             Value::Int(U256::from(1)),
@@ -350,7 +355,7 @@ mod tests {
     fn loop_add_expr_4_times() {
         let ops   = parse("(loop 4 (+ 1 2))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(
             state.0,
@@ -364,7 +369,7 @@ mod tests {
     fn hash_bytes() {
         let ops   = parse("(hash 1 0xF0)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
-        let mut state = exec(&tx, ops);
+        let mut state = exec(&tx, &[], ops);
 
         if let blkstructs::melvm::Value::Bytes(im_bytes) = state.0.pop().unwrap() {
             assert_eq!(im_bytes.into_iter().collect::<Vec<u8>>(), vec![
@@ -385,7 +390,7 @@ mod tests {
                     0x{}
                     SPENDER-TX-HASH)", hex::encode(&pk.0))).unwrap();
 
-        let state = exec(&tx, ops);
+        let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::one())]);
     }

@@ -1,12 +1,10 @@
 use crate::PErr;
 use std::collections::HashMap;
 use crate::types::{Reserved, Value, ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
-use crate::parser::{fold_results, ParseErr, Defn};
+use crate::parser::{fold_results, ParseErr, Defn, NUM_RESERVED};
 
 /// A list of a function's parameters and its body.
 type FnInfo = (Vec<Symbol>, Expr);
-
-const FIRST_UNRESERVED: i32 = 3;
 
 /// Evaluate a Mil [Expr], tracking symbols and unrolling fns.
 pub trait Evaluator {
@@ -51,7 +49,7 @@ impl Evaluator for Env {
     /// Return the new expression as an [UnrolledExpr].
     fn expand_fns(&self, expr: &Expr) -> Result<UnrolledExpr, ParseErr> {
         // Start from 2 bcs 0 and 1 memory locations are occupied in the VM
-        self.expand_mangle_fns(expr, &mut LinearMangler{ idx:FIRST_UNRESERVED })
+        self.expand_mangle_fns(expr, &mut LinearMangler{ idx: NUM_RESERVED })
     }
 }
 

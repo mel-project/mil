@@ -13,6 +13,9 @@ pub enum ParseError<E> {
     Expansion(ParseErr),
 }
 
+/// Number of reserved locations on an execution heap, enumerated from 0.
+const NUM_RESERVED: i32 = 8;
+
 // TODO: hide underlying parse fns and provide a unified parser interface here.
 pub fn parse(input: &str) -> Result<MelExpr, ParseError<nom::error::VerboseError<&str>>> {
     // First pass AST

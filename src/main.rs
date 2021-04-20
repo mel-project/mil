@@ -9,17 +9,16 @@ use std::path::PathBuf;
 use std::io::prelude::*;
 use structopt::StructOpt;
 use tmelcrypt::ed25519_keygen;
-use blkstructs::melvm::{Transaction, Covenant};
+use blkstructs::{
+    Transaction,
+    CoinID,
+    CoinDataHeight};
 
-/*
-#[derive(Deserialize)]
-struct TestTxs {
-    pub txs: Vec<Transaction>,
-}
-*/
+/// List of transactions and coin inputs to execute a script on.
+type TestTxs = Vec<(CoinID, CoinDataHeight, Transaction)>;
 
 /// Read a list of transactions from a JSON file.
-fn read_txs(fp: PathBuf) -> anyhow::Result<Vec<Transaction>> {
+fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
     let mut file = File::open(fp)?;
     let mut str_txs = String::new();
     file.read_to_string(&mut str_txs)?;
@@ -105,11 +104,11 @@ fn main() -> anyhow::Result<()> {
             let l = read_txs(fp)?;
 
             if cmd.debug {
-                l.iter().enumerate().for_each(|(i,tx)| {
+                l.into_iter().enumerate().for_each(|(i, (coin_id, coin_data, tx))| {
                     println!("Debug execution log for tx#{}", i);
                     //println!("{:?}", serde_json::to_string(&tx));
 
-                    let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
+                    let mut env = executor::ExecutionEnv::new(tx, coin_data, coin_id, &ops);
                     // Display every step in debug mode
                     env.into_iter()
                         .take_while(|r| r.is_some())
@@ -126,8 +125,10 @@ fn main() -> anyhow::Result<()> {
                         .last();
                 });
             } else {
-                let execs = l.iter()
-                    .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ));
+                let execs = l.into_iter()
+                    .map(|(coin_id, coin_data, tx)|
+                        executor::execute(
+                            executor::ExecutionEnv::new(tx, coin_data, coin_id, &ops)));
 
                 execs.enumerate().for_each(|(i,res)| {
                     print!("tx#{} - ", i);
@@ -147,10 +148,11 @@ fn main() -> anyhow::Result<()> {
         // Execute on a dummy transaction if none provided
         // -----------------------------------------------
 
+        /*
         if cmd.test_txs.is_none() {
             let (_, sk) = ed25519_keygen();
             let tx = Transaction::empty_test().sign_ed25519(sk);
-            let mut env = executor::ExecutionEnv::new(&tx, &ops, cov_hash);
+            let mut env = executor::ExecutionEnv::new(&tx, &[], &ops, cov_hash);
 
             if cmd.debug {
                 // Display every step in debug mode
@@ -177,6 +179,7 @@ fn main() -> anyhow::Result<()> {
                 }
             }
         }
+        */
     } else {
         println!("Disassembly failed!");
     }
