@@ -309,8 +309,13 @@ pub fn reserved<'a>(input: &'a str)
     context("reserved identity",
         alt((tag("SPENDER-TX-HASH").map(|_| Reserved::SpenderTx),
              tag("SPENDER-TX").map(|_| Reserved::SpenderTxHash),
+             tag("SELF-TX-HASH").map(|_| Reserved::SelfTxHash),
+             tag("COIN-INDEX").map(|_| Reserved::CoinIndex),
              tag("COV-HASH").map(|_| Reserved::CovHash),
-             tag("SELF-INPUT").map(|_| Reserved::SelfInput),
+             tag("COIN-VALUE").map(|_| Reserved::CoinValue),
+             tag("COIN-DENOM").map(|_| Reserved::CoinDenom),
+             tag("SELF-DATA").map(|_| Reserved::SelfData),
+             tag("COIN-HEIGHT").map(|_| Reserved::CoinHeight),
         )))(input)
 }
 

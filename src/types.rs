@@ -128,10 +128,20 @@ pub enum Reserved {
     SpenderTx = 1,
     /// Hash of the spender transaction.
     SpenderTxHash = 0,
+    /// Hash of the spent coin's transaction.
+    SelfTxHash = 2,
+    /// Index of the output in spent coin's transaction.
+    CoinIndex = 3,
     /// Hash of the covenant script.
-    CovHash = 2,
+    CovHash = 4,
+    /// The spent coin's monetary value.
+    CoinValue = 5,
+    /// Denomination of the currency of the spent coin.
+    CoinDenom = 6,
     /// Arbitrary bytes as input to a UTXO.
-    SelfInput = 3,
+    SelfData = 7,
+    /// Block height of the spent coin.
+    CoinHeight = 8,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
