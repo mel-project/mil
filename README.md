@@ -24,34 +24,19 @@ mil examples/hellohash.mil
 cargo run -- examples/hellohash.mil
 ```
 
-Compilation results are vomitted onto stdout.
+The binary is printed in hex. The compiler also disassembles the binary directly from the MelVM, showing the raw instructions of the program.
+
 ```
-Ast
-----
-([], Hash(10, Value(Bytes([104, 101, 108, 108, 111, 119, 111, 114, 108, 100]))))
-
-Expanded
------
-Ok(Hash(10, Value(Bytes([104, 101, 108, 108, 111, 119, 111, 114, 108, 100]))))
-
-MelVM
------
-Hash(10, Value(Bytes([104, 101, 108, 108, 111, 119, 111, 114, 108, 100])))
-
-Binary: 0xf00a68656c6c6f776f726c6430000a
+Binary as hex
+-------------
+f00a68656c6c6f776f726c6430000a
 
 Disassembly:
-[PUSHB([104, 101, 108, 108, 111, 119, 111, 114, 108, 100]), HASH(10)]
-
-Successful execution.
-
-Final stack
---------
-[Bytes([123, 178, 5, 36, 77, 128, 131, 86, 49, 142, 198, 93, 10, 229, 79, 50, 238, 58, 123, 171, 93, 250, 244, 49, 176, 30, 86, 126, 3, 186, 171, 79])]
+[PushB([104, 101, 108, 108, 111, 119, 111, 114, 108, 100]), Hash(10)]
 ```
-This shows the program structure at each step of compilation: AST, Expanded-AST, MelVM ops, and binary. "Disassembly" is the ops as interpreted by MelVM from the compiled binary. "Final stack" is the final state of the MelVM stack after execution of the script. More on this in execution tests.
 
-Stdout wont always look this verbose. But in these early days of the mil compiler, it may give insight into what the program is doing under the hood.
+
+Stdout wont always look this verbose. But in these early days of the mil compiler, disassembly may give insight into what the program is doing under the hood, and guarantees that the program will be interpreted successfully.
 
 The binary can also be written to a file
 ```
@@ -59,5 +44,27 @@ mil examples/hellohash.mil --output hh.mvm
 ```
 
 ### Execution tests
-The mil compiler also provides an environment for executing and debugging programs.
-As of now, the only behaviour is to execute the script on an empty transaction. This is run automatically after compiling succeeds.
+The mil compiler also provides an environment for executing scripts on user-configured scenarios. In the MelVM, a script is associated with a UTXO, and executed only when a transaction attempts to spend it. Therefore, this test environment takes a json file consisting of a list of (UTXO, spender-transaction) values to execute. The json file specifically is of type `[(CoinID, CoinDataHeight, Transaction)]`. See the [mil binary search tree configuration](https://github.com/jaybutera/bst_mil/blob/master/txs.json) for an example.
+
+To execute a script on a test tx file,
+```bash
+mil bst.mil --test-txs.json
+```
+
+The results of each tx pair is printed. Indicating whether execution succeeded, and displaying the final state of the MelVM stack, which if `Int(0)` indicates that the spend is not allowed, and any other value means it is.
+```
+tx#0 - Successful execution.
+
+Final stack
+--------
+[Int(1)]
+
+tx#1 - Successful execution.
+
+Final stack
+--------
+[Int(0)]
+```
+
+### Debugging
+To see the entire execution, one instruction at a time, and the evolution of the stack and heap, attach the `--debug` flag to compilation.
