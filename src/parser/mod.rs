@@ -70,6 +70,11 @@ impl BuiltIn {
             "cons" => Some(BuiltIn::Vpush(e1, e2)),
             "get" => Some(BuiltIn::Vref(e1, e2)),
             "concat" => Some(BuiltIn::Vappend(e1, e2)),
+            "<<" => Some(BuiltIn::Shl(e1, e2)),
+            ">>" => Some(BuiltIn::Shr(e1, e2)),
+            "&" => Some(BuiltIn::BitAnd(e1, e2)),
+            "|" => Some(BuiltIn::BitOr(e1, e2)),
+            "^" => Some(BuiltIn::BitXor(e1, e2)),
             _ => None,
         }
     }

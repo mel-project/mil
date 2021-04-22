@@ -25,6 +25,12 @@ pub enum ExpandedBuiltIn<E> {
     Eql(E, E),
     Lt(E, E),
     Gt(E, E),
+    // Bitwise logical
+    Shl(E, E),
+    Shr(E, E),
+    BitAnd(E, E),
+    BitOr(E, E),
+    BitXor(E, E),
     // Vectors
     Vempty,
     Bempty,
@@ -60,6 +66,7 @@ pub enum BuiltIn {
     Div(Expr, Expr),
     /// (% 10 3)
     Rem(Expr, Expr),
+
     // Logical
     // ---------
     /// (and 1 0)
@@ -76,6 +83,20 @@ pub enum BuiltIn {
     Lt(Expr, Expr),
     /// (> x y) ; x > y
     Gt(Expr, Expr),
+
+    // Bitwise logical
+    // ---------
+    /// (<< b 1)
+    Shl(Expr, Expr),
+    /// (>> b 1)
+    Shr(Expr, Expr),
+    /// (& a b)
+    BitAnd(Expr, Expr),
+    /// (| a b)
+    BitOr(Expr, Expr),
+    /// (^ a b)
+    BitXor(Expr, Expr),
+
     // Vectors
     // ---------
     /// (cons nil 1) ; construct a vector from a push to the back
@@ -94,6 +115,7 @@ pub enum BuiltIn {
     Vslice(Expr, Expr, Expr),
     /// (vfrom v 0 2) ; Create a new vector/bytes like v but the 0th element is 2
     Vset(Expr, Expr, Expr),
+
     // Type casts
     /// Integer to bytes
     ItoB(Expr),

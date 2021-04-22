@@ -235,6 +235,33 @@ mod tests {
     }
 
     #[test]
+    fn shift_left() {
+        let ops   = parse("(<< 2 3)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(16))]);
+    }
+
+    #[test]
+    fn bitwise_and() {
+        let ops   = parse("(& 3 2)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(2))]);
+    }
+
+    #[test]
+    fn bitwise_or() {
+        let ops   = parse("(| 1 2)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(3))]);
+    }
+
+    #[test]
     fn btoi_1() {
         let ops   = parse("(bytes->u256 0x0000000000000000000000000000000000000000000000000000000000000001)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
