@@ -369,6 +369,19 @@ mod tests {
     }
 
     #[test]
+    fn rot_from_shifts() {
+        let ops = parse("\
+            (fn rot (b n) \
+                (| (<< b n) (>> b (- 256 n)))) \
+            (rot (bytes->u256 0x0100000000000000000000000000000000000000000000000000000000000000) 8)\
+        ").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+    }
+
+    #[test]
     fn init_vec_native() {
         let ops   = parse("(let (v [1 2 3]) v)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
