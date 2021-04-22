@@ -70,7 +70,7 @@ fn defn<'a>(input: &'a str)
             // Fn name
             cut(alpha1),
             // Parameters
-            cut(s_expr(separated_list1(multispace1, symbol))),
+            cut(s_expr(separated_list0(multispace1, symbol))),
             // Body
             cut(expr)))
         .map(|(_, name, params, body)| (name.to_string(), (params, body)))
@@ -233,6 +233,16 @@ where F: Parser<&'a str, O, VerboseError<&'a str>>,
         multispace0.and(char(')'))))
 }
 
+/// Optionally parse comments and atleast one whitespace character
+pub fn ws_or_comment<'a>(input: &'a str)
+-> ParseRes<&'a str> {
+    context("Comment/whitespace",
+        alt((
+            delimited(multispace0, comment, multispace0),
+            multispace1)))
+        (input)
+}
+
 /// Parse a comment.
 pub fn comment<'a>(input: &'a str)
 -> ParseRes<&'a str> {
@@ -244,8 +254,9 @@ pub fn comment<'a>(input: &'a str)
 /// Top level of a program consists of a list of fn definitions and an expression.
 pub fn root<'a>(input: &'a str)
 -> ParseRes<(Vec<Defn>, Expr)> {
-    tuple((separated_list0(multispace1, defn),
-           preceded(multispace0, expr)))
+    opt(ws_or_comment).flat_map(|_|
+        tuple((separated_list0(ws_or_comment, defn),
+               preceded(multispace0, expr))))
     .parse(input)
 }
 

@@ -347,9 +347,11 @@ mod tests {
     #[test]
     fn inlined_comments() {
         let ops   = parse("
+        ; aghhh
         (if ; this is just
             0 ;for tests
-            (* 2 2); dont mind me
+            (* 2 ;they're everywhere!
+            2); dont mind me
             1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
