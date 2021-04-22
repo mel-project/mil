@@ -68,7 +68,7 @@ fn defn<'a>(input: &'a str)
         list!(
             tag("fn"),
             // Fn name
-            cut(alpha1),
+            cut(symbol),
             // Parameters
             cut(s_expr(separated_list0(multispace1, symbol))),
             // Body
@@ -272,10 +272,13 @@ pub fn set<'a>(input: &'a str)
 pub fn app<'a>(input: &'a str)
 -> ParseRes<Expr> {
     context("Application",
-        list!(symbol, separated_list1(multispace1,
-              opt(preceded(multispace0, comment))
-                  .flat_map(|_| expr))))
-            .map(|(s,a)| Expr::App(s,a))
+        alt((
+            s_expr(symbol).map(|s| Expr::App(s, vec![])),
+            list!(symbol, separated_list1(ws_or_comment,
+                  opt(preceded(multispace0, comment))
+                      .flat_map(|_| expr)))
+                .map(|(s,a)| Expr::App(s,a))
+        )))
         .parse(input)
 }
 
