@@ -141,7 +141,6 @@ fn binary_builtin<'a>(input: &'a str)
                 tag("or"), tag("xor"),
                 tag("cons"), tag("get"),
                 tag("concat"), tag("="),
-                tag("&"), tag("|"), tag("^"),
             )),
             cut(expr),
             cut(expr)),

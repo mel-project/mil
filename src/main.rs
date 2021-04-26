@@ -3,6 +3,7 @@ use mil::{
     cmdline::BuildCmd,
     parser::mel_expr::MemoryMap,
     parser::expansion::Evaluator,
+    executor::{ExecutionEnv, CovEnv},
     compiler::{Compile, BinCode}};
 use std::fs::File;
 use std::path::PathBuf;
@@ -10,12 +11,14 @@ use std::io::prelude::*;
 use structopt::StructOpt;
 use tmelcrypt::ed25519_keygen;
 use blkstructs::{
+    Header,
     Transaction,
     CoinID,
     CoinDataHeight};
 
 /// List of transactions and coin inputs to execute a script on.
-type TestTxs = Vec<(CoinID, CoinDataHeight, Transaction)>;
+type TestTxs = Vec<(CovEnv, Transaction)>;
+//type TestTxs = Vec<(CoinID, CoinDataHeight, Transaction)>;
 
 /// Read a list of transactions from a JSON file.
 fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
@@ -104,11 +107,11 @@ fn main() -> anyhow::Result<()> {
             let l = read_txs(fp)?;
 
             if cmd.debug {
-                l.into_iter().enumerate().for_each(|(i, (coin_id, coin_data, tx))| {
+                l.into_iter().enumerate().for_each(|(i, (cov_env, tx))| {
                     println!("Debug execution log for tx#{}", i);
                     //println!("{:?}", serde_json::to_string(&tx));
 
-                    let mut env = executor::ExecutionEnv::new(tx, coin_data, coin_id, &ops);
+                    let mut env = ExecutionEnv::new(tx, cov_env, &ops);
                     // Display every step in debug mode
                     env.into_iter()
                         .take_while(|r| r.is_some())
@@ -126,9 +129,9 @@ fn main() -> anyhow::Result<()> {
                 });
             } else {
                 let execs = l.into_iter()
-                    .map(|(coin_id, coin_data, tx)|
+                    .map(|(cov_env, tx)|
                         executor::execute(
-                            executor::ExecutionEnv::new(tx, coin_data, coin_id, &ops)));
+                            ExecutionEnv::new(tx, cov_env, &ops)));
 
                 execs.enumerate().for_each(|(i,res)| {
                     print!("tx#{} - ", i);

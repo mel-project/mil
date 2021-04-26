@@ -28,9 +28,6 @@ pub enum ExpandedBuiltIn<E> {
     // Bitwise logical
     Shl(E, E),
     Shr(E, E),
-    BitAnd(E, E),
-    BitOr(E, E),
-    BitXor(E, E),
     // Vectors
     Vempty,
     Bempty,
@@ -90,12 +87,6 @@ pub enum BuiltIn {
     Shl(Expr, Expr),
     /// (>> b 1)
     Shr(Expr, Expr),
-    /// (& a b)
-    BitAnd(Expr, Expr),
-    /// (| a b)
-    BitOr(Expr, Expr),
-    /// (^ a b)
-    BitXor(Expr, Expr),
 
     // Vectors
     // ---------

@@ -1,14 +1,39 @@
 use std::collections::HashMap;
 use crate::compiler::BinCode;
-use tmelcrypt::ed25519_keygen;
+use tmelcrypt::{ed25519_keygen, HashVal};
+use serde::Deserialize;
 use blkstructs::{
-    Transaction, CoinDataHeight, CoinID, CoinData,
-    melvm::{Value, Executor, Covenant, OpCode}};
+    Header, Transaction, CoinDataHeight, CoinID, CoinData,
+    melvm::{self, Value, Executor, Covenant, OpCode}};
 
+/// Points to current instruction of a program in an [ExecutionEnv].
 pub type ProgramCounter = usize;
 type Stack = Vec<Value>;
 type Heap  = HashMap<u16, Value>;
 
+/// The execution environment of a covenant.
+/// Matches the CovenantEnv struct of blkstructs package.
+/// However, fields here are owned not borrowed.
+#[derive(Debug, Deserialize)]
+pub struct CovEnv {
+    pub parent_coinid: CoinID,
+    pub parent_cdh: CoinDataHeight,
+    pub spender_index: u8,
+    pub last_header: Header,
+}
+
+impl<'a> From<&'a CovEnv> for melvm::CovenantEnv<'a> {
+    fn from(e: &'a CovEnv) -> Self {
+        melvm::CovenantEnv {
+            parent_coinid: &e.parent_coinid,
+            parent_cdh: &e.parent_cdh,
+            spender_index: e.spender_index,
+            last_header: &e.last_header,
+        }
+    }
+}
+
+/// A wrapper of the MelVM Executor, associated with a list of opcodes to execute.
 pub struct ExecutionEnv<'a> {
     /// A stack and heap environment.
     executor: Executor,
@@ -19,14 +44,17 @@ pub struct ExecutionEnv<'a> {
 impl<'a> ExecutionEnv<'a> {
     pub fn new(
         spending_tx: Transaction,
-        coin_data: CoinDataHeight,
-        coin_id: CoinID,
+        cov_env: CovEnv,
+        //coin_data: CoinDataHeight,
+        //coin_id: CoinID,
         ops: &'a [OpCode]) -> ExecutionEnv<'a>
     {
-        println!("cov hash: {:?}", coin_data.coin_data.covhash);
+        //println!("cov hash: {:?}", coin_data.coin_data.covhash);
 
         ExecutionEnv {
-            executor: Executor::from(spending_tx, coin_id, coin_data),
+            executor: Executor::new_from_env(
+                          spending_tx,
+                          Some(melvm::CovenantEnv::from(&cov_env))),
             ops,
         }
     }
@@ -48,17 +76,17 @@ impl<'a,'b> IntoIterator for &'b mut ExecutionEnv<'a> {
     }
 }
 
+/// Iterate over program instructions in an [ExecutionEnv], returning an optional
+/// view into the environment state each time. If the inner optional is none, the
+/// program failed execution. If the outer optional is none, execution finished
+/// successfully. If the inner optional is not checked, this iterator may be
+/// non-terminating.
 pub struct ExecutorIter<'a,'b> {
     env: &'b mut ExecutionEnv<'a>,
     /// Tracks the next instruction to be executed.
     pc: ProgramCounter,
 }
 
-/// Iterate over program instructions in an [ExecutionEnv], returning an optional
-/// view into the environment state each time. If the inner optional is none, the
-/// program failed execution. If the outer optional is none, execution finished
-/// successfully. If the inner optional is not checked, this iterator may be
-/// non-terminating.
 impl<'a,'b> Iterator for ExecutorIter<'a,'b> {
     type Item = Option<(Stack, Heap, ProgramCounter)>;
 
@@ -117,7 +145,7 @@ mod tests {
 
     fn key_and_empty_tx() -> (Ed25519PK, Ed25519SK, Transaction) {
         let (pk, sk) = ed25519_keygen();
-        let tx       = Transaction::empty_test().sign_ed25519(sk);
+        let tx       = Transaction::empty_test().signed_ed25519(sk);
         (pk, sk, tx)
     }
 
@@ -139,7 +167,27 @@ mod tests {
             height: 0,
         };
 
-        execute(ExecutionEnv::new(tx.clone(), empty_cdh, empty_ci, &dis))
+        let cov_env = CovEnv {
+            parent_coinid: empty_ci,
+            parent_cdh: empty_cdh,
+            spender_index: 0,
+            last_header:
+                Header {
+                    network: blkstructs::NetID::Testnet,
+                    previous: HashVal::default(),
+                    height: 0,
+                    history_hash: HashVal::default(),
+                    coins_hash: HashVal::default(),
+                    transactions_hash: HashVal::default(),
+                    fee_pool: 0,
+                    fee_multiplier: 0,
+                    dosc_speed: 0,
+                    pools_hash: HashVal::default(),
+                    stakes_hash: HashVal::default(),
+                },
+        };
+
+        execute(ExecutionEnv::new(tx.clone(), cov_env, &dis))
             .expect(&format!("Failed to execute: {:?}", dis))
     }
 
@@ -245,7 +293,7 @@ mod tests {
 
     #[test]
     fn bitwise_and() {
-        let ops   = parse("(& 3 2)").unwrap();
+        let ops   = parse("(and 3 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -254,7 +302,7 @@ mod tests {
 
     #[test]
     fn bitwise_or() {
-        let ops   = parse("(| 1 2)").unwrap();
+        let ops   = parse("(or 1 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -372,7 +420,7 @@ mod tests {
     fn rot_from_shifts() {
         let ops = parse("\
             (fn rot (b n) \
-                (| (<< b n) (>> b (- 256 n)))) \
+                (or (<< b n) (>> b (- 256 n)))) \
             (rot (bytes->u256 0x0100000000000000000000000000000000000000000000000000000000000000) 8)\
         ").unwrap();
         let (_, _, tx) = key_and_empty_tx();
