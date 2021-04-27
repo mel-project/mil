@@ -18,6 +18,7 @@ pub enum ParseError<E> {
     Expansion(ParseErr),
 }
 
+
 /// A macro definition type.
 /// Macros are not part of an [Expr] because they are only defined at the beginning of a program,
 /// and cannot be nested.

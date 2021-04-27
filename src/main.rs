@@ -12,6 +12,7 @@ use std::io::prelude::*;
 use structopt::StructOpt;
 use tmelcrypt::ed25519_keygen;
 use blkstructs::Transaction;
+use anyhow::anyhow;
 
 /// List of transactions and coin inputs to execute a script on.
 type TestTxs = Vec<(CovEnv, Transaction)>;
@@ -52,6 +53,17 @@ fn execute_on_txs(txs: TestTxs, bin: &BinCode) {
     }
 }
 */
+/*
+fn parse(code: &str) -> Result<MelExpr, ()> {
+    let mel_ops = parser::parse(&code[..])
+        .map_err(|e| match e {
+            ParseError::Syntax(e) => match e {
+                nom::Err::Failure(e) | nom::Err::Error(e) => format!("{}", nom::error::convert_error(&code[..], e)),
+                _ => unreachable!(),
+            },
+            ParseError::Expansion(msg) => format!("{}", msg.0),
+        })?;
+*/
 
 //fn main() -> std::io::Result<()> {
 fn main() -> anyhow::Result<()> {
@@ -66,11 +78,12 @@ fn main() -> anyhow::Result<()> {
     let mel_ops = parser::parse(&code[..])
         .map_err(|e| match e {
             ParseError::Syntax(e) => match e {
-                nom::Err::Failure(e) | nom::Err::Error(e) => println!("{}", nom::error::convert_error(&code[..], e)),
+                nom::Err::Failure(e) | nom::Err::Error(e) =>
+                    anyhow!(format!("{}", nom::error::convert_error(&code[..], e))),
                 _ => unreachable!(),
             },
-            ParseError::Expansion(msg) => println!("{}", msg.0),
-        }).unwrap();
+            ParseError::Expansion(msg) => anyhow!(format!("{}", msg.0)),
+        })?;
 
     // Compile to binary
     let empty = BinCode(Vec::new());
