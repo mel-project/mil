@@ -23,22 +23,9 @@ mil examples/hellohash.mil
 # Alternatively
 cargo run -- examples/hellohash.mil
 ```
+By default, only the hash of the script is printed to stdout upon successful compilation.
 
-The binary is printed in hex. The compiler also disassembles the binary directly from the MelVM, showing the raw instructions of the program.
-
-```
-Binary as hex
--------------
-f00a68656c6c6f776f726c6430000a
-
-Disassembly:
-[PushB([104, 101, 108, 108, 111, 119, 111, 114, 108, 100]), Hash(10)]
-```
-
-
-Stdout wont always look this verbose. But in these early days of the mil compiler, disassembly may give insight into what the program is doing under the hood, and guarantees that the program will be interpreted successfully.
-
-The binary can also be written to a file
+To get the binary, tell the compiler to write it to a file.
 ```
 mil examples/hellohash.mil --output hh.mvm
 ```
@@ -68,3 +55,5 @@ Final stack
 
 ### Debugging
 To see the entire execution, one instruction at a time, and the evolution of the stack and heap, attach the `--debug` flag to compilation.
+
+You can also disassemble a program after its been compiled to see its opcodes as interpreted by the MelVM. Use the `--show-disassembly` flag to get the disassembly on stdout.
