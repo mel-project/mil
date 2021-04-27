@@ -52,57 +52,6 @@ macro_rules! PErr {
 /// and cannot be nested.
 pub type Defn = (Symbol, (Vec<Symbol>, Expr));
 
-// TODO: Inline this logic into parser combinators. Its redundant here and can leave mismatches unchecked.
-impl BuiltIn {
-    fn from_bin_token(s: &str, e1: Expr, e2: Expr) -> Option<BuiltIn> {
-        match s {
-            "=" => Some(BuiltIn::Eql(e1, e2)),
-            "+" => Some(BuiltIn::Add(e1, e2)),
-            "-" => Some(BuiltIn::Sub(e1, e2)),
-            "*" => Some(BuiltIn::Mul(e1, e2)),
-            "/" => Some(BuiltIn::Div(e1, e2)),
-            "<" => Some(BuiltIn::Lt(e1, e2)),
-            ">" => Some(BuiltIn::Gt(e1, e2)),
-            "%" => Some(BuiltIn::Rem(e1, e2)),
-            "and" => Some(BuiltIn::And(e1, e2)),
-            "or" => Some(BuiltIn::Or(e1, e2)),
-            "xor" => Some(BuiltIn::Xor(e1, e2)),
-            "cons" => Some(BuiltIn::Vpush(e1, e2)),
-            "get" => Some(BuiltIn::Vref(e1, e2)),
-            "concat" => Some(BuiltIn::Vappend(e1, e2)),
-            "<<" => Some(BuiltIn::Shl(e1, e2)),
-            ">>" => Some(BuiltIn::Shr(e1, e2)),
-            _ => None,
-        }
-    }
-    fn from_tri_token(s: &str, e1: Expr, e2: Expr, e3: Expr) -> Option<BuiltIn> {
-        match s {
-            "slice" => Some(BuiltIn::Vslice(e1, e2, e3)),
-            "vfrom" => Some(BuiltIn::Vset(e1, e2, e3)),
-            _ => None,
-        }
-    }
-
-    fn from_empty_token(s: &str) -> Option<BuiltIn> {
-        match s {
-            "nil" => Some(BuiltIn::Vempty),
-            "bnil" => Some(BuiltIn::Bempty),
-            _ => None,
-        }
-    }
-
-    fn from_uni_token(s: &str, e: Expr) -> Option<BuiltIn> {
-        match s {
-            //"load" => Some(BuiltIn::Load(e)),
-            "not" => Some(BuiltIn::Not(e)),
-            "len" => Some(BuiltIn::Vlen(e)),
-            "bytes->u256" => Some(BuiltIn::BtoI(e)),
-            "u256->bytes" => Some(BuiltIn::ItoB(e)),
-            _ => None,
-        }
-    }
-}
-
 /// Try to extract values from results in vector. Short circuit on the first failure. Note this
 /// does not return an iterator (because it folds).
 // TODO: For efficiency: fold_results(v: Vec<O>, f: Fn(O) -> Result<O,E>), map and fold in one pass
