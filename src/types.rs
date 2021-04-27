@@ -30,13 +30,22 @@ pub enum ExpandedBuiltIn<E> {
     Shr(E, E),
     // Vectors
     Vempty,
-    Bempty,
     Vlen(E),
     Vref(E, E),
     Vpush(E, E),
+    Vcons(E, E),
     Vappend(E, E),
     Vslice(E, E, E),
     Vset(E, E, E),
+    // Bytes
+    Bempty,
+    Blen(E),
+    Bref(E, E),
+    Bpush(E, E),
+    Bcons(E, E),
+    Bappend(E, E),
+    Bslice(E, E, E),
+    Bset(E, E, E),
     // Control flow
     Bez(u16),
     Bnz(u16),
@@ -90,24 +99,44 @@ pub enum BuiltIn {
 
     // Vectors
     // ---------
-    /// (cons nil 1) ; construct a vector from a push to the back
+    /// (v-push v-nil 1) ; construct a vector from a push to the back
     Vpush(Expr, Expr),
-    /// nil
+    /// (v-cons 1 v-nil) ; construct a vector, prepending an element
+    Vcons(Expr, Expr),
+    /// v-nil
     Vempty,
-    /// bnil
-    Bempty,
-    /// (get v 0)
+    /// (v-get v 0)
     Vref(Expr, Expr),
-    /// (vlen v)
+    /// (v-len v)
     Vlen(Expr),
-    /// (concat (cons 2 nil) (cons 1 nil)) => [2 1]
+    /// (v-concat (v-cons 2 v-nil) (v-cons 1 v-nil)) => [2 1]
     Vappend(Expr, Expr),
-    /// (slice v 32 64) ; [32..64]
+    /// (v-slice v 32 64) ; [32..64]
     Vslice(Expr, Expr, Expr),
-    /// (vfrom v 0 2) ; Create a new vector/bytes like v but the 0th element is 2
+    /// (v-from v 0 2) ; Create a new vector/bytes like v but the 0th element is 2
     Vset(Expr, Expr, Expr),
 
+    // Bytes
+    // ---------
+    /// bnil
+    Bempty,
+    /// (b-len v)
+    Blen(Expr),
+    /// (b-get v 0)
+    Bref(Expr, Expr),
+    /// (b-push b-nil 1) ; construct a vector from a push to the back
+    Bpush(Expr, Expr),
+    /// (b-cons 1 b-nil) ; construct a vector, prepending an element
+    Bcons(Expr, Expr),
+    /// (b-concat (b-cons 2 b-nil) (b-cons 1 b-nil)) => [2 1]
+    Bappend(Expr, Expr),
+    /// (b-slice v 32 64) ; [32..64]
+    Bslice(Expr, Expr, Expr),
+    /// (b-from v 0 2) ; Create a new vector/bytes like v but the 0th element is 2
+    Bset(Expr, Expr, Expr),
+
     // Type casts
+    // ---------
     /// Integer to bytes
     ItoB(Expr),
     /// First 32 bytes of a Bytes to an integer

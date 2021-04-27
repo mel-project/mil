@@ -237,8 +237,8 @@ mod tests {
     }
 
     #[test]
-    fn cons_nil_1() {
-        let ops   = parse("(cons nil 1)").unwrap();
+    fn push_nil_1() {
+        let ops   = parse("(v-push v-nil 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -247,7 +247,7 @@ mod tests {
 
     #[test]
     fn concat_vectors() {
-        let ops   = parse("(concat (cons nil 2) (cons nil 1))").unwrap();
+        let ops   = parse("(v-concat (v-cons 2 v-nil) (v-cons 1 v-nil))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -257,7 +257,7 @@ mod tests {
 
     #[test]
     fn ref_vector() {
-        let ops   = parse("(get (concat (cons nil 2) (cons nil 1)) 1)").unwrap();
+        let ops   = parse("(v-get (v-concat (v-cons 2 v-nil) (v-cons 1 v-nil)) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -366,8 +366,8 @@ mod tests {
     }
 
     #[test]
-    fn vfrom_bytes() {
-        let ops   = parse("(vfrom (cons bnil 1) 0 2)").unwrap();
+    fn from_bytes() {
+        let ops   = parse("(b-from (b-cons 1 b-nil) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -376,7 +376,7 @@ mod tests {
 
     #[test]
     fn vset_vector() {
-        let ops   = parse("(vfrom (cons nil 1) 0 2)").unwrap();
+        let ops   = parse("(v-from (v-cons 1 v-nil) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -384,8 +384,8 @@ mod tests {
     }
 
     #[test]
-    fn vset_bytes() {
-        let ops   = parse("(vfrom 0x00 0 2)").unwrap();
+    fn set_bytes() {
+        let ops   = parse("(b-from 0x00 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -476,7 +476,7 @@ mod tests {
         let (pk, _, tx) = key_and_empty_tx();
         let ops   = parse(&format!("
                 (sigeok 32
-                    (get (get SPENDER-TX 6) 0)
+                    (v-get (v-get SPENDER-TX 6) 0)
                     0x{}
                     SPENDER-TX-HASH)", hex::encode(&pk.0))).unwrap();
 

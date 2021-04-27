@@ -121,6 +121,7 @@ impl Env {
                 BuiltIn::Bempty => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Bempty))),
                 BuiltIn::Not(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler),
                 BuiltIn::Vlen(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Vlen, mangler),
+                BuiltIn::Blen(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Blen, mangler),
                 BuiltIn::BtoI(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::BtoI, mangler),
                 BuiltIn::ItoB(e) => self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::ItoB, mangler),
                 BuiltIn::Add(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Add, mangler),
@@ -139,8 +140,15 @@ impl Env {
                 BuiltIn::Vref(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vref, mangler),
                 BuiltIn::Vappend(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vappend, mangler),
                 BuiltIn::Vpush(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vpush, mangler),
+                BuiltIn::Vcons(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Vcons, mangler),
                 BuiltIn::Vslice(e1,e2,e3) => self.expand_triop(e1, e2, e3, ExpandedBuiltIn::<UnrolledExpr>::Vslice, mangler),
                 BuiltIn::Vset(e1,e2,e3) => self.expand_triop(e1, e2, e3, ExpandedBuiltIn::<UnrolledExpr>::Vset, mangler),
+                BuiltIn::Bref(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Bref, mangler),
+                BuiltIn::Bappend(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Bappend, mangler),
+                BuiltIn::Bpush(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Bpush, mangler),
+                BuiltIn::Bcons(e1,e2) => self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Bcons, mangler),
+                BuiltIn::Bslice(e1,e2,e3) => self.expand_triop(e1, e2, e3, ExpandedBuiltIn::<UnrolledExpr>::Bslice, mangler),
+                BuiltIn::Bset(e1,e2,e3) => self.expand_triop(e1, e2, e3, ExpandedBuiltIn::<UnrolledExpr>::Bset, mangler),
                 /*
                 BuiltIn::Store(e) => {
                     let e = self.expand_mangle_fns(&e, mangler)?;

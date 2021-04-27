@@ -4,8 +4,8 @@ use primitive_types::U256;
 use crate::types::{Reserved, Symbol, Value, BuiltIn, Expr};
 //#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
 use nom::{IResult, Parser, branch::alt,
-bytes::complete::{take_while, is_not, tag},
-character::complete::{hex_digit1, line_ending, alpha1, multispace1, multispace0, digit1},
+bytes::complete::{take_while, take_while1, is_not, tag},
+character::{is_space, complete::{hex_digit1, alpha1, multispace1, multispace0, digit1}},
 character::complete::{alphanumeric0, char},
 combinator::{opt, cut, map_res, map_opt},
 error::{context, ParseError},
@@ -82,8 +82,21 @@ fn tri_builtin<'a>(input: &'a str)
 -> ParseRes<BuiltIn> {
     context("tri builtin",
         map_opt(
-            list!(alt((tag("vfrom"), tag("slice"))), cut(expr), cut(expr), cut(expr)),
-            |(s,e1,e2,e3)| BuiltIn::from_tri_token(s,e1,e2,e3)))
+            list!(
+                take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r'),
+                cut(expr),
+                cut(expr),
+                cut(expr)
+            ),
+            |(s,e1,e2,e3)|
+                match s.as_ref() {
+                    "v-from" => Some(BuiltIn::Vset(e1, e2, e3)),
+                    "b-from" => Some(BuiltIn::Bset(e1, e2, e3)),
+                    "v-slice" => Some(BuiltIn::Vslice(e1, e2, e3)),
+                    "b-slice" => Some(BuiltIn::Bslice(e1, e2, e3)),
+                    _ => None,
+                }
+    ))
     .parse(input)
 }
 
@@ -91,60 +104,73 @@ fn tri_builtin<'a>(input: &'a str)
 fn empty_builtin<'a>(input: &'a str)
 -> ParseRes<BuiltIn> {
     context("empty builtin",
-        map_opt(alt((tag("nil"), tag("bnil"))),
-                BuiltIn::from_empty_token))
-    .parse(input)
+        map_opt(
+            // Basically saying that either nil or (nil) is acceptable
+            //alt((
+                //s_expr(take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r')),
+                take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r' && x != ')'),
+            //)),
+            |s: &str| match s.as_ref() {
+                "v-nil" => Some(BuiltIn::Vempty),
+                "b-nil" => Some(BuiltIn::Bempty),
+                _ => None,
+            }
+    ))(input)
 }
 
 fn unary_builtin<'a>(input: &'a str)
 -> ParseRes<BuiltIn> {
     context("unary builtin",
-        //alt((
-            map_opt(
-                list!(alt((
-                        tag("len"),
-                        tag("not"),
-                        tag("bytes->u256"),
-                        tag("u256->bytes"),
-                    )),
-                    cut(expr)),
-                |(s,e)| BuiltIn::from_uni_token(s, e)),
-            // <tag> <symb>
-            // TODO: Probably take these out since theyre very low level and redundant w/ let/set
-            /*
-            alt((
-                list!(
-                    tag("store"),
-                    symbol)
-                .map(|(_,s)| BuiltIn::Store(s)),
-                list!(
-                    tag("load"),
-                    symbol)
-                .map(|(_,s)| BuiltIn::Load(s)),
-            */
-            //)))))
-            )
-    .parse(input)
+        map_opt(
+            list!(
+                take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r'),
+                cut(expr)
+            ),
+            |(s,e)| match s.as_ref() {
+                "not" => Some(BuiltIn::Not(e)),
+                "v-len" => Some(BuiltIn::Vlen(e)),
+                "b-len" => Some(BuiltIn::Blen(e)),
+                "bytes->u256" => Some(BuiltIn::BtoI(e)),
+                "u256->bytes" => Some(BuiltIn::ItoB(e)),
+                _ => None,
+            }
+    ))(input)
 }
 
 fn binary_builtin<'a>(input: &'a str)
 -> ParseRes<BuiltIn> {
     context("binary builtin",
-        // <tag> <expr> <expr>
-        map_opt(list!(
-            alt((
-                tag("+"), tag("-"),
-                tag("*"), tag("/"),
-                tag("<<"), tag(">>"),
-                tag("<"), tag(">"),
-                tag("%"), tag("and"),
-                tag("or"), tag("xor"),
-                tag("cons"), tag("get"),
-                tag("concat"), tag("="),
-            )),
-            cut(expr),
-            cut(expr)),
-            |(s,e1,e2)| BuiltIn::from_bin_token(s, e1, e2)))
+        map_opt(
+            list!(
+                take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r'),
+                cut(expr),
+                cut(expr)
+            ),
+            |(s,e1,e2)| match s.as_ref() {
+                "=" => Some(BuiltIn::Eql(e1, e2)),
+                "+" => Some(BuiltIn::Add(e1, e2)),
+                "-" => Some(BuiltIn::Sub(e1, e2)),
+                "*" => Some(BuiltIn::Mul(e1, e2)),
+                "/" => Some(BuiltIn::Div(e1, e2)),
+                "<" => Some(BuiltIn::Lt(e1, e2)),
+                ">" => Some(BuiltIn::Gt(e1, e2)),
+                "%" => Some(BuiltIn::Rem(e1, e2)),
+                "and" => Some(BuiltIn::And(e1, e2)),
+                "or" => Some(BuiltIn::Or(e1, e2)),
+                "xor" => Some(BuiltIn::Xor(e1, e2)),
+                "v-cons" => Some(BuiltIn::Vcons(e1, e2)),
+                "v-push" => Some(BuiltIn::Vpush(e1, e2)),
+                "v-get" => Some(BuiltIn::Vref(e1, e2)),
+                "v-concat" => Some(BuiltIn::Vappend(e1, e2)),
+                "b-cons" => Some(BuiltIn::Bcons(e1, e2)),
+                "b-push" => Some(BuiltIn::Bpush(e1, e2)),
+                "b-get" => Some(BuiltIn::Bref(e1, e2)),
+                "b-concat" => Some(BuiltIn::Bappend(e1, e2)),
+                "<<" => Some(BuiltIn::Shl(e1, e2)),
+                ">>" => Some(BuiltIn::Shr(e1, e2)),
+                _ => None,
+            }
+    ))
     .parse(input)
 }
 
@@ -188,7 +214,13 @@ fn bytes<'a>(input: &'a str)
     context("bytes",
         alt((
             // TODO: Support whitespace in strings
-            delimited(tag("\""), alphanumeric0.map(|s: &str| s.as_bytes().into()), tag("\"")),
+            delimited(
+                tag("\""),
+                //alphanumeric0.map(|s: &str| s.as_bytes().into()),
+                take_while(|x| x != '"')
+                    .map(|s: &str| s.as_bytes().into()),
+                tag("\"")
+            ),
             map_res(preceded(tag("0x"), cut(hex_digit1)),
                 from_hex),
            )))
@@ -220,10 +252,7 @@ fn vector<'a>(input: &'a str)
 /// Wrap a parser in surrounding parenthesis with optional internal whitespace.
 fn s_expr<'a, O, F>(parser: F)
 -> impl FnMut(&'a str) -> IResult<&'a str, O, VerboseError<&'a str>>
-//-> impl FnMut(&'a str) -> IResult<&'a str, O, E>
 where F: Parser<&'a str, O, VerboseError<&'a str>>,
-//where F: Parser<&'a str, O, E>,
-//      E: nom::error::ParseError<&'a str> + nom::error::ContextError<&'a str>
 {
     context("S expression",
     delimited(
