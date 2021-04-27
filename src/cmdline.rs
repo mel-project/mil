@@ -15,4 +15,8 @@ pub struct BuildCmd {
     /// File containing a list of transactions as json to test the compiled script.
     #[structopt(long)]
     pub test_txs: Option<PathBuf>,
+    /// Show disassembly of the binary. Useful for verifying the binary will be interpreted
+    /// correctly.
+    #[structopt(long = "disassembly")]
+    pub show_disassembly: bool,
 }
