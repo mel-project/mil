@@ -1,23 +1,36 @@
-pub mod syntax;
-pub mod expansion;
-pub mod mel_expr;
+mod syntax;
+mod expansion;
+mod mel_expr;
+
+/// Count the number of instructions in a [MelExpr].
+pub use mel_expr::count_insts;
 
 use mel_expr::MemoryMap;
 use expansion::Evaluator;
-use crate::types::{MelExpr, Symbol, BuiltIn, Expr};
+use crate::types::{MelExpr, Symbol, Expr};
 
 /// Module-level aggregate error type. Unifies all parser-type errors.
 #[derive(Debug)]
 pub enum ParseError<E> {
+    /// Error deriving from syntax parsing.
     Syntax(nom::Err<E>),
+    /// Error during macro expansion of the AST.
     Expansion(ParseErr),
 }
+
+/// A macro definition type.
+/// Macros are not part of an [Expr] because they are only defined at the beginning of a program,
+/// and cannot be nested.
+type Defn = (Symbol, (Vec<Symbol>, Expr));
 
 /// Number of reserved locations on an execution heap, enumerated from 0.
 const NUM_RESERVED: i32 = 8;
 
-// TODO: hide underlying parse fns and provide a unified parser interface here.
-pub fn parse(input: &str) -> Result<MelExpr, ParseError<nom::error::VerboseError<&str>>> {
+/// Parse a string into the low-level abstract syntax tree, [MelExpr],
+/// which can be directly compiled to bytes.
+pub fn parse(input: &str)
+    -> Result<MelExpr, ParseError<nom::error::VerboseError<&str>>>
+{
     // First pass AST
     syntax::root(input)
         .map_err(|verbose_err| ParseError::Syntax(verbose_err))
@@ -35,7 +48,7 @@ pub fn parse(input: &str) -> Result<MelExpr, ParseError<nom::error::VerboseError
 
 /// Syntax parser error type. May become may intricate later.
 #[derive(Debug, PartialEq, Eq)]
-pub struct ParseErr(String);
+pub struct ParseErr(pub String);
 
 /// Short hand for a Result<_, ParseErr> type given the error string and args.
 #[macro_export]
@@ -47,10 +60,6 @@ macro_rules! PErr {
         Err(ParseErr(format!($msg, $($var),+)))
     }
 }
-
-/// Macros are not part of an [Expr] because they are only defined at the beginning of a program,
-/// and cannot be nested.
-pub type Defn = (Symbol, (Vec<Symbol>, Expr));
 
 /// Try to extract values from results in vector. Short circuit on the first failure. Note this
 /// does not return an iterator (because it folds).

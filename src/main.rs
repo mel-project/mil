@@ -1,8 +1,9 @@
 use mil::{
     parser, executor,
     cmdline::BuildCmd,
-    parser::mel_expr::MemoryMap,
-    parser::expansion::Evaluator,
+    parser::ParseError,
+        //mel_expr::MemoryMap,
+        //expansion::Evaluator,},
     executor::{ExecutionEnv, CovEnv},
     compiler::{Compile, BinCode}};
 use std::fs::File;
@@ -10,15 +11,10 @@ use std::path::PathBuf;
 use std::io::prelude::*;
 use structopt::StructOpt;
 use tmelcrypt::ed25519_keygen;
-use blkstructs::{
-    Header,
-    Transaction,
-    CoinID,
-    CoinDataHeight};
+use blkstructs::Transaction;
 
 /// List of transactions and coin inputs to execute a script on.
 type TestTxs = Vec<(CovEnv, Transaction)>;
-//type TestTxs = Vec<(CoinID, CoinDataHeight, Transaction)>;
 
 /// Read a list of transactions from a JSON file.
 fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
@@ -67,25 +63,13 @@ fn main() -> anyhow::Result<()> {
     file.read_to_string(&mut code)?;
 
     // Parse to MelExpr ops
-    let mel_ops = parser::syntax::root(&code[..])
-        .map(|(_, (fn_defs, ast))| {
-            // First pass AST
-            //println!("Ast\n----\n{:?}\n", (fn_defs.clone(), ast.clone()));
-            let env = parser::expansion::Env::new(fn_defs);
-
-            // Expand AST
-            let expanded = env.expand_fns(&ast);
-            //println!("Expanded\n-----\n{:?}\n", expanded);
-
-            // Low-level MelExpr
-            let mut mem  = MemoryMap::new();
-            let mel_expr = mem.to_mel_expr(expanded.unwrap());
-            //println!("MelVM\n-----\n{:?}\n", mel_expr);
-            mel_expr
-        })
+    let mel_ops = parser::parse(&code[..])
         .map_err(|e| match e {
-            nom::Err::Failure(e) | nom::Err::Error(e) => println!("{}", nom::error::convert_error(&code[..], e)),
-            _ => unreachable!(),
+            ParseError::Syntax(e) => match e {
+                nom::Err::Failure(e) | nom::Err::Error(e) => println!("{}", nom::error::convert_error(&code[..], e)),
+                _ => unreachable!(),
+            },
+            ParseError::Expansion(msg) => println!("{}", msg.0),
         }).unwrap();
 
     // Compile to binary
@@ -147,42 +131,6 @@ fn main() -> anyhow::Result<()> {
                 });
             }
         }
-
-        // Execute on a dummy transaction if none provided
-        // -----------------------------------------------
-
-        /*
-        if cmd.test_txs.is_none() {
-            let (_, sk) = ed25519_keygen();
-            let tx = Transaction::empty_test().sign_ed25519(sk);
-            let mut env = executor::ExecutionEnv::new(&tx, &[], &ops, cov_hash);
-
-            if cmd.debug {
-                // Display every step in debug mode
-                env.into_iter()
-                    .take_while(|r| r.is_some())
-                    .inspect(|res| match res {
-                        Some((stack,heap,pc)) =>
-                            println!("-----\n\
-                                Executed instruction: {:?}\n\
-                                Next instruction: {:?}\n\n\
-                                    Stack\n{:?}\n\n\
-                                    Heap\n{:?}\n",
-                                ops[*pc-1], ops.get(*pc), stack, heap),
-                        None => (),
-                    })
-                    .last();
-            } else {
-                // Just display the final state
-                if let Some(final_state) = executor::execute(env) {
-                    println!("Successful execution.\n");
-                    println!("Final stack\n--------\n{:?}", final_state.0);
-                } else {
-                    println!("Execution failed.");
-                }
-            }
-        }
-        */
     } else {
         println!("Disassembly failed!");
     }

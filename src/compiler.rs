@@ -121,7 +121,7 @@ fn write_pushb(mut b: BinCode, bytes: &Vec<u8>) -> BinCode {
 /// Compile a loop expression onto a bincode.
 fn write_loop(mut b: BinCode, n: &u16, e: &MelExpr) -> BinCode {
     b.0.push(0xb0);
-    let op_cnt: u16 = crate::parser::mel_expr::count_insts(e);
+    let op_cnt: u16 = crate::parser::count_insts(e);
     let b = n.compile_onto(b);
     let b = op_cnt.compile_onto(b);
     e.compile_onto(b)
