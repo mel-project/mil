@@ -189,8 +189,7 @@ impl Env {
 
                 // Create a new env to expand the body and replace variables with the mangled version
                 let f_env = Env {
-                    // TODO: Make sure mangled_map overrides mangled
-                    mangled: self.mangled.clone().into_iter().chain(mangled_map).collect(),
+                    mangled: mangled_map,
                     fns: self.fns.clone(),
                 };
 

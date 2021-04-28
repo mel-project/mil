@@ -151,7 +151,6 @@ mod tests {
 
     fn exec(tx: &Transaction, input: &[u8], ops: MelExpr) -> (Stack, Heap, ProgramCounter) {
         let bin = compile(ops);
-        let cov_hash = tmelcrypt::hash_single(&bin.0);
         let dis = disassemble(bin).expect("Failed to disassemble");
         let empty_ci = CoinID {
             txhash: tmelcrypt::HashVal::default(),
@@ -162,7 +161,7 @@ mod tests {
                 covhash: tmelcrypt::HashVal::default(),
                 value: 0,
                 denom: vec![],
-                additional_data: vec![],
+                additional_data: input.into(),
             },
             height: 0,
         };
@@ -484,4 +483,17 @@ mod tests {
 
         assert_eq!(state.0, vec![Value::Int(U256::one())]);
     }
+
+    /*
+    #[test]
+    fn fn_no_capture() {
+        let ops = parse("\
+            (fn f (x) y)\
+            (let (y 1) (f 2))\
+            ").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+    }
+    */
 }
