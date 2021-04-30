@@ -2,8 +2,6 @@ use mil::{
     parser, executor,
     cmdline::BuildCmd,
     parser::ParseError,
-        //mel_expr::MemoryMap,
-        //expansion::Evaluator,},
     executor::{ExecutionEnv, CovEnv},
     compiler::{Compile, BinCode}};
 use std::fs::File;

@@ -395,8 +395,11 @@ mod tests {
     fn inlined_comments() {
         let ops   = parse("
         ; aghhh
+        ; and a second
+
         (if ; this is just
             0 ;for tests
+            ;everywhere
             (* 2 ;they're everywhere!
             2); dont mind me
             1)").unwrap();

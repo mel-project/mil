@@ -22,13 +22,11 @@ macro_rules! list {
         s_expr(tuple($($tuple),+))
     };
     (@accum ($($tuple:expr),*) $parser:expr) => {
-        list!(@as_expr ($($tuple),*, opt(preceded(multispace0, comment))
-                .flat_map(|_| preceded(multispace1, $parser))))
+        list!(@as_expr ($($tuple),*, preceded(many1(ws_or_comment), $parser)))
     };
     (@accum ($($tuple:expr),*) $parser:expr, $($tail:tt)*) => {
         list!(@accum ($($tuple),*,
-                      opt(preceded(multispace0, comment))
-                          .flat_map(|_| preceded(multispace1, $parser)))
+                      preceded(many1(ws_or_comment), $parser))
                   $($tail)*)
     };
     ($parser:expr, $($tail:tt)*) => {
@@ -231,8 +229,7 @@ fn bytes<'a>(input: &'a str)
 fn int<'a>(input: &'a str)
 -> ParseRes<U256> {
     context("int",
-        // TODO: Strange parsing behaviour when parsing directly n_str.parse::<U256>
-        map_res(digit1, |n_str: &str| n_str.parse::<u64>())
+        map_res(digit1, |n_str: &str| U256::from_dec_str(n_str))
             .map(U256::from))
             .parse(input)
 }
@@ -282,8 +279,9 @@ pub fn comment<'a>(input: &'a str)
 /// Top level of a program consists of a list of fn definitions and an expression.
 pub fn root<'a>(input: &'a str)
 -> ParseRes<(Vec<Defn>, Expr)> {
-    opt(ws_or_comment).flat_map(|_|
-        tuple((separated_list0(ws_or_comment, defn),
+    //opt(ws_or_comment).flat_map(|_|
+    preceded(many0(ws_or_comment),
+        tuple((separated_list0(many1(ws_or_comment), defn),
                preceded(multispace0, expr))))
     .parse(input)
 }
@@ -302,9 +300,9 @@ pub fn app<'a>(input: &'a str)
     context("Application",
         alt((
             s_expr(symbol).map(|s| Expr::App(s, vec![])),
-            list!(symbol, separated_list1(ws_or_comment,
-                  opt(preceded(multispace0, comment))
-                      .flat_map(|_| expr)))
+            list!(symbol, separated_list1(ws_or_comment, expr))
+                  //opt(preceded(multispace0, comment))
+                      //.flat_map(|_| expr)))
                 .map(|(s,a)| Expr::App(s,a))
         )))
         .parse(input)
