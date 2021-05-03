@@ -43,8 +43,8 @@ fn sym_binds<'a>(input: &'a str)
 -> ParseRes<Vec<(Symbol, Expr)>> {
     context("symbol bindings",
     s_expr(separated_list0(
-        multispace1,
-        separated_pair(symbol, multispace1, expr)
+        many1(ws_or_comment),
+        separated_pair(symbol, many1(ws_or_comment), expr)
         )))(input)
 }
 
@@ -82,9 +82,9 @@ fn tri_builtin<'a>(input: &'a str)
         map_opt(
             list!(
                 take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r'),
-                cut(expr),
-                cut(expr),
-                cut(expr)
+                expr,
+                expr,
+                expr
             ),
             |(s,e1,e2,e3)|
                 match s.as_ref() {
@@ -104,10 +104,10 @@ fn empty_builtin<'a>(input: &'a str)
     context("empty builtin",
         map_opt(
             // Basically saying that either nil or (nil) is acceptable
-            //alt((
-                //s_expr(take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r')),
+            alt((
+                s_expr(take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r')),
                 take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r' && x != ')'),
-            //)),
+            )),
             |s: &str| match s.as_ref() {
                 "v-nil" => Some(BuiltIn::Vempty),
                 "b-nil" => Some(BuiltIn::Bempty),
@@ -122,7 +122,7 @@ fn unary_builtin<'a>(input: &'a str)
         map_opt(
             list!(
                 take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r'),
-                cut(expr)
+                expr
             ),
             |(s,e)| match s.as_ref() {
                 "not" => Some(BuiltIn::Not(e)),
@@ -141,8 +141,8 @@ fn binary_builtin<'a>(input: &'a str)
         map_opt(
             list!(
                 take_while1(|x: char| x != ' ' && x != '\t' && x != '\n' && x != '\r'),
-                cut(expr),
-                cut(expr)
+                expr,
+                expr
             ),
             |(s,e1,e2)| match s.as_ref() {
                 "=" => Some(BuiltIn::Eql(e1, e2)),
@@ -368,6 +368,7 @@ pub fn expr<'a>(input: &'a str)
     alt((bytes.map(Value::Bytes).map(Expr::Value),
          int.map(Value::Int).map(Expr::Value),
          vector.map(Expr::Vector),
+         let_bind.map(|(binds, exprs)| Expr::Let(binds, exprs)),
          unary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          binary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          tri_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
@@ -375,7 +376,6 @@ pub fn expr<'a>(input: &'a str)
          reserved.map(|r| Expr::Reserved(r)),
          symbol.map(Expr::Var),
          set,
-         let_bind.map(|(binds, exprs)| Expr::Let(binds, exprs)),
          if_expr.map(|(p,t,f)| Expr::If(Box::new(p), Box::new(t), Box::new(f))),
          loop_expr.map(|(n,e)| Expr::Loop(n, Box::new(e))),
          hash.map(|(n,e)| Expr::Hash(n, Box::new(e))),
