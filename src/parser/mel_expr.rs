@@ -159,10 +159,12 @@ impl MemoryMap {
 }
 
 /// Count the number of primitive instructions recursively from a [MelExpr].
+/// Loop-embedded instructions aren't counted (a loop is 1 instruction).
 pub fn count_insts(e: &MelExpr) -> u16 {
     match e {
         MelExpr::Seq(v) => v.iter().map(count_insts).reduce(|a,b| a+b).unwrap_or(0),
-        MelExpr::Loop(_,e) => 1 + count_insts(e),
+        // Loop-embedded instructions aren't counted in the VM.
+        MelExpr::Loop(_,_) => 1,
         MelExpr::Hash(_,e) => 1 + count_insts(e),
         MelExpr::Sigeok(_,e1,e2,e3) => 1 + count_insts(e1) + count_insts(e2) + count_insts(e3),
         MelExpr::Value(val) => match val {

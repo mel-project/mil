@@ -37,6 +37,7 @@ pub fn parse(input: &str)
         .map_err(|verbose_err| ParseError::Syntax(verbose_err))
         // Expand AST
         .and_then(|(_, (fn_defs, ast))| {
+            //println!("{:?}\n\n{:?}\n", fn_defs, ast);
             let env = expansion::Env::new(fn_defs);
             env.expand_fns(&ast)
                .map_err(|e| ParseError::Expansion(e))
