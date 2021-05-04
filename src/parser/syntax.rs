@@ -54,7 +54,7 @@ fn let_bind<'a>(input: &'a str)
         list!(
             tag("let"),
             cut(sym_binds),
-            cut(separated_list1(multispace1, expr))
+            cut(separated_list1(many1(ws_or_comment), expr))
             ))
             .map(|(_,a,b)| (a,b))
         .parse(input)
@@ -68,7 +68,7 @@ fn defn<'a>(input: &'a str)
             // Fn name
             cut(symbol),
             // Parameters
-            cut(s_expr(separated_list0(multispace1, symbol))),
+            cut(s_expr(separated_list0(many1(ws_or_comment), symbol))),
             // Body
             cut(expr)))
         .map(|(_, name, params, body)| (name.to_string(), (params, body)))
@@ -241,7 +241,7 @@ fn vector<'a>(input: &'a str)
     context("vector",
         delimited(
             char('[').and(multispace0),
-            cut(separated_list0(multispace1, expr)),
+            cut(separated_list0(many1(ws_or_comment), expr)),
             multispace0.and(char(']'))))
         (input)
 }
@@ -279,10 +279,9 @@ pub fn comment<'a>(input: &'a str)
 /// Top level of a program consists of a list of fn definitions and an expression.
 pub fn root<'a>(input: &'a str)
 -> ParseRes<(Vec<Defn>, Expr)> {
-    //opt(ws_or_comment).flat_map(|_|
     preceded(many0(ws_or_comment),
         tuple((separated_list0(many1(ws_or_comment), defn),
-               preceded(multispace0, expr))))
+               preceded(many0(ws_or_comment), expr))))
     .parse(input)
 }
 
@@ -300,9 +299,7 @@ pub fn app<'a>(input: &'a str)
     context("Application",
         alt((
             s_expr(symbol).map(|s| Expr::App(s, vec![])),
-            list!(symbol, separated_list1(ws_or_comment, expr))
-                  //opt(preceded(multispace0, comment))
-                      //.flat_map(|_| expr)))
+            list!(symbol, separated_list1(many1(ws_or_comment), expr))
                 .map(|(s,a)| Expr::App(s,a))
         )))
         .parse(input)
@@ -321,7 +318,7 @@ pub fn sigeok<'a>(input: &'a str)
     context("sigeok operation",
         list!(tag("sigeok"),
               cut(map_res(digit1, |n_str: &str| n_str.parse::<u16>())),
-              expr, expr, expr)
+              cut(expr), cut(expr), cut(expr))
             .map(|(_, n, e1, e2, e3)| (n,e1,e2,e3)))
             .parse(input)
 }
@@ -331,7 +328,7 @@ pub fn hash<'a>(input: &'a str)
     context("hash operation",
         list!(tag("hash"),
               cut(map_res(digit1, |n_str: &str| n_str.parse::<u16>())),
-              expr)
+              cut(expr))
             .map(|(_, n, e)| (n,e)))
             .parse(input)
 }
@@ -341,7 +338,7 @@ pub fn loop_expr<'a>(input: &'a str)
     context("loop expression",
         list!(tag("loop"),
               cut(map_res(digit1, |n_str: &str| n_str.parse::<u16>())),
-              expr)
+              cut(expr))
             .map(|(_, n, e)| (n,e)))
             .parse(input)
 }
