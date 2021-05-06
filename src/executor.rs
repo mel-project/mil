@@ -5,9 +5,12 @@ use serde::Deserialize;
 use blkstructs::{
     Header, Transaction, CoinDataHeight, CoinID, CoinData,
     melvm::{self, Value, Executor, Covenant, OpCode}};
+use genawaiter::{yield_, rc::gen};
 
 /// Points to current instruction of a program in an [ExecutionEnv].
 pub type ProgramCounter = usize;
+/// A view into an execution environment.
+pub type EnvView = (Stack, Heap, ProgramCounter);
 type Stack = Vec<Value>;
 type Heap  = HashMap<u16, Value>;
 
@@ -45,12 +48,8 @@ impl<'a> ExecutionEnv<'a> {
     pub fn new(
         spending_tx: Transaction,
         cov_env: CovEnv,
-        //coin_data: CoinDataHeight,
-        //coin_id: CoinID,
         ops: &'a [OpCode]) -> ExecutionEnv<'a>
     {
-        //println!("cov hash: {:?}", coin_data.coin_data.covhash);
-
         ExecutionEnv {
             executor: Executor::new_from_env(
                           spending_tx,
@@ -59,49 +58,26 @@ impl<'a> ExecutionEnv<'a> {
         }
     }
 
-    pub fn view(&self) -> (Stack, Heap) {
-        (self.executor.stack.clone(), self.executor.heap.clone())
+    pub fn view(&self, pc: ProgramCounter) -> EnvView {
+        (self.executor.stack.clone(), self.executor.heap.clone(), pc)
     }
-}
 
-impl<'a,'b> IntoIterator for &'b mut ExecutionEnv<'a> {
-    type Item = Option<(Stack, Heap, ProgramCounter)>;
-    type IntoIter = ExecutorIter<'a,'b>;
-
-    fn into_iter(self) -> ExecutorIter<'a,'b> {
-        ExecutorIter {
-            env: self,
-            pc: 0,
-        }
-    }
-}
-
-/// Iterate over program instructions in an [ExecutionEnv], returning an optional
-/// view into the environment state each time. If the inner optional is none, the
-/// program failed execution. If the outer optional is none, execution finished
-/// successfully. If the inner optional is not checked, this iterator may be
-/// non-terminating.
-pub struct ExecutorIter<'a,'b> {
-    env: &'b mut ExecutionEnv<'a>,
-    /// Tracks the next instruction to be executed.
-    pc: ProgramCounter,
-}
-
-impl<'a,'b> Iterator for ExecutorIter<'a,'b> {
-    type Item = Option<(Stack, Heap, ProgramCounter)>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.env.ops.get(self.pc) {
-            Some(op_next) => match self.env.executor.do_op(op_next, self.pc as u32) {
-                Some(pc_new) => {
-                    self.pc = pc_new as usize;
-                    let view = self.env.view();
-                    Some( Some((view.0, view.1, self.pc)) )
-                },
-                None => Some(None),
-            },
-            None => None,
-        }
+    pub fn into_iter(mut self) -> impl Iterator<Item=Option<EnvView>> + 'a {
+        let mut pc = 0;
+        gen!({
+            while let Some(op_next) = self.ops.get(pc) {
+                match self.executor.do_op(op_next, pc as u32) {
+                    Some(pc_new) => {
+                        pc = pc_new as usize;
+                        // Successful ongoing execution
+                        yield_!(Some(self.view(pc)))
+                    },
+                    // Failed execution
+                    None => yield_!(None),
+                }
+            }
+        })
+        .into_iter()
     }
 }
 
@@ -114,10 +90,9 @@ pub fn disassemble(bin: BinCode) -> Option<Vec<OpCode>> {
 }
 
 /// Execute the given environment to completion or failure.
-pub fn execute(mut env: ExecutionEnv) -> Option<(Stack, Heap, ProgramCounter)> {
+pub fn execute(env: ExecutionEnv) -> Option<(Stack, Heap, ProgramCounter)> {
     let mut final_state = (vec![], HashMap::new(), 0);
-    let e = &mut env;
-    for x in e.into_iter() {
+    for x in env.into_iter() {
         match x {
             None => return None,
             Some(state) => final_state = state,

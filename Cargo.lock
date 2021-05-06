@@ -966,6 +966,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "blkstructs",
+ "genawaiter",
  "hex",
  "im",
  "nom",
