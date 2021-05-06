@@ -184,6 +184,8 @@ pub enum Reserved {
     SelfData = 7,
     /// Block height of the spent coin.
     CoinHeight = 8,
+    /// Header of the last block to be added to the chain.
+    LastHeader = 9,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

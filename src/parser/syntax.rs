@@ -357,6 +357,7 @@ pub fn reserved<'a>(input: &'a str)
              tag("COIN-DENOM").map(|_| Reserved::CoinDenom),
              tag("SELF-DATA").map(|_| Reserved::SelfData),
              tag("COIN-HEIGHT").map(|_| Reserved::CoinHeight),
+             tag("LAST-HEADER").map(|_| Reserved::LastHeader),
         )))(input)
 }
 
