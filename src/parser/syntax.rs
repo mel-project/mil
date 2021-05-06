@@ -22,7 +22,8 @@ macro_rules! list {
         s_expr(tuple($($tuple),+))
     };
     (@accum ($($tuple:expr),*) $parser:expr) => {
-        list!(@as_expr ($($tuple),*, preceded(many1(ws_or_comment), $parser)))
+        //list!(@as_expr ($($tuple),*, preceded(many1(ws_or_comment), $parser)))
+        list!(@as_expr ($($tuple),*, delimited(many1(ws_or_comment), $parser, many0(ws_or_comment))))
     };
     (@accum ($($tuple:expr),*) $parser:expr, $($tail:tt)*) => {
         list!(@accum ($($tuple),*,
@@ -184,7 +185,8 @@ fn symbol<'a>(input: &'a str)
     context("symbol", map_res(
         tuple((alpha1, take_while(|c|
             match c {
-                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '?' => true,
+                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' |
+                '-' | '?' | '>' | '!' => true,
                 _ => false,
             }))), concat))
         .parse(input)
