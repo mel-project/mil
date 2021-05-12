@@ -1,4 +1,4 @@
-use primitive_types::U256;
+use ethnum::U256;
 
 /// Push is inherent in the language and so not a variant of BuiltIn.
 pub struct PushI;

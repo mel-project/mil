@@ -1,6 +1,7 @@
 use crate::PErr;
 use crate::parser::{Defn, ParseErr};
-use primitive_types::U256;
+use ethnum::U256;
+//use primitive_types::U256;
 use crate::types::{Reserved, Symbol, Value, BuiltIn, Expr};
 //#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
 use nom::{IResult, Parser, branch::alt,
@@ -216,7 +217,6 @@ fn bytes<'a>(input: &'a str)
             // TODO: Support whitespace in strings
             delimited(
                 tag("\""),
-                //alphanumeric0.map(|s: &str| s.as_bytes().into()),
                 take_while(|x| x != '"')
                     .map(|s: &str| s.as_bytes().into()),
                 tag("\"")
@@ -231,7 +231,8 @@ fn bytes<'a>(input: &'a str)
 fn int<'a>(input: &'a str)
 -> ParseRes<U256> {
     context("int",
-        map_res(digit1, |n_str: &str| U256::from_dec_str(n_str))
+        //map_res(digit1, |n_str: &str| U256::from_dec_str(n_str))
+        map_res(digit1, |n_str: &str| U256::from_str_radix(n_str, 10))
             .map(U256::from))
             .parse(input)
 }

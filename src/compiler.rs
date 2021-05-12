@@ -1,5 +1,5 @@
 use std::fmt;
-use primitive_types::U256;
+use ethnum::U256;
 use crate::types::{Value, HeapPos, PushI, PushB, ExpandedBuiltIn, MelExpr};
 
 #[derive(Clone)]
@@ -96,14 +96,14 @@ fn write_pushi(mut b: BinCode, n: &U256) -> BinCode {
     // Write op + n to bincode
     b.0.push(PushI.into());
 
-    let idx = b.0.len();
+    //let idx = b.0.len();
 
     // Extend vec by 32 bytes to effeciently add U256
-    let b_size = 32;
-    b.0.reserve(b_size);
-    unsafe { b.0.set_len(idx + b_size); }
+    //let b_size = 32;
+    //b.0.reserve(b_size);
+    //unsafe { b.0.set_len(idx + b_size); }
 
-    n.to_big_endian(&mut b.0[idx..]);
+    b.0.extend(&n.to_be_bytes());//&mut b.0[idx..]);
 
     b
 }

@@ -63,14 +63,14 @@ impl<'a> ExecutionEnv<'a> {
     }
 
     pub fn into_iter(mut self) -> impl Iterator<Item=Option<EnvView>> + 'a {
-        let mut pc = 0;
         gen!({
-            while let Some(op_next) = self.ops.get(pc) {
-                match self.executor.do_op(op_next, pc as u32) {
-                    Some(pc_new) => {
-                        pc = pc_new as usize;
-                        // Successful ongoing execution
-                        yield_!(Some(self.view(pc)))
+            while self.executor.pc() < self.ops.len() {
+                let next_op = self.ops.get( self.executor.pc() )
+                    .expect("ExecutionEnv iterator should never index an op out of range");
+
+                match self.executor.step(&next_op) {
+                    Some(_) => {
+                        yield_!(Some(self.view(self.executor.pc())))
                     },
                     // Failed execution
                     None => yield_!(None),
@@ -108,7 +108,7 @@ mod tests {
     use crate::parser::parse;
     use crate::types::MelExpr;
     use crate::compiler::{Compile, BinCode};
-    use primitive_types::U256;
+    use ethnum::U256;
     use tmelcrypt::{Ed25519PK, Ed25519SK};
     use im::vector;
 
@@ -135,7 +135,7 @@ mod tests {
             coin_data: CoinData {
                 covhash: tmelcrypt::HashVal::default(),
                 value: 0,
-                denom: vec![],
+                denom: blkstructs::Denom::Mel,
                 additional_data: input.into(),
             },
             height: 0,
@@ -171,7 +171,7 @@ mod tests {
         let (pk, sk, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(3))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(3))]);
     }
 
     #[test]
@@ -180,7 +180,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     #[test]
@@ -189,7 +189,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(0))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(0))]);
     }
 
     #[test]
@@ -198,7 +198,7 @@ mod tests {
         let (pk, sk, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(6))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(6))]);
     }
 
     #[test]
@@ -207,7 +207,7 @@ mod tests {
         let (pk, sk, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(2))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(2))]);
     }
 
     #[test]
@@ -216,7 +216,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::one())])]);
+        assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::new(1))])]);
     }
 
     #[test]
@@ -226,7 +226,7 @@ mod tests {
         let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Vector(
-                vector![Value::Int(U256::from(2)), Value::Int(U256::one())])]);
+                vector![Value::Int(U256::new(2)), Value::Int(U256::new(1))])]);
     }
 
     #[test]
@@ -235,7 +235,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     #[test]
@@ -244,7 +244,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     #[test]
@@ -253,7 +253,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     #[test]
@@ -262,7 +262,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(16))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(16))]);
     }
 
     #[test]
@@ -271,7 +271,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(2))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(2))]);
     }
 
     #[test]
@@ -280,7 +280,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(3))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(3))]);
     }
 
     #[test]
@@ -289,7 +289,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     #[test]
@@ -298,18 +298,17 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::max_value())]);
+        assert_eq!(state.0, vec![Value::Int(U256::MAX)]);
     }
 
     #[test]
     fn itob_1() {
-        // TODO: Can't yet parse this
-        //let ops = parse(&format!("(itob {})", U256::max_value())).unwrap();
-        let ops = parse(&format!("(u256->bytes {})", U256::one())).unwrap();
+        //let ops = parse(&format!("(itob {})", U256::MAX)).unwrap();
+        let ops = parse(&format!("(u256->bytes {})", U256::new(1))).unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Bytes(vector![1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])]);
+        assert_eq!(state.0, vec![Value::Bytes(vector![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])]);
     }
 
     #[test]
@@ -318,7 +317,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(6))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(6))]);
     }
 
     #[test]
@@ -327,7 +326,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(4))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(4))]);
     }
 
     #[test]
@@ -336,7 +335,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     #[test]
@@ -354,7 +353,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::from(2))])]);
+        assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::new(2))])]);
     }
 
     #[test]
@@ -381,7 +380,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     #[test]
@@ -403,7 +402,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::from(1))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     #[test]
@@ -413,9 +412,9 @@ mod tests {
         let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Vector(vector![
-            Value::Int(U256::from(1)),
-            Value::Int(U256::from(2)),
-            Value::Int(U256::from(3))])]);
+            Value::Int(U256::new(1)),
+            Value::Int(U256::new(2)),
+            Value::Int(U256::new(3))])]);
     }
 
     #[test]
@@ -426,10 +425,10 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Int(U256::from(3)),
-                 Value::Int(U256::from(3)),
-                 Value::Int(U256::from(3)),
-                 Value::Int(U256::from(3))]);
+            vec![Value::Int(U256::new(3)),
+                 Value::Int(U256::new(3)),
+                 Value::Int(U256::new(3)),
+                 Value::Int(U256::new(3))]);
     }
 
     #[test]
@@ -459,7 +458,7 @@ mod tests {
 
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Int(U256::one())]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
     /*
