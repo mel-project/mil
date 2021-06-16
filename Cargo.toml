@@ -13,11 +13,12 @@ im = "15.0.0"
 anyhow = "1.0"
 genawaiter = "0.99.1"
 ethnum = "1"
-blkstructs = { git = "https://github.com/themeliolabs/themelio-core" }
+#blkstructs = { git = "https://github.com/themeliolabs/themelio-core" }
+themelio-stf = { git = "https://github.com/themeliolabs/themelio-stf" }
 tmelcrypt = { git = "https://github.com/themeliolabs/themelio-core" }
 #blkstructs = { path = "../themelio-core/libs/blkstructs" }
 #tmelcrypt = { path = "../themelio-core/libs/tmelcrypt" }
 primitive-types = { version = "0.8.0", default-features = false }
 structopt = { version = "0.3", default-features = false }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.126", features = ["derive"] }
 serde_json = "1.0"
