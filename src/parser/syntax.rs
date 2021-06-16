@@ -243,9 +243,9 @@ fn vector<'a>(input: &'a str)
 -> ParseRes<Vec<Expr>> {
     context("vector",
         delimited(
-            char('[').and(multispace0),
+            tag("#(").and(multispace0),
             cut(separated_list0(many1(ws_or_comment), expr)),
-            multispace0.and(char(']'))))
+            multispace0.and(char(')'))))
         (input)
 }
 

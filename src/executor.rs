@@ -15,7 +15,7 @@ type Stack = Vec<Value>;
 type Heap  = HashMap<u16, Value>;
 
 /// The execution environment of a covenant.
-/// Matches the CovenantEnv struct of blkstructs package.
+/// Matches the CovenantEnv struct of themelio_stf package.
 /// However, fields here are owned not borrowed.
 #[derive(Debug, Deserialize)]
 pub struct CovEnv {
@@ -135,7 +135,7 @@ mod tests {
             coin_data: CoinData {
                 covhash: tmelcrypt::HashVal::default(),
                 value: 0,
-                denom: blkstructs::Denom::Mel,
+                denom: themelio_stf::Denom::Mel,
                 additional_data: input.into(),
             },
             height: 0,
@@ -147,7 +147,7 @@ mod tests {
             spender_index: 0,
             last_header:
                 Header {
-                    network: blkstructs::NetID::Testnet,
+                    network: themelio_stf::NetID::Testnet,
                     previous: HashVal::default(),
                     height: 0,
                     history_hash: HashVal::default(),
@@ -407,7 +407,7 @@ mod tests {
 
     #[test]
     fn init_vec_native() {
-        let ops   = parse("(let (v [1 2 3]) v)").unwrap();
+        let ops   = parse("(let (v #(1 2 3)) v)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -451,7 +451,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let mut state = exec(&tx, &[], ops);
 
-        if let blkstructs::melvm::Value::Bytes(im_bytes) = state.0.pop().unwrap() {
+        if let themelio_stf::melvm::Value::Bytes(im_bytes) = state.0.pop().unwrap() {
             assert_eq!(im_bytes.into_iter().collect::<Vec<u8>>(), vec![
                     233, 131, 224, 169, 229, 83, 12, 43, 119, 20, 230,
                     120, 233, 61, 188, 129, 150, 148, 124, 190, 111, 195,
