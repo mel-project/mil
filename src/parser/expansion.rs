@@ -1,7 +1,7 @@
 use crate::PErr;
 use std::collections::HashMap;
-use crate::types::{Reserved, Value, ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
 use crate::parser::{fold_results, ParseErr, Defn, NUM_RESERVED};
+use crate::types::{UnrolledStatement, Statement, Value, ExpandedBuiltIn, BuiltIn, Symbol, Expr, VarId, UnrolledExpr};
 
 /// A list of a function's parameters and its body.
 type FnInfo = (Vec<Symbol>, Expr);
@@ -84,7 +84,55 @@ impl Env {
         Ok(UnrolledExpr::BuiltIn( Box::new(op(e)) ))
     }
 
-    // Auxillery function to expand and mangle an expression
+    /// Auxillery function to expand and mangle a statement
+    fn expand_mangle_stmnt(&self, stmnt: &Statement, mangler: &mut LinearMangler) -> Result<UnrolledStatement, ParseErr>
+    {
+        match stmnt {
+            Statement::SetLet(binds, stmnts) => {
+                // Generate mangled names for variables
+                let mangled_vars: Vec<VarId> = binds.iter().map(|_| mangler.next()).collect();
+                // Expand binding expressions
+                let expanded_bind_exprs = fold_results(binds.iter()
+                    .map(|(_, expr)| self.expand_mangle_fns(expr, mangler)).collect())?;
+                // Zip em together for later
+                let mangled_binds = mangled_vars.iter().cloned()
+                                                .zip(expanded_bind_exprs.iter().cloned())
+                                                .collect();
+
+                // Map between mangled and original variable names
+                let mangled_map: HashMap<Symbol, VarId>
+                    = binds.into_iter()
+                           .map(|(s,_)| s.clone())
+                           .zip(mangled_vars.into_iter().clone())
+                           .collect();
+
+                // Create a new env to expand the body and replace variables with the mangled version
+                let f_env = Env {
+                    // TODO: Make sure mangled_map overrides mangled
+                    mangled: self.mangled.clone().into_iter().chain(mangled_map).collect(),
+                    fns: self.fns.clone(),
+                };
+
+                let expanded_stmnts = fold_results(stmnts.iter()
+                    .map(|stm| f_env.expand_mangle_stmnt(stm, mangler))
+                    .collect())?;
+
+                Ok(UnrolledStatement::SetLet(mangled_binds, expanded_stmnts))
+            },
+            // A `set!` must operate on a bound variable; find it and also expand the assignment expression
+            Statement::Set(sym,e) => {
+                let var = try_get_var(sym, &self.mangled)?;
+                let expr = self.expand_mangle_fns(e, mangler)?;
+                Ok(UnrolledStatement::Set(var, Box::new(expr)))
+            },
+            Statement::Loop(n, stmnt) => {
+                let u_stmnt = self.expand_mangle_stmnt(stmnt, mangler)?;
+                Ok( UnrolledStatement::Loop(*n, Box::new(u_stmnt)) )
+            },
+        }
+    }
+
+    /// Auxillery function to expand and mangle an expression
     fn expand_mangle_fns(&self, expr: &Expr, mangler: &mut LinearMangler) -> Result<UnrolledExpr, ParseErr>
     {
         match expr {
@@ -157,12 +205,6 @@ impl Env {
                 */
                 //_ => todo!("Not all builtins have been implemented"),
             },
-            // A `set!` must operate on a bound variable; find it and also expand the assignment expression
-            Expr::Set(s,e) => {
-                let var = try_get_var(s, &self.mangled)?;
-                let expr = self.expand_mangle_fns(e, mangler)?;
-                Ok(UnrolledExpr::Set(var, Box::new(expr)))
-            },
             // Expand a fn call to its body, fail if a defn is not found
             Expr::App(f,es) => {
                 // Get the fn definition from the env
@@ -201,10 +243,10 @@ impl Env {
                                            .collect();
 
                 // Wrap our mangled body in let bindings
-                Ok(UnrolledExpr::Let(bindings, vec![mangled_body]))
+                Ok(UnrolledExpr::Let(bindings, vec![], Box::new(mangled_body)))
             },
             // Mangling happens here
-            Expr::Let(binds, es) => {
+            Expr::Let(binds, stmnts, e) => {
                 // Generate mangled names for variables
                 let mangled_vars: Vec<VarId> = binds.iter().map(|_| mangler.next()).collect();
                 // Expand binding expressions
@@ -229,12 +271,15 @@ impl Env {
                     fns: self.fns.clone(),
                 };
 
-                // Expand body expressions
-                let expanded_es = fold_results(es.iter()
-                    .map(|e| f_env.expand_mangle_fns(e, mangler))
+                // Expand body statements
+                let expanded_stmnts = fold_results(stmnts.iter()
+                    .map(|stm| f_env.expand_mangle_stmnt(stm, mangler))
                     .collect())?;
 
-                Ok(UnrolledExpr::Let(mangled_binds, expanded_es))
+                // Expand final expression
+                let expanded_e = f_env.expand_mangle_fns(e, mangler)?;
+
+                Ok(UnrolledExpr::Let(mangled_binds, expanded_stmnts, Box::new(expanded_e)))
             },
             Expr::If(pred, on_true, on_false) => {
                 let u_pred   = self.expand_mangle_fns(pred, mangler)?;
@@ -252,10 +297,6 @@ impl Env {
                 let u_e2 = self.expand_mangle_fns(e2, mangler)?;
                 let u_e3 = self.expand_mangle_fns(e3, mangler)?;
                 Ok( UnrolledExpr::Sigeok(*n, Box::new(u_e1), Box::new(u_e2), Box::new(u_e3)) )
-            },
-            Expr::Loop(n, expr) => {
-                let u_expr = self.expand_mangle_fns(expr, mangler)?;
-                Ok( UnrolledExpr::Loop(*n, Box::new(u_expr)) )
             },
             Expr::Value(v) => match v {
                 Value::Int(n) => Ok(UnrolledExpr::Value(Value::Int(n.clone()))),

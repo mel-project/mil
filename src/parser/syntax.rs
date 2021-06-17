@@ -1,8 +1,7 @@
 use crate::PErr;
 use crate::parser::{Defn, ParseErr};
 use ethnum::U256;
-//use primitive_types::U256;
-use crate::types::{Reserved, Symbol, Value, BuiltIn, Expr};
+use crate::types::{Reserved, Symbol, Value, BuiltIn, Expr, Statement};
 //#[macro_use] use nom_trace::{tr,print_trace, activate_trace};
 use nom::{IResult, Parser, branch::alt,
 bytes::complete::{take_while, take_while1, is_not, tag},
@@ -50,15 +49,31 @@ fn sym_binds<'a>(input: &'a str)
         )))(input)
 }
 
+fn setlet_bind<'a>(input: &'a str)
+-> ParseRes<(Vec<(Symbol, Expr)>, Vec<Statement>)> {
+    context("set-let binding",
+        list!(
+            tag("set-let"),
+            cut(sym_binds),
+            cut(separated_list1(many1(ws_or_comment), statement))
+            ))
+            .map(|(_,a,b)| (a,b))
+        .parse(input)
+}
+
 fn let_bind<'a>(input: &'a str)
--> ParseRes<(Vec<(Symbol, Expr)>, Vec<Expr>)> {
+-> ParseRes<(Vec<(Symbol, Expr)>, Vec<Statement>, Expr)> {
     context("let binding",
         list!(
             tag("let"),
             cut(sym_binds),
-            cut(separated_list1(many1(ws_or_comment), expr))
+            cut(alt((
+                separated_list0(many1(ws_or_comment), statement)
+                    .and(preceded(many1(ws_or_comment), expr)),
+                expr.map(|e| (vec![], e))
+            )))
             ))
-            .map(|(_,a,b)| (a,b))
+            .map(|(_,a,(b,c))| (a,b,c))
         .parse(input)
 }
 
@@ -289,10 +304,10 @@ pub fn root<'a>(input: &'a str)
 }
 
 pub fn set<'a>(input: &'a str)
--> ParseRes<Expr> {
+-> ParseRes<Statement> {
     // <tag> <symb> <expr>
     list!(tag("set!"), cut(symbol), cut(expr))
-        .map(|(_,s,e)| Expr::Set(s,Box::new(e)))
+        .map(|(_,s,e)| Statement::Set(s, Box::new(e)))
         .parse(input)
 }
 
@@ -336,12 +351,12 @@ pub fn hash<'a>(input: &'a str)
             .parse(input)
 }
 
-pub fn loop_expr<'a>(input: &'a str)
--> ParseRes<(u16, Expr)> {
+pub fn loop_stmnt<'a>(input: &'a str)
+-> ParseRes<(u16, Statement)> {
     context("loop expression",
         list!(tag("loop"),
               cut(map_res(digit1, |n_str: &str| n_str.parse::<u16>())),
-              cut(expr))
+              cut(statement))
             .map(|(_, n, e)| (n,e)))
             .parse(input)
 }
@@ -362,6 +377,17 @@ pub fn reserved<'a>(input: &'a str)
         )))(input)
 }
 
+/// Parse a mil statement (non-returning expression)
+pub fn statement<'a>(input: &'a str)
+-> ParseRes<Statement> {
+    // The order is important
+    alt((
+         setlet_bind.map(|(binds, stmnts)| Statement::SetLet(binds, stmnts)),
+         set,
+         loop_stmnt.map(|(n,s)| Statement::Loop(n, Box::new(s))),
+     )).parse(input)
+}
+
 /// Top level parser returns any valid [Expr].
 pub fn expr<'a>(input: &'a str)
 -> ParseRes<Expr> {
@@ -369,16 +395,14 @@ pub fn expr<'a>(input: &'a str)
     alt((bytes.map(Value::Bytes).map(Expr::Value),
          int.map(Value::Int).map(Expr::Value),
          vector.map(Expr::Vector),
-         let_bind.map(|(binds, exprs)| Expr::Let(binds, exprs)),
+         let_bind.map(|(binds, stmnts, expr)| Expr::Let(binds, stmnts, Box::new(expr))),
          unary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          binary_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          tri_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          empty_builtin.map(|b| Expr::BuiltIn(Box::new(b))),
          reserved.map(|r| Expr::Reserved(r)),
          symbol.map(Expr::Var),
-         set,
          if_expr.map(|(p,t,f)| Expr::If(Box::new(p), Box::new(t), Box::new(f))),
-         loop_expr.map(|(n,e)| Expr::Loop(n, Box::new(e))),
          hash.map(|(n,e)| Expr::Hash(n, Box::new(e))),
          sigeok.map(|(n,e1,e2,e3)| Expr::Sigeok(n, Box::new(e1), Box::new(e2), Box::new(e3))),
          app,

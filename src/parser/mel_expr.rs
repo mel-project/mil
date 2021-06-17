@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::types::{Value, ExpandedBuiltIn, UnrolledExpr, MelExpr, VarId, HeapPos};
+use crate::types::{UnrolledStatement, Value, ExpandedBuiltIn, UnrolledExpr, MelExpr, VarId, HeapPos};
 
 pub struct MemoryMap {
     memory_store: HashMap<VarId, HeapPos>,
@@ -24,6 +24,53 @@ impl MemoryMap {
         let mel_e1 = self.to_mel_expr(e1);
         let mel_e2 = self.to_mel_expr(e2);
         op(mel_e1, mel_e2)
+    }
+
+    pub fn stmnt_to_mel_expr(&mut self, stmnt: UnrolledStatement) -> MelExpr {
+        match stmnt {
+            UnrolledStatement::Set(var_id, body) => {
+                let mel_body = self.to_mel_expr(*body);
+                let loc = self.memory_store.get(&var_id)
+                              .expect("Failed to access variable id, there's a bug somewhere.");
+
+                // Evaluate the body, then store the result in memory at `loc`
+                MelExpr::Seq(vec![
+                    mel_body,
+                    MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Store(loc.clone())))])
+            },
+            UnrolledStatement::Loop(n, stmnt) => MelExpr::Loop(n, Box::new(self.stmnt_to_mel_expr(*stmnt))),
+            UnrolledStatement::SetLet(binds, stmnts) => {
+                // For each binding, evaluate the expression (to push onto stack) and store in a new
+                // memory location.
+                // TODO: What happens when the binding expression is a 'set!'?
+                let mut mel_binds = vec![];
+                binds.into_iter().for_each(|(var_id, expr)| {
+                    // Make sure the variable is not somehow already there
+                    self.memory_store.get(&var_id)
+                        .map(|_| panic!("Variable id in let binding should not already be defined, this is a bug."));
+
+                    // Assign the variable a memory location
+                    // TODO: For simplicity, just converting the id into an address. This
+                    // should probably be decoupled though.
+                    let loc = var_id as HeapPos;
+                    self.memory_store.insert(var_id, loc);
+
+                    // Translate expr into mel instructions
+                    let mel_expr = self.to_mel_expr(expr);
+
+                    // Evaluate the expression,
+                    // then store whatever is popped from the stack at 'loc'
+                    mel_binds.push(mel_expr);
+                    mel_binds.push( MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Store(loc))) );
+                });
+
+                // Finally, evaluate the body
+                let mel_stmnts = stmnts.into_iter().map(|stm| self.stmnt_to_mel_expr(stm));
+                mel_binds.extend(mel_stmnts);
+
+                MelExpr::Seq( mel_binds )
+            },
+        }
     }
 
     /// Translate an [UnrolledExpr] into a set of low-level [MelExpr] instructions.
@@ -94,16 +141,6 @@ impl MemoryMap {
 
                 MelExpr::BuiltIn(Box::new(mel_b))
             },
-            UnrolledExpr::Set(var_id, body) => {
-                let mel_body = self.to_mel_expr(*body);
-                let loc = self.memory_store.get(&var_id)
-                              .expect("Failed to access variable id, there's a bug somewhere.");
-
-                // Evaluate the body, then store the result in memory at `loc`
-                MelExpr::Seq(vec![
-                    mel_body,
-                    MelExpr::BuiltIn(Box::new(ExpandedBuiltIn::Store(loc.clone())))])
-            },
             UnrolledExpr::If(pred, on_true, on_false) => {
                 let mel_true = self.to_mel_expr(*on_true);
                 let mel_false = self.to_mel_expr(*on_false);
@@ -116,7 +153,7 @@ impl MemoryMap {
                     mel_false,
                 ])
             },
-            UnrolledExpr::Let(binds, exprs) => {
+            UnrolledExpr::Let(binds, stmnts, expr) => {
                 // For each binding, evaluate the expression (to push onto stack) and store in a new
                 // memory location.
                 // TODO: What happens when the binding expression is a 'set!'?
@@ -142,13 +179,14 @@ impl MemoryMap {
                 });
 
                 // Finally, evaluate the body
-                let mel_exprs = exprs.into_iter().map(|e| self.to_mel_expr(e));
-                //mel_binds.push(mel_body);
-                mel_binds.extend(mel_exprs);
+                let mel_stmnts = stmnts.into_iter().map(|stm| self.stmnt_to_mel_expr(stm));
+                mel_binds.extend(mel_stmnts);
+
+                let mel_expr = self.to_mel_expr(*expr);
+                mel_binds.push(mel_expr);
 
                 MelExpr::Seq( mel_binds )
             },
-            UnrolledExpr::Loop(n, expr) => MelExpr::Loop(n, Box::new(self.to_mel_expr(*expr))),
             UnrolledExpr::Hash(n, expr) => MelExpr::Hash(n, Box::new(self.to_mel_expr(*expr))),
             UnrolledExpr::Sigeok(n, e1,e2,e3) =>
                 MelExpr::Sigeok(n, Box::new(self.to_mel_expr(*e1)),

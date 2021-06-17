@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::io::prelude::*;
 use structopt::StructOpt;
 use tmelcrypt::ed25519_keygen;
-use blkstructs::Transaction;
+use themelio_stf::Transaction;
 use anyhow::anyhow;
 
 /// List of transactions and coin inputs to execute a script on.

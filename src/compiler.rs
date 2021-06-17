@@ -190,7 +190,7 @@ impl From<PushB> for u8 {
 mod test {
     use super::*;
     use crate::parser;
-    use blkstructs::melvm::{Covenant, OpCode::{self, *}};
+    use themelio_stf::melvm::{Covenant, OpCode::{self, *}};
 
     /*
     fn compile(code: &str) -> Result<BinCode, ()> {

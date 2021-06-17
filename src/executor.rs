@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::compiler::BinCode;
 use tmelcrypt::{ed25519_keygen, HashVal};
 use serde::Deserialize;
-use blkstructs::{
+use themelio_stf::{
     Header, Transaction, CoinDataHeight, CoinID, CoinData,
     melvm::{self, Value, Executor, Covenant, OpCode}};
 use genawaiter::{yield_, rc::gen};
@@ -110,7 +110,20 @@ mod tests {
     use crate::compiler::{Compile, BinCode};
     use ethnum::U256;
     use tmelcrypt::{Ed25519PK, Ed25519SK};
+    use themelio_stf::{TxHash, TxKind, melvm::Address};
     use im::vector;
+
+    fn empty_test() -> Transaction {
+        Transaction {
+            kind: TxKind::Normal,
+            inputs: Vec::new(),
+            outputs: Vec::new(),
+            fee: 0,
+            scripts: Vec::new(),
+            data: Vec::new(),
+            sigs: Vec::new(),
+        }
+    }
 
     fn compile(ops: MelExpr) -> BinCode {
         // Compile to binary
@@ -120,7 +133,7 @@ mod tests {
 
     fn key_and_empty_tx() -> (Ed25519PK, Ed25519SK, Transaction) {
         let (pk, sk) = ed25519_keygen();
-        let tx       = Transaction::empty_test().signed_ed25519(sk);
+        let tx       = empty_test().signed_ed25519(sk);
         (pk, sk, tx)
     }
 
@@ -128,12 +141,12 @@ mod tests {
         let bin = compile(ops);
         let dis = disassemble(bin).expect("Failed to disassemble");
         let empty_ci = CoinID {
-            txhash: tmelcrypt::HashVal::default(),
+            txhash: TxHash(tmelcrypt::HashVal::default()),
             index: 0,
         };
         let empty_cdh = CoinDataHeight {
             coin_data: CoinData {
-                covhash: tmelcrypt::HashVal::default(),
+                covhash: Address::coin_destroy(),//tmelcrypt::HashVal::default().to_addr(),
                 value: 0,
                 denom: themelio_stf::Denom::Mel,
                 additional_data: input.into(),
@@ -419,30 +432,24 @@ mod tests {
 
     #[test]
     fn loop_add_expr_4_times() {
-        let ops   = parse("(loop 4 (+ 1 2))").unwrap();
+        let ops   = parse("(let (x 0) (loop 4 (set! x (+ 3 x))) x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
         assert_eq!(
             state.0,
-            vec![Value::Int(U256::new(3)),
-                 Value::Int(U256::new(3)),
-                 Value::Int(U256::new(3)),
-                 Value::Int(U256::new(3))]);
+            vec![Value::Int(U256::new(12))]);
     }
 
     #[test]
     fn nested_loop() {
-        let ops   = parse("(loop 2 (loop 2 (+ 1 2)))").unwrap();
+        let ops   = parse("(let (x 0) (loop 2 (loop 2 (set! x (+ x 1)))) x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
         assert_eq!(
             state.0,
-            vec![Value::Int(U256::new(3)),
-                 Value::Int(U256::new(3)),
-                 Value::Int(U256::new(3)),
-                 Value::Int(U256::new(3))]);
+            vec![Value::Int(U256::new(4))]);
     }
 
     #[test]

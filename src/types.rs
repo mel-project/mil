@@ -188,6 +188,28 @@ pub enum Reserved {
     LastHeader = 9,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+/// Non-value-returning syntax.
+pub enum Statement {
+    /// Bind a symbol to a value within for the scope of a list of statements.
+    SetLet(Vec<(Symbol, Expr)>, Vec<Statement>),
+    /// Loop an expression a specified number of  times.
+    Loop(u16, Box<Statement>),
+    /// Assign a value stored on the heap to a symbol
+    Set(Symbol, Box<Expr>),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+/// Non-value-returning syntax.
+pub enum UnrolledStatement {
+    /// Bind a symbol to a value within for the scope of a list of statements.
+    SetLet(Vec<(VarId, UnrolledExpr)>, Vec<UnrolledStatement>),
+    /// Loop an expression a specified number of  times.
+    Loop(u16, Box<UnrolledStatement>),
+    /// Assign a value stored on the heap to a symbol
+    Set(VarId, Box<UnrolledExpr>),
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 /// The lower level representation of a program that is directly compilable into a binary for the
 /// MelVM.
@@ -219,20 +241,20 @@ pub enum Expr {
     BuiltIn(Box<BuiltIn>),
     /// Application of a user-defined function to some arguments.
     App(Symbol, Vec<Expr>),
-    /// Assign a value stored on the heap to a symbol
-    Set(Symbol, Box<Expr>),
+    // Assign a value stored on the heap to a symbol
+    //Set(Symbol, Box<Expr>),
     /// A variable is a pointer to a location on the heap.
     Var(Symbol),
     /// Reserved identities for values available in every MelVM script.
     Reserved(Reserved),
     /// Bind a symbol to a value within the scope of a given expression.
-    Let(Vec<(Symbol, Expr)>, Vec<Expr>),
+    Let(Vec<(Symbol, Expr)>, Vec<Statement>, Box<Expr>),
     // Set a symbol to point to a location.
     //SetTo(Symbol, Box<Expr>),
     /// If expression.
     If(Box<Expr>, Box<Expr>, Box<Expr>),
-    /// Loop an expression a specified number of  times.
-    Loop(u16, Box<Expr>),
+    // Loop an expression a specified number of  times.
+    //Loop(u16, Box<Expr>),
     /// Hash the return value of an expression.
     Hash(u16, Box<Expr>),
     /// Sign a message with a public key and check that it matches a signature.
@@ -248,17 +270,17 @@ pub enum UnrolledExpr {
     Value(Value),
     /// Builtin operations.
     BuiltIn(Box<ExpandedBuiltIn<UnrolledExpr>>),
-    /// Assign a value stored on the heap to a symbol
-    Set(VarId, Box<UnrolledExpr>),
+    // Assign a value stored on the heap to a symbol
+    //Set(VarId, Box<UnrolledExpr>),
     /// A variable is a pointer to a location on the heap.
     /// The [VarId] represents a unique-mangled variable id.
     Var(VarId),
     /// Bind a symbol to a value within the scope of a given expression.
-    Let(Vec<(VarId, UnrolledExpr)>, Vec<UnrolledExpr>),
+    Let(Vec<(VarId, UnrolledExpr)>, Vec<UnrolledStatement>, Box<UnrolledExpr>),
     /// If expression.
     If(Box<UnrolledExpr>, Box<UnrolledExpr>, Box<UnrolledExpr>),
-    /// Loop an expression a specified number of  times.
-    Loop(u16, Box<UnrolledExpr>),
+    // Loop an expression a specified number of  times.
+    //Loop(u16, Box<UnrolledExpr>),
     /// Hash the return value of an expression.
     Hash(u16, Box<UnrolledExpr>),
     /// Sign a message with a public key and check that it matches a signature.
