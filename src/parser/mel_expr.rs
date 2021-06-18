@@ -202,7 +202,7 @@ pub fn count_insts(e: &MelExpr) -> u16 {
     match e {
         MelExpr::Seq(v) => v.iter().map(count_insts).reduce(|a,b| a+b).unwrap_or(0),
         // Loop-embedded instructions aren't counted in the VM.
-        MelExpr::Loop(_,e) => count_insts(e),
+        MelExpr::Loop(_,e) => 1 + count_insts(e),
         MelExpr::Hash(_,e) => 1 + count_insts(e),
         MelExpr::Sigeok(_,e1,e2,e3) => 1 + count_insts(e1) + count_insts(e2) + count_insts(e3),
         MelExpr::Value(val) => match val {

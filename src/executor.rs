@@ -432,24 +432,35 @@ mod tests {
 
     #[test]
     fn loop_add_expr_4_times() {
-        let ops   = parse("(let (x 0) (loop 4 (set! x (+ 3 x))) x)").unwrap();
-        let (_, _, tx) = key_and_empty_tx();
-        let state = exec(&tx, &[], ops);
-
-        assert_eq!(
-            state.0,
-            vec![Value::Int(U256::new(12))]);
-    }
-
-    #[test]
-    fn nested_loop() {
-        let ops   = parse("(let (x 0) (loop 2 (loop 2 (set! x (+ x 1)))) x)").unwrap();
+        let ops   = parse("(let (x 0) (loop 4 (set! x (+ 1 x))) x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
         assert_eq!(
             state.0,
             vec![Value::Int(U256::new(4))]);
+    }
+
+    #[test]
+    fn set_let() {
+        let ops   = parse("(let (x 0) (set-let () (set! x 2)) x)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(
+            state.0,
+            vec![Value::Int(U256::new(2))]);
+    }
+
+    #[test]
+    fn nested_loop() {
+        let ops   = parse("(let (x 0) (loop 3 (loop 2 (set! x (+ x 1)))) x)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(
+            state.0,
+            vec![Value::Int(U256::new(6))]);
     }
 
     #[test]
