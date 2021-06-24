@@ -331,6 +331,14 @@ pub fn if_expr<'a>(input: &'a str)
         .parse(input)
 }
 
+pub fn if_stmnt<'a>(input: &'a str)
+-> ParseRes<(Expr, Statement, Statement)> {
+    context("if expression",
+        list!(tag("set-if"), cut(expr), cut(statement), cut(statement)))
+        .map(|(_,e1,s2,s3)| (e1,s2,s3))
+        .parse(input)
+}
+
 pub fn sigeok<'a>(input: &'a str)
 -> ParseRes<(u16, Expr, Expr, Expr)> {
     context("sigeok operation",
@@ -385,6 +393,7 @@ pub fn statement<'a>(input: &'a str)
          setlet_bind.map(|(binds, stmnts)| Statement::SetLet(binds, stmnts)),
          set,
          loop_stmnt.map(|(n,s)| Statement::Loop(n, Box::new(s))),
+         if_stmnt.map(|(p,t,f)| Statement::If(Box::new(p), Box::new(t), Box::new(f))),
      )).parse(input)
 }
 

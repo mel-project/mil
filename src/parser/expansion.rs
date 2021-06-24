@@ -129,6 +129,13 @@ impl Env {
                 let u_stmnt = self.expand_mangle_stmnt(stmnt, mangler)?;
                 Ok( UnrolledStatement::Loop(*n, Box::new(u_stmnt)) )
             },
+            Statement::If(pred, on_true, on_false) => {
+                let u_pred   = self.expand_mangle_fns(pred, mangler)?;
+                let on_true  = self.expand_mangle_stmnt(on_true, mangler)?;
+                let on_false = self.expand_mangle_stmnt(on_false, mangler)?;
+
+                Ok( UnrolledStatement::If(Box::new(u_pred), Box::new(on_true), Box::new(on_false)) )
+            },
         }
     }
 

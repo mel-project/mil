@@ -193,8 +193,10 @@ pub enum Reserved {
 pub enum Statement {
     /// Bind a symbol to a value within for the scope of a list of statements.
     SetLet(Vec<(Symbol, Expr)>, Vec<Statement>),
-    /// Loop an expression a specified number of  times.
+    /// Loop a statement a specified number of  times.
     Loop(u16, Box<Statement>),
+    /// An if control flow with bodies as statements.
+    If(Box<Expr>, Box<Statement>, Box<Statement>),
     /// Assign a value stored on the heap to a symbol
     Set(Symbol, Box<Expr>),
 }
@@ -204,8 +206,10 @@ pub enum Statement {
 pub enum UnrolledStatement {
     /// Bind a symbol to a value within for the scope of a list of statements.
     SetLet(Vec<(VarId, UnrolledExpr)>, Vec<UnrolledStatement>),
-    /// Loop an expression a specified number of  times.
+    /// Loop a statement a specified number of  times.
     Loop(u16, Box<UnrolledStatement>),
+    /// An if control flow with bodies as statements.
+    If(Box<UnrolledExpr>, Box<UnrolledStatement>, Box<UnrolledStatement>),
     /// Assign a value stored on the heap to a symbol
     Set(VarId, Box<UnrolledExpr>),
 }

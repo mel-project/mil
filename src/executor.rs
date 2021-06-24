@@ -352,6 +352,15 @@ mod tests {
     }
 
     #[test]
+    fn set_if_true_branch() {
+        let ops   = parse("(let (x 0) (set-if 1 (set! x 1) (set! x 2)) x)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
+    }
+
+    #[test]
     fn from_bytes() {
         let ops   = parse("(b-from (b-cons 1 b-nil) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
