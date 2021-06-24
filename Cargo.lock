@@ -1306,9 +1306,7 @@ dependencies = [
 
 [[package]]
 name = "themelio-stf"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44d97ccfcf5df905f25ca1599fb2d7b6b452ca71167f89b8b05ab327452a663c"
+version = "0.3.4-alpha.0"
 dependencies = [
  "arbitrary",
  "cached",

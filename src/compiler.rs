@@ -162,6 +162,11 @@ impl Compile for MelExpr {
                                    expr.compile_onto(b_acc)),
             // Compile the op wth args in postfix
             MelExpr::BuiltIn(op) => op.compile_onto(b),
+            MelExpr::Noop => {
+                let mut b = b;
+                b.0.push(0x09);
+                b
+            },
         }
     }
 }

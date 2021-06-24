@@ -136,6 +136,7 @@ impl Env {
 
                 Ok( UnrolledStatement::If(Box::new(u_pred), Box::new(on_true), Box::new(on_false)) )
             },
+            Statement::Noop => Ok(UnrolledStatement::Noop),
         }
     }
 

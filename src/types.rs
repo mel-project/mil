@@ -199,6 +199,8 @@ pub enum Statement {
     If(Box<Expr>, Box<Statement>, Box<Statement>),
     /// Assign a value stored on the heap to a symbol
     Set(Symbol, Box<Expr>),
+    /// No-operation
+    Noop,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -212,6 +214,8 @@ pub enum UnrolledStatement {
     If(Box<UnrolledExpr>, Box<UnrolledStatement>, Box<UnrolledStatement>),
     /// Assign a value stored on the heap to a symbol
     Set(VarId, Box<UnrolledExpr>),
+    /// No-operation
+    Noop,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -230,6 +234,8 @@ pub enum MelExpr {
     Hash(u16, Box<MelExpr>),
     /// Sign a message with a public key and check that it matches a signature.
     Sigeok(u16, Box<MelExpr>, Box<MelExpr>, Box<MelExpr>),
+    /// No-operation
+    Noop,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]

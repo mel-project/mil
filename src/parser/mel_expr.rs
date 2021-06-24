@@ -82,6 +82,7 @@ impl MemoryMap {
 
                 MelExpr::Seq( mel_binds )
             },
+            UnrolledStatement::Noop => MelExpr::Noop,
         }
     }
 
@@ -212,6 +213,7 @@ impl MemoryMap {
 /// Loop-embedded instructions aren't counted (a loop is 1 instruction).
 pub fn count_insts(e: &MelExpr) -> u16 {
     match e {
+        MelExpr::Noop => 1,
         MelExpr::Seq(v) => v.iter().map(count_insts).reduce(|a,b| a+b).unwrap_or(0),
         // Loop-embedded instructions aren't counted in the VM.
         MelExpr::Loop(_,e) => 1 + count_insts(e),

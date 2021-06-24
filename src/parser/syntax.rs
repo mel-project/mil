@@ -242,6 +242,15 @@ fn bytes<'a>(input: &'a str)
         .parse(input)
 }
 
+/// Parse a noop statement
+fn noop<'a>(input: &'a str)
+-> ParseRes<Statement> {
+    context("noop statement",
+        s_expr(tag("noop"))
+            .map(|_| Statement::Noop))
+        .parse(input)
+}
+
 /// Parse a [U256] integer.
 fn int<'a>(input: &'a str)
 -> ParseRes<U256> {
@@ -392,6 +401,7 @@ pub fn statement<'a>(input: &'a str)
     alt((
          setlet_bind.map(|(binds, stmnts)| Statement::SetLet(binds, stmnts)),
          set,
+         noop,
          loop_stmnt.map(|(n,s)| Statement::Loop(n, Box::new(s))),
          if_stmnt.map(|(p,t,f)| Statement::If(Box::new(p), Box::new(t), Box::new(f))),
      )).parse(input)

@@ -361,6 +361,15 @@ mod tests {
     }
 
     #[test]
+    fn set_if_false_branch() {
+        let ops   = parse("(let (x 0) (set-if 0 (set! x 1) (set! x 2)) x)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::new(2))]);
+    }
+
+    #[test]
     fn from_bytes() {
         let ops   = parse("(b-from (b-cons 1 b-nil) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
@@ -459,6 +468,39 @@ mod tests {
         assert_eq!(
             state.0,
             vec![Value::Int(U256::new(2))]);
+    }
+
+    #[test]
+    fn noop() {
+        let ops   = parse("(let () (noop) 2)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(
+            state.0,
+            vec![Value::Int(U256::new(2))]);
+    }
+
+    #[test]
+    fn loop_with_noop() {
+        let ops   = parse("
+        (let (i 0
+          sum 0)
+
+          (loop 10 (set-let ()
+            (set-if (> i 5)
+              (set! sum (+ sum i))
+              (noop))
+            (set! i (+ i 1))))
+
+          sum)
+        ").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(
+            state.0,
+            vec![Value::Int(U256::new(30))]);
     }
 
     #[test]
