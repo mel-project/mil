@@ -16,7 +16,7 @@ im = "15.0.0"
 anyhow = "1.0"
 genawaiter = "0.99.1"
 ethnum = "1"
-themelio-stf = "0.3.4"
+themelio-stf = "0.4.1"
 #themelio-stf = { path = "../themelio-stf" }
 tmelcrypt="0.1"
 #tmelcrypt = { path = "../themelio-core/libs/tmelcrypt" }
