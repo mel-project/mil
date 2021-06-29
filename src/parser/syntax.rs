@@ -266,10 +266,10 @@ fn int<'a>(input: &'a str)
 fn vector<'a>(input: &'a str)
 -> ParseRes<Vec<Expr>> {
     context("vector",
-        delimited(
-            tag("#(").and(multispace0),
-            cut(separated_list0(many1(ws_or_comment), expr)),
-            multispace0.and(char(')'))))
+        s_expr(
+            tag("vector").and(multispace0)
+            .and(cut(separated_list0(many1(ws_or_comment), expr))))
+        .map(|(_,es)| es))
         (input)
 }
 

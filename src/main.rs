@@ -94,9 +94,9 @@ fn main() -> anyhow::Result<()> {
     }
 
     // Generate hash of the script
-    let cov_hash = &tmelcrypt::hash_single(&bincode.0);
+    let address = &tmelcrypt::hash_single(&bincode.0).to_addr();
     // This is the only thing to print by default
-    println!("{}", cov_hash);
+    println!("{}", address);
 
     // Disassemble compiled binary
     let ops = executor::disassemble(bincode)

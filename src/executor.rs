@@ -438,7 +438,7 @@ mod tests {
 
     #[test]
     fn init_vec_native() {
-        let ops   = parse("(let (v #(1 2 3)) v)").unwrap();
+        let ops   = parse("(let (v (vector 1 2 3)) v)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
