@@ -30,12 +30,34 @@ To get the binary, tell the compiler to write it to a file.
 mil examples/hellohash.mil --output hh.mvm
 ```
 
-### Execution tests
+### Generate a test-transactions file
+To test that a covenant script executes properly, you need to define the
+context in which you want to test the script. The context is everything a
+covenant would have access to when used in a real-world transaction. That is,
+the transaction it is a part of, and the transaction spending it.
+
+The mil compiler accepts a json file with a list of environment contexts which
+it will execute the compiled script in and display the results (script returned true or false)
+when you pass the flag `--test-txs <file.json>`.
+
+Writing all this context manually would be cumbersome, so we've written a tool
+in racket, [mel-types-rkt]() to generate the json for you. In the simplest use
+case, we just want a dummy environment and don't care what the "self" and
+spending transactions really look like.
+
+*TODO: package a binary for mel-types-rkt*
+With [racket]() and mel-types-rkt installed, generate the test-txs.json file as
+follows:
+```bash
+mil hello.mil | racket main.rkt > test-txs.json
+```
+
+### Execute tests
 The mil compiler also provides an environment for executing scripts on user-configured scenarios. In the MelVM, a script is associated with a UTXO, and executed only when a transaction attempts to spend it. Therefore, this test environment takes a json file consisting of a list of (UTXO, spender-transaction) values to execute. The json file specifically is of type `[(CoinID, CoinDataHeight, Transaction)]`. See the [mil binary search tree configuration](https://github.com/jaybutera/bst_mil/blob/master/txs.json) for an example.
 
 To execute a script on a test tx file,
 ```bash
-mil bst.mil --test-txs.json
+mil bst.mil --test-txs test-txs.json
 ```
 
 The results of each tx pair is printed. Indicating whether execution succeeded, and displaying the final state of the MelVM stack, which if `Int(0)` indicates that the spend is not allowed, and any other value means it is.
