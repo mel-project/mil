@@ -49,8 +49,12 @@ spending transactions really look like.
 With [racket]() and mel-types-rkt installed, generate the test-txs.json file as
 follows:
 ```bash
-mil hello.mil | racket main.rkt > test-txs.json
+mil hello.mil | racket <path-to-mel-types-rkt>/main.rkt > test-txs.json
 ```
+
+The mil compiler will output the hash of the hello.mil script. The main
+entrypoint of mel-types-rkt uses that hash to generate a valid context for the
+script.
 
 ### Execute tests
 The mil compiler also provides an environment for executing scripts on user-configured scenarios. In the MelVM, a script is associated with a UTXO, and executed only when a transaction attempts to spend it. Therefore, this test environment takes a json file consisting of a list of (UTXO, spender-transaction) values to execute. The json file specifically is of type `[(CoinID, CoinDataHeight, Transaction)]`. See the [mil binary search tree configuration](https://github.com/jaybutera/bst_mil/blob/master/txs.json) for an example.
