@@ -49,7 +49,7 @@ spending transactions really look like.
 With [racket]() and mel-types-rkt installed, generate the test-txs.json file as
 follows:
 ```bash
-mil hello.mil | racket <path-to-mel-types-rkt>/main.rkt > test-txs.json
+mil hello.mil --out hello.out | racket <path-to-mel-types-rkt>/main.rkt -f hello.out > test-txs.json
 ```
 
 The mil compiler will output the hash of the hello.mil script. The main
