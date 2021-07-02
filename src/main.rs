@@ -114,10 +114,11 @@ fn main() -> anyhow::Result<()> {
 
         if cmd.debug {
             l.into_iter().enumerate().for_each(|(i, (cov_env, tx))| {
+
                 println!("Debug execution log for tx#{}", i);
                 //println!("{:?}", serde_json::to_string(&tx));
 
-                let mut env = ExecutionEnv::new(tx, cov_env, &ops);
+                let env = ExecutionEnv::new(tx, cov_env, &ops);
                 // Display every step in debug mode
                 env.into_iter()
                     .take_while(|r| r.is_some())
@@ -134,12 +135,16 @@ fn main() -> anyhow::Result<()> {
                     .last();
             });
         } else {
+            let weights: Vec<u128> = l.iter().map(|(_,tx)| tx.weight()).collect();
             let execs = l.into_iter()
                 .map(|(cov_env, tx)|
                     executor::execute(
                         ExecutionEnv::new(tx, cov_env, &ops)));
 
             execs.enumerate().for_each(|(i,res)| {
+                // Show weight of the transaction
+                println!("Transaction weight: {}", weights[i]);
+
                 print!("tx#{} - ", i);
                 match res {
                     Some(final_state) => {
