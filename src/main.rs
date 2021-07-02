@@ -8,7 +8,6 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::io::prelude::*;
 use structopt::StructOpt;
-use tmelcrypt::ed25519_keygen;
 use themelio_stf::Transaction;
 use anyhow::anyhow;
 
@@ -26,44 +25,6 @@ fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
         .expect("Failed to parse transactions as json."))
 }
 
-/*
-fn execute_on_txs(txs: TestTxs, bin: &BinCode) {
-    let cov_hash = &tmelcrypt::hash_single(&bincode.0);
-    // Disassemble compiled binary
-    if let Some(ops) = executor::disassemble(bincode) {
-        //println!("Disassembly:\n{:?}\n", ops);
-
-        //if let Some(fp) = cmd.test_txs {
-            //let l = read_txs(fp)?;
-            let execs = txs.iter()
-                .map(|tx| executor::execute( executor::ExecutionEnv::new(&tx, &ops, cov_hash) ));
-
-            execs.for_each(|res| match res {
-                Some(final_state) => {
-                    println!("Successful execution.\n");
-                    println!("Final stack\n--------\n{:?}", final_state.0);
-                },
-                None => {
-                    println!("Execution failed.");
-                },
-            });
-        }
-    }
-}
-*/
-/*
-fn parse(code: &str) -> Result<MelExpr, ()> {
-    let mel_ops = parser::parse(&code[..])
-        .map_err(|e| match e {
-            ParseError::Syntax(e) => match e {
-                nom::Err::Failure(e) | nom::Err::Error(e) => format!("{}", nom::error::convert_error(&code[..], e)),
-                _ => unreachable!(),
-            },
-            ParseError::Expansion(msg) => format!("{}", msg.0),
-        })?;
-*/
-
-//fn main() -> std::io::Result<()> {
 fn main() -> anyhow::Result<()> {
     // Command line arguments
     let cmd: BuildCmd = StructOpt::from_args();
