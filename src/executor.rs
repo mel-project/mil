@@ -4,9 +4,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use themelio_stf::{
     melvm::{self, Covenant, Executor, OpCode, Value},
-    CoinData, CoinDataHeight, CoinID, Header, Transaction,
+    CoinDataHeight, CoinID, Header, Transaction,
 };
-use tmelcrypt::{ed25519_keygen, HashVal};
 
 /// Points to current instruction of a program in an [ExecutionEnv].
 pub type ProgramCounter = usize;
@@ -107,8 +106,8 @@ mod tests {
     use crate::types::MelExpr;
     use ethnum::U256;
     use im::vector;
-    use themelio_stf::{melvm::Address, TxHash, TxKind};
-    use tmelcrypt::{Ed25519PK, Ed25519SK};
+    use themelio_stf::{melvm::Address, CoinData, TxHash, TxKind};
+    use tmelcrypt::{ed25519_keygen, Ed25519PK, Ed25519SK, HashVal};
 
     fn empty_test() -> Transaction {
         Transaction {
@@ -171,7 +170,7 @@ mod tests {
         };
 
         execute(ExecutionEnv::new(tx.clone(), cov_env, &dis))
-            .expect(&format!("Failed to execute: {:?}", dis))
+            .unwrap_or_else(|| panic!("Failed to execute: {:?}", dis))
     }
 
     #[test]
