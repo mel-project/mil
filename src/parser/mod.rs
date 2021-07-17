@@ -24,7 +24,7 @@ pub enum ParseError<E> {
 type Defn = (Symbol, (Vec<Symbol>, Expr));
 
 /// Number of reserved locations on an execution heap, enumerated from 0.
-const NUM_RESERVED: i32 = 8;
+const NUM_RESERVED: i32 = 32;
 
 /// Parse a string into the low-level abstract syntax tree, [MelExpr],
 /// which can be directly compiled to bytes.
