@@ -57,7 +57,7 @@ impl<'a> ExecutionEnv<'a> {
         (self.executor.stack.clone(), self.executor.heap.clone(), pc)
     }
 
-    pub fn into_iter(mut self) -> impl Iterator<Item = Option<EnvView>> + 'a {
+    pub fn iterate(mut self) -> impl Iterator<Item = Option<EnvView>> + 'a {
         gen!({
             while self.executor.pc() < self.ops.len() {
                 let next_op = self
@@ -89,7 +89,7 @@ pub fn disassemble(bin: BinCode) -> Option<Vec<OpCode>> {
 /// Execute the given environment to completion or failure.
 pub fn execute(env: ExecutionEnv) -> Option<(Stack, Heap, ProgramCounter)> {
     let mut final_state = (vec![], HashMap::new(), 0);
-    for x in env.into_iter() {
+    for x in env.iterate() {
         match x {
             None => return None,
             Some(state) => final_state = state,

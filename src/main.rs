@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
 
                 let env = ExecutionEnv::new(tx, cov_env, &ops);
                 // Display every step in debug mode
-                env.into_iter()
+                env.iterate()
                     .take_while(|r| r.is_some())
                     .inspect(|res| match res {
                         Some((stack, heap, pc)) => println!(
