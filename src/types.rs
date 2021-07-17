@@ -168,25 +168,27 @@ pub enum Value {
 /// u8 represents the corresponding location on the heap.
 pub enum Reserved {
     /// The transaction spending the covenant script's output, as a value.
-    SpenderTx = 1,
+    SpenderTx = 0,
     /// Hash of the spender transaction.
-    SpenderTxHash = 0,
+    SpenderTxHash = 1,
     /// Hash of the spent coin's transaction.
-    SelfTxHash = 2,
+    ParentTxHash = 2,
     /// Index of the output in spent coin's transaction.
-    CoinIndex = 3,
+    ParentIndex = 3,
     /// Hash of the covenant script.
-    CovHash = 4,
+    SelfHash = 4,
     /// The spent coin's monetary value.
-    CoinValue = 5,
+    ParentValue = 5,
     /// Denomination of the currency of the spent coin.
-    CoinDenom = 6,
+    ParentDenom = 6,
     /// Arbitrary bytes as input to a UTXO.
-    SelfData = 7,
+    ParentData = 7,
     /// Block height of the spent coin.
-    CoinHeight = 8,
+    ParentHeight = 8,
+    /// Which input of the spender is this
+    SpenderIndex = 9,
     /// Header of the last block to be added to the chain.
-    LastHeader = 9,
+    LastHeader = 10,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
