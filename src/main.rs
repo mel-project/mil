@@ -1,15 +1,17 @@
+use anyhow::anyhow;
 use mil::{
-    parser, executor,
     cmdline::BuildCmd,
+    compiler::{BinCode, Compile},
+    executor,
+    executor::{CovEnv, ExecutionEnv},
+    parser,
     parser::ParseError,
-    executor::{ExecutionEnv, CovEnv},
-    compiler::{Compile, BinCode}};
+};
 use std::fs::File;
-use std::path::PathBuf;
 use std::io::prelude::*;
+use std::path::PathBuf;
 use structopt::StructOpt;
 use themelio_stf::Transaction;
-use anyhow::anyhow;
 
 /// List of transactions and coin inputs to execute a script on.
 type TestTxs = Vec<(CovEnv, Transaction)>;
@@ -21,8 +23,7 @@ fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
     file.read_to_string(&mut str_txs)?;
 
     // TODO: Don't expect here
-    Ok(serde_json::from_str(&str_txs)
-        .expect("Failed to parse transactions as json."))
+    Ok(serde_json::from_str(&str_txs).expect("Failed to parse transactions as json."))
 }
 
 fn main() -> anyhow::Result<()> {
@@ -34,15 +35,15 @@ fn main() -> anyhow::Result<()> {
     file.read_to_string(&mut code)?;
 
     // Parse to MelExpr ops
-    let mel_ops = parser::parse(&code[..])
-        .map_err(|e| match e {
-            ParseError::Syntax(e) => match e {
-                nom::Err::Failure(e) | nom::Err::Error(e) =>
-                    anyhow!(format!("{}", nom::error::convert_error(&code[..], e))),
-                _ => unreachable!(),
-            },
-            ParseError::Expansion(msg) => anyhow!(format!("{}", msg.0)),
-        })?;
+    let mel_ops = parser::parse(&code[..]).map_err(|e| match e {
+        ParseError::Syntax(e) => match e {
+            nom::Err::Failure(e) | nom::Err::Error(e) => {
+                anyhow!(nom::error::convert_error(&code[..], e))
+            }
+            _ => unreachable!(),
+        },
+        ParseError::Expansion(msg) => anyhow!(msg.0),
+    })?;
 
     // Compile to binary
     let empty = BinCode(Vec::new());
@@ -61,7 +62,8 @@ fn main() -> anyhow::Result<()> {
 
     // Disassemble compiled binary
     let ops = executor::disassemble(bincode)
-        .ok_or("Failed to disassemble binary.").unwrap();
+        .ok_or("Failed to disassemble binary.")
+        .unwrap();
 
     // Show disassembly of binary if asked to
     if cmd.show_disassembly {
@@ -75,7 +77,6 @@ fn main() -> anyhow::Result<()> {
 
         if cmd.debug {
             l.into_iter().enumerate().for_each(|(i, (cov_env, tx))| {
-
                 println!("Debug execution log for tx#{}", i);
                 //println!("{:?}", serde_json::to_string(&tx));
 
@@ -84,25 +85,28 @@ fn main() -> anyhow::Result<()> {
                 env.into_iter()
                     .take_while(|r| r.is_some())
                     .inspect(|res| match res {
-                        Some((stack,heap,pc)) =>
-                            println!("-----\n\
+                        Some((stack, heap, pc)) => println!(
+                            "-----\n\
                                 Executed instruction: {:?}\n\
                                 Next instruction: {:?}\n\n\
                                     Stack\n{:?}\n\n\
                                     Heap\n{:?}\n",
-                                ops[*pc-1], ops.get(*pc), stack, heap),
+                            ops[*pc - 1],
+                            ops.get(*pc),
+                            stack,
+                            heap
+                        ),
                         None => (),
                     })
                     .last();
             });
         } else {
-            let weights: Vec<u128> = l.iter().map(|(_,tx)| tx.weight()).collect();
-            let execs = l.into_iter()
-                .map(|(cov_env, tx)|
-                    executor::execute(
-                        ExecutionEnv::new(tx, cov_env, &ops)));
+            let weights: Vec<u128> = l.iter().map(|(_, tx)| tx.weight()).collect();
+            let execs = l
+                .into_iter()
+                .map(|(cov_env, tx)| executor::execute(ExecutionEnv::new(tx, cov_env, &ops)));
 
-            execs.enumerate().for_each(|(i,res)| {
+            execs.enumerate().for_each(|(i, res)| {
                 // Show weight of the transaction
                 println!("Transaction weight: {}", weights[i]);
 
@@ -111,10 +115,10 @@ fn main() -> anyhow::Result<()> {
                     Some(final_state) => {
                         println!("Successful execution.\n");
                         println!("Final stack\n--------\n{:?}", final_state.0);
-                    },
+                    }
                     None => {
                         println!("Execution failed.");
-                    },
+                    }
                 }
             });
         }

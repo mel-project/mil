@@ -1,18 +1,19 @@
-use std::collections::HashMap;
 use crate::compiler::BinCode;
-use tmelcrypt::{ed25519_keygen, HashVal};
+use genawaiter::{rc::gen, yield_};
 use serde::Deserialize;
+use std::collections::HashMap;
 use themelio_stf::{
-    Header, Transaction, CoinDataHeight, CoinID, CoinData,
-    melvm::{self, Value, Executor, Covenant, OpCode}};
-use genawaiter::{yield_, rc::gen};
+    melvm::{self, Covenant, Executor, OpCode, Value},
+    CoinData, CoinDataHeight, CoinID, Header, Transaction,
+};
+use tmelcrypt::{ed25519_keygen, HashVal};
 
 /// Points to current instruction of a program in an [ExecutionEnv].
 pub type ProgramCounter = usize;
 /// A view into an execution environment.
 pub type EnvView = (Stack, Heap, ProgramCounter);
 type Stack = Vec<Value>;
-type Heap  = HashMap<u16, Value>;
+type Heap = HashMap<u16, Value>;
 
 /// The execution environment of a covenant.
 /// Matches the CovenantEnv struct of themelio_stf package.
@@ -45,15 +46,9 @@ pub struct ExecutionEnv<'a> {
 }
 
 impl<'a> ExecutionEnv<'a> {
-    pub fn new(
-        spending_tx: Transaction,
-        cov_env: CovEnv,
-        ops: &'a [OpCode]) -> ExecutionEnv<'a>
-    {
+    pub fn new(spending_tx: Transaction, cov_env: CovEnv, ops: &'a [OpCode]) -> ExecutionEnv<'a> {
         ExecutionEnv {
-            executor: Executor::new_from_env(
-                          spending_tx,
-                          Some(melvm::CovenantEnv::from(&cov_env))),
+            executor: Executor::new_from_env(spending_tx, Some(melvm::CovenantEnv::from(&cov_env))),
             ops,
         }
     }
@@ -62,16 +57,18 @@ impl<'a> ExecutionEnv<'a> {
         (self.executor.stack.clone(), self.executor.heap.clone(), pc)
     }
 
-    pub fn into_iter(mut self) -> impl Iterator<Item=Option<EnvView>> + 'a {
+    pub fn into_iter(mut self) -> impl Iterator<Item = Option<EnvView>> + 'a {
         gen!({
             while self.executor.pc() < self.ops.len() {
-                let next_op = self.ops.get( self.executor.pc() )
+                let next_op = self
+                    .ops
+                    .get(self.executor.pc())
                     .expect("ExecutionEnv iterator should never index an op out of range");
 
                 match self.executor.step(&next_op) {
                     Some(_) => {
                         yield_!(Some(self.view(self.executor.pc())))
-                    },
+                    }
                     // Failed execution
                     None => yield_!(None),
                 }
@@ -84,7 +81,7 @@ impl<'a> ExecutionEnv<'a> {
 /// Disassemble a binary code using the MelVM disassembler.
 pub fn disassemble(bin: BinCode) -> Option<Vec<OpCode>> {
     // Wrap in a covenant
-    let script = Covenant(bin.0.clone());
+    let script = Covenant(bin.0);
     // Disassemble compiled binary
     script.to_ops()
 }
@@ -97,7 +94,7 @@ pub fn execute(env: ExecutionEnv) -> Option<(Stack, Heap, ProgramCounter)> {
             None => return None,
             Some(state) => final_state = state,
         }
-    };
+    }
 
     Some(final_state)
 }
@@ -105,13 +102,13 @@ pub fn execute(env: ExecutionEnv) -> Option<(Stack, Heap, ProgramCounter)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::compiler::{BinCode, Compile};
     use crate::parser::parse;
     use crate::types::MelExpr;
-    use crate::compiler::{Compile, BinCode};
     use ethnum::U256;
-    use tmelcrypt::{Ed25519PK, Ed25519SK};
-    use themelio_stf::{TxHash, TxKind, melvm::Address};
     use im::vector;
+    use themelio_stf::{melvm::Address, TxHash, TxKind};
+    use tmelcrypt::{Ed25519PK, Ed25519SK};
 
     fn empty_test() -> Transaction {
         Transaction {
@@ -133,7 +130,7 @@ mod tests {
 
     fn key_and_empty_tx() -> (Ed25519PK, Ed25519SK, Transaction) {
         let (pk, sk) = ed25519_keygen();
-        let tx       = empty_test().signed_ed25519(sk);
+        let tx = empty_test().signed_ed25519(sk);
         (pk, sk, tx)
     }
 
@@ -146,7 +143,7 @@ mod tests {
         };
         let empty_cdh = CoinDataHeight {
             coin_data: CoinData {
-                covhash: Address::coin_destroy(),//tmelcrypt::HashVal::default().to_addr(),
+                covhash: Address::coin_destroy(), //tmelcrypt::HashVal::default().to_addr(),
                 value: 0,
                 denom: themelio_stf::Denom::Mel,
                 additional_data: input.into(),
@@ -158,20 +155,19 @@ mod tests {
             parent_coinid: empty_ci,
             parent_cdh: empty_cdh,
             spender_index: 0,
-            last_header:
-                Header {
-                    network: themelio_stf::NetID::Testnet,
-                    previous: HashVal::default(),
-                    height: 0,
-                    history_hash: HashVal::default(),
-                    coins_hash: HashVal::default(),
-                    transactions_hash: HashVal::default(),
-                    fee_pool: 0,
-                    fee_multiplier: 0,
-                    dosc_speed: 0,
-                    pools_hash: HashVal::default(),
-                    stakes_hash: HashVal::default(),
-                },
+            last_header: Header {
+                network: themelio_stf::NetID::Testnet,
+                previous: HashVal::default(),
+                height: 0,
+                history_hash: HashVal::default(),
+                coins_hash: HashVal::default(),
+                transactions_hash: HashVal::default(),
+                fee_pool: 0,
+                fee_multiplier: 0,
+                dosc_speed: 0,
+                pools_hash: HashVal::default(),
+                stakes_hash: HashVal::default(),
+            },
         };
 
         execute(ExecutionEnv::new(tx.clone(), cov_env, &dis))
@@ -180,7 +176,7 @@ mod tests {
 
     #[test]
     fn add_numbers() {
-        let ops   = parse("(+ 1 2)").unwrap();
+        let ops = parse("(+ 1 2)").unwrap();
         let (pk, sk, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -189,7 +185,7 @@ mod tests {
 
     #[test]
     fn test_eql() {
-        let ops   = parse("(= 1 1)").unwrap();
+        let ops = parse("(= 1 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -198,7 +194,7 @@ mod tests {
 
     #[test]
     fn test_not_eql() {
-        let ops   = parse("(= (+ 2 2) 1)").unwrap();
+        let ops = parse("(= (+ 2 2) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -207,7 +203,7 @@ mod tests {
 
     #[test]
     fn fn_application() {
-        let ops   = parse("(fn f (x y) (* x y)) (f 2 3)").unwrap();
+        let ops = parse("(fn f (x y) (* x y)) (f 2 3)").unwrap();
         let (pk, sk, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -216,7 +212,7 @@ mod tests {
 
     #[test]
     fn set_value() {
-        let ops   = parse("(let (x 1) (set! x 2) x)").unwrap();
+        let ops = parse("(let (x 1) (set! x 2) x)").unwrap();
         let (pk, sk, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -225,26 +221,34 @@ mod tests {
 
     #[test]
     fn push_nil_1() {
-        let ops   = parse("(v-push v-nil 1)").unwrap();
+        let ops = parse("(v-push v-nil 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::new(1))])]);
+        assert_eq!(
+            state.0,
+            vec![Value::Vector(vector![Value::Int(U256::new(1))])]
+        );
     }
 
     #[test]
     fn concat_vectors() {
-        let ops   = parse("(v-concat (v-cons 2 v-nil) (v-cons 1 v-nil))").unwrap();
+        let ops = parse("(v-concat (v-cons 2 v-nil) (v-cons 1 v-nil))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Vector(
-                vector![Value::Int(U256::new(2)), Value::Int(U256::new(1))])]);
+        assert_eq!(
+            state.0,
+            vec![Value::Vector(vector![
+                Value::Int(U256::new(2)),
+                Value::Int(U256::new(1))
+            ])]
+        );
     }
 
     #[test]
     fn ref_vector() {
-        let ops   = parse("(v-get (v-concat (v-cons 2 v-nil) (v-cons 1 v-nil)) 1)").unwrap();
+        let ops = parse("(v-get (v-concat (v-cons 2 v-nil) (v-cons 1 v-nil)) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -253,7 +257,7 @@ mod tests {
 
     #[test]
     fn two_gt_one() {
-        let ops   = parse("(> 2 1)").unwrap();
+        let ops = parse("(> 2 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -262,7 +266,7 @@ mod tests {
 
     #[test]
     fn one_lt_two() {
-        let ops   = parse("(< 1 2)").unwrap();
+        let ops = parse("(< 1 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -271,7 +275,7 @@ mod tests {
 
     #[test]
     fn shift_left() {
-        let ops   = parse("(<< 2 3)").unwrap();
+        let ops = parse("(<< 2 3)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -280,7 +284,7 @@ mod tests {
 
     #[test]
     fn bitwise_and() {
-        let ops   = parse("(and 3 2)").unwrap();
+        let ops = parse("(and 3 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -289,7 +293,7 @@ mod tests {
 
     #[test]
     fn bitwise_or() {
-        let ops   = parse("(or 1 2)").unwrap();
+        let ops = parse("(or 1 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -298,7 +302,10 @@ mod tests {
 
     #[test]
     fn btoi_1() {
-        let ops   = parse("(bytes->u256 0x0000000000000000000000000000000000000000000000000000000000000001)").unwrap();
+        let ops = parse(
+            "(bytes->u256 0x0000000000000000000000000000000000000000000000000000000000000001)",
+        )
+        .unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -307,7 +314,10 @@ mod tests {
 
     #[test]
     fn btoi_max() {
-        let ops   = parse("(bytes->u256 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)").unwrap();
+        let ops = parse(
+            "(bytes->u256 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)",
+        )
+        .unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -321,12 +331,18 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Bytes(vector![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])]);
+        assert_eq!(
+            state.0,
+            vec![Value::Bytes(vector![
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 1
+            ])]
+        );
     }
 
     #[test]
     fn nested_lets() {
-        let ops   = parse("(let (x 3) (let (y 2) (* x y)))").unwrap();
+        let ops = parse("(let (x 3) (let (y 2) (* x y)))").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -335,7 +351,7 @@ mod tests {
 
     #[test]
     fn if_true_branch() {
-        let ops   = parse("(if (and 1 1) (* 2 2) 1)").unwrap();
+        let ops = parse("(if (and 1 1) (* 2 2) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -344,7 +360,7 @@ mod tests {
 
     #[test]
     fn if_false_branch() {
-        let ops   = parse("(if 0 (* 2 2) 1)").unwrap();
+        let ops = parse("(if 0 (* 2 2) 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -353,7 +369,7 @@ mod tests {
 
     #[test]
     fn set_if_true_branch() {
-        let ops   = parse("(let (x 0) (set-if 1 (set! x 1) (set! x 2)) x)").unwrap();
+        let ops = parse("(let (x 0) (set-if 1 (set! x 1) (set! x 2)) x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -362,7 +378,7 @@ mod tests {
 
     #[test]
     fn set_if_false_branch() {
-        let ops   = parse("(let (x 0) (set-if 0 (set! x 1) (set! x 2)) x)").unwrap();
+        let ops = parse("(let (x 0) (set-if 0 (set! x 1) (set! x 2)) x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -371,7 +387,7 @@ mod tests {
 
     #[test]
     fn from_bytes() {
-        let ops   = parse("(b-from (b-cons 1 b-nil) 0 2)").unwrap();
+        let ops = parse("(b-from (b-cons 1 b-nil) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -380,16 +396,19 @@ mod tests {
 
     #[test]
     fn vset_vector() {
-        let ops   = parse("(v-from (v-cons 1 v-nil) 0 2)").unwrap();
+        let ops = parse("(v-from (v-cons 1 v-nil) 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Vector(vector![Value::Int(U256::new(2))])]);
+        assert_eq!(
+            state.0,
+            vec![Value::Vector(vector![Value::Int(U256::new(2))])]
+        );
     }
 
     #[test]
     fn set_bytes() {
-        let ops   = parse("(b-from 0x00 0 2)").unwrap();
+        let ops = parse("(b-from 0x00 0 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -398,7 +417,8 @@ mod tests {
 
     #[test]
     fn inlined_comments() {
-        let ops   = parse("
+        let ops = parse(
+            "
         ; aghhh
         ; and a second
 
@@ -407,7 +427,9 @@ mod tests {
             ;everywhere
             (* 2 ;they're everywhere!
             2); dont mind me
-            1)").unwrap();
+            1)",
+        )
+        .unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -416,7 +438,7 @@ mod tests {
 
     #[test]
     fn empty_string_is_empty_bytes() {
-        let ops   = parse("(let (x \"\") x)").unwrap();
+        let ops = parse("(let (x \"\") x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
@@ -438,52 +460,51 @@ mod tests {
 
     #[test]
     fn init_vec_native() {
-        let ops   = parse("(let (v (vector 1 2 3)) v)").unwrap();
+        let ops = parse("(let (v (vector 1 2 3)) v)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Vector(vector![
-            Value::Int(U256::new(1)),
-            Value::Int(U256::new(2)),
-            Value::Int(U256::new(3))])]);
+        assert_eq!(
+            state.0,
+            vec![Value::Vector(vector![
+                Value::Int(U256::new(1)),
+                Value::Int(U256::new(2)),
+                Value::Int(U256::new(3))
+            ])]
+        );
     }
 
     #[test]
     fn loop_add_expr_4_times() {
-        let ops   = parse("(let (x 0) (loop 4 (set! x (+ 1 x))) x)").unwrap();
+        let ops = parse("(let (x 0) (loop 4 (set! x (+ 1 x))) x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(
-            state.0,
-            vec![Value::Int(U256::new(4))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(4))]);
     }
 
     #[test]
     fn set_let() {
-        let ops   = parse("(let (x 0) (set-let () (set! x 2)) x)").unwrap();
+        let ops = parse("(let (x 0) (set-let () (set! x 2)) x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(
-            state.0,
-            vec![Value::Int(U256::new(2))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(2))]);
     }
 
     #[test]
     fn noop() {
-        let ops   = parse("(let () (noop) 2)").unwrap();
+        let ops = parse("(let () (noop) 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(
-            state.0,
-            vec![Value::Int(U256::new(2))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(2))]);
     }
 
     #[test]
     fn loop_with_noop() {
-        let ops   = parse("
+        let ops = parse(
+            "
         (let (i 0
           sum 0)
 
@@ -494,37 +515,38 @@ mod tests {
             (set! i (+ i 1))))
 
           sum)
-        ").unwrap();
+        ",
+        )
+        .unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(
-            state.0,
-            vec![Value::Int(U256::new(30))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(30))]);
     }
 
     #[test]
     fn nested_loop() {
-        let ops   = parse("(let (x 0) (loop 3 (loop 2 (set! x (+ x 1)))) x)").unwrap();
+        let ops = parse("(let (x 0) (loop 3 (loop 2 (set! x (+ x 1)))) x)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(
-            state.0,
-            vec![Value::Int(U256::new(6))]);
+        assert_eq!(state.0, vec![Value::Int(U256::new(6))]);
     }
 
     #[test]
     fn hash_bytes() {
-        let ops   = parse("(hash 1 0xF0)").unwrap();
+        let ops = parse("(hash 1 0xF0)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
         let mut state = exec(&tx, &[], ops);
 
         if let themelio_stf::melvm::Value::Bytes(im_bytes) = state.0.pop().unwrap() {
-            assert_eq!(im_bytes.into_iter().collect::<Vec<u8>>(), vec![
-                    233, 131, 224, 169, 229, 83, 12, 43, 119, 20, 230,
-                    120, 233, 61, 188, 129, 150, 148, 124, 190, 111, 195,
-                    63, 163, 212, 106, 36, 240, 111, 251, 98, 193]);
+            assert_eq!(
+                im_bytes.into_iter().collect::<Vec<u8>>(),
+                vec![
+                    233, 131, 224, 169, 229, 83, 12, 43, 119, 20, 230, 120, 233, 61, 188, 129, 150,
+                    148, 124, 190, 111, 195, 63, 163, 212, 106, 36, 240, 111, 251, 98, 193
+                ]
+            );
         } else {
             panic!();
         }
@@ -533,11 +555,15 @@ mod tests {
     #[test]
     fn sigeok_bytes() {
         let (pk, _, tx) = key_and_empty_tx();
-        let ops   = parse(&format!("
+        let ops = parse(&format!(
+            "
                 (sigeok 32
                     (v-get (v-get SPENDER-TX 6) 0)
                     0x{}
-                    SPENDER-TX-HASH)", hex::encode(&pk.0))).unwrap();
+                    SPENDER-TX-HASH)",
+            hex::encode(&pk.0)
+        ))
+        .unwrap();
 
         let state = exec(&tx, &[], ops);
 

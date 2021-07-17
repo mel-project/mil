@@ -150,6 +150,7 @@ pub enum BuiltIn {
 
 /// Symbolic name for an expression
 pub type Symbol = String;
+pub type Symb = str;
 /// Internal data type for tracking variable ids.
 pub type VarId = i32;
 
@@ -211,7 +212,11 @@ pub enum UnrolledStatement {
     /// Loop a statement a specified number of  times.
     Loop(u16, Box<UnrolledStatement>),
     /// An if control flow with bodies as statements.
-    If(Box<UnrolledExpr>, Box<UnrolledStatement>, Box<UnrolledStatement>),
+    If(
+        Box<UnrolledExpr>,
+        Box<UnrolledStatement>,
+        Box<UnrolledStatement>,
+    ),
     /// Assign a value stored on the heap to a symbol
     Set(VarId, Box<UnrolledExpr>),
     /// No-operation
@@ -286,7 +291,11 @@ pub enum UnrolledExpr {
     /// The [VarId] represents a unique-mangled variable id.
     Var(VarId),
     /// Bind a symbol to a value within the scope of a given expression.
-    Let(Vec<(VarId, UnrolledExpr)>, Vec<UnrolledStatement>, Box<UnrolledExpr>),
+    Let(
+        Vec<(VarId, UnrolledExpr)>,
+        Vec<UnrolledStatement>,
+        Box<UnrolledExpr>,
+    ),
     /// If expression.
     If(Box<UnrolledExpr>, Box<UnrolledExpr>, Box<UnrolledExpr>),
     // Loop an expression a specified number of  times.

@@ -1,15 +1,19 @@
-use std::fmt;
+use crate::types::{ExpandedBuiltIn, HeapPos, MelExpr, PushB, PushI, Value};
 use ethnum::U256;
-use crate::types::{Value, HeapPos, PushI, PushB, ExpandedBuiltIn, MelExpr};
+use std::fmt;
 
 #[derive(Clone)]
 pub struct BinCode(pub Vec<u8>);
 
 impl fmt::Display for BinCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0.iter()
-           .fold(String::from(""), |acc, bit|
-               acc + &format!("{:02x?}", bit)))
+        write!(
+            f,
+            "{}",
+            self.0
+                .iter()
+                .fold(String::from(""), |acc, bit| acc + &format!("{:02x?}", bit))
+        )
     }
 }
 
@@ -18,55 +22,55 @@ pub trait Compile {
     /// and mutates for efficient allocation.
     fn compile_onto(&self, b: BinCode) -> BinCode;
 
-    // Map on the output of the 
+    // Map on the output of the
     // fn map(&self, other: impl Fn(BinCode) -> BinCode) -> BinCode
 }
 
 impl<T: Compile> Compile for ExpandedBuiltIn<T> {
     fn compile_onto(&self, b: BinCode) -> BinCode {
         match self {
-            ExpandedBuiltIn::Add(e1,e2)     => compile_op(b, 0x10, vec![e1,e2]),
-            ExpandedBuiltIn::Sub(e1,e2)     => compile_op(b, 0x11, vec![e1,e2]),
-            ExpandedBuiltIn::Mul(e1,e2)     => compile_op(b, 0x12, vec![e1,e2]),
-            ExpandedBuiltIn::Div(e1,e2)     => compile_op(b, 0x13, vec![e1,e2]),
-            ExpandedBuiltIn::Rem(e1,e2)     => compile_op(b, 0x14, vec![e1,e2]),
+            ExpandedBuiltIn::Add(e1, e2) => compile_op(b, 0x10, vec![e1, e2]),
+            ExpandedBuiltIn::Sub(e1, e2) => compile_op(b, 0x11, vec![e1, e2]),
+            ExpandedBuiltIn::Mul(e1, e2) => compile_op(b, 0x12, vec![e1, e2]),
+            ExpandedBuiltIn::Div(e1, e2) => compile_op(b, 0x13, vec![e1, e2]),
+            ExpandedBuiltIn::Rem(e1, e2) => compile_op(b, 0x14, vec![e1, e2]),
 
-            ExpandedBuiltIn::And(e1,e2)     => compile_op(b, 0x20, vec![e1,e2]),
-            ExpandedBuiltIn::Or(e1,e2)      => compile_op(b, 0x21, vec![e1,e2]),
-            ExpandedBuiltIn::Xor(e1,e2)     => compile_op(b, 0x22, vec![e1,e2]),
-            ExpandedBuiltIn::Not(e)         => compile_op(b, 0x23, vec![e]),
-            ExpandedBuiltIn::Eql(e1,e2)     => compile_op(b, 0x24, vec![e1,e2]),
-            ExpandedBuiltIn::Lt(e1,e2)      => compile_op(b, 0x25, vec![e1,e2]),
-            ExpandedBuiltIn::Gt(e1,e2)      => compile_op(b, 0x26, vec![e1,e2]),
-            ExpandedBuiltIn::Shl(e1,e2)     => compile_op(b, 0x27, vec![e1,e2]),
-            ExpandedBuiltIn::Shr(e1,e2)     => compile_op(b, 0x28, vec![e1,e2]),
+            ExpandedBuiltIn::And(e1, e2) => compile_op(b, 0x20, vec![e1, e2]),
+            ExpandedBuiltIn::Or(e1, e2) => compile_op(b, 0x21, vec![e1, e2]),
+            ExpandedBuiltIn::Xor(e1, e2) => compile_op(b, 0x22, vec![e1, e2]),
+            ExpandedBuiltIn::Not(e) => compile_op(b, 0x23, vec![e]),
+            ExpandedBuiltIn::Eql(e1, e2) => compile_op(b, 0x24, vec![e1, e2]),
+            ExpandedBuiltIn::Lt(e1, e2) => compile_op(b, 0x25, vec![e1, e2]),
+            ExpandedBuiltIn::Gt(e1, e2) => compile_op(b, 0x26, vec![e1, e2]),
+            ExpandedBuiltIn::Shl(e1, e2) => compile_op(b, 0x27, vec![e1, e2]),
+            ExpandedBuiltIn::Shr(e1, e2) => compile_op(b, 0x28, vec![e1, e2]),
 
-            ExpandedBuiltIn::ItoB(e)        => compile_op(b, 0xc0, vec![e]),
-            ExpandedBuiltIn::BtoI(e)        => compile_op(b, 0xc1, vec![e]),
+            ExpandedBuiltIn::ItoB(e) => compile_op(b, 0xc0, vec![e]),
+            ExpandedBuiltIn::BtoI(e) => compile_op(b, 0xc1, vec![e]),
 
-            ExpandedBuiltIn::Vref(e1,e2)    => compile_op(b, 0x50, vec![e1,e2]),
-            ExpandedBuiltIn::Vappend(e1,e2) => compile_op(b, 0x51, vec![e1,e2]),
+            ExpandedBuiltIn::Vref(e1, e2) => compile_op(b, 0x50, vec![e1, e2]),
+            ExpandedBuiltIn::Vappend(e1, e2) => compile_op(b, 0x51, vec![e1, e2]),
             ExpandedBuiltIn::Vempty => compile_op::<MelExpr>(b, 0x52, vec![]),
-            ExpandedBuiltIn::Vlen(e)        => compile_op(b, 0x53, vec![e]),
-            ExpandedBuiltIn::Vslice(e1,e2,e3) => compile_op(b, 0x54, vec![e1,e2,e3]),
-            ExpandedBuiltIn::Vset(e1,e2,e3) => compile_op(b, 0x55, vec![e1,e2,e3]),
-            ExpandedBuiltIn::Vpush(e1,e2)   => compile_op(b, 0x56, vec![e1,e2]),
-            ExpandedBuiltIn::Vcons(e1,e2)   => compile_op(b, 0x57, vec![e1,e2]),
+            ExpandedBuiltIn::Vlen(e) => compile_op(b, 0x53, vec![e]),
+            ExpandedBuiltIn::Vslice(e1, e2, e3) => compile_op(b, 0x54, vec![e1, e2, e3]),
+            ExpandedBuiltIn::Vset(e1, e2, e3) => compile_op(b, 0x55, vec![e1, e2, e3]),
+            ExpandedBuiltIn::Vpush(e1, e2) => compile_op(b, 0x56, vec![e1, e2]),
+            ExpandedBuiltIn::Vcons(e1, e2) => compile_op(b, 0x57, vec![e1, e2]),
 
-            ExpandedBuiltIn::Bref(e1,e2)    => compile_op(b, 0x70, vec![e1,e2]),
-            ExpandedBuiltIn::Bappend(e1,e2) => compile_op(b, 0x71, vec![e1,e2]),
+            ExpandedBuiltIn::Bref(e1, e2) => compile_op(b, 0x70, vec![e1, e2]),
+            ExpandedBuiltIn::Bappend(e1, e2) => compile_op(b, 0x71, vec![e1, e2]),
             ExpandedBuiltIn::Bempty => compile_op::<MelExpr>(b, 0x72, vec![]),
-            ExpandedBuiltIn::Blen(e)        => compile_op(b, 0x73, vec![e]),
-            ExpandedBuiltIn::Bslice(e1,e2,e3) => compile_op(b, 0x74, vec![e1,e2,e3]),
-            ExpandedBuiltIn::Bset(e1,e2,e3) => compile_op(b, 0x75, vec![e1,e2,e3]),
-            ExpandedBuiltIn::Bpush(e1,e2)   => compile_op(b, 0x76, vec![e1,e2]),
-            ExpandedBuiltIn::Bcons(e1,e2)   => compile_op(b, 0x77, vec![e1,e2]),
+            ExpandedBuiltIn::Blen(e) => compile_op(b, 0x73, vec![e]),
+            ExpandedBuiltIn::Bslice(e1, e2, e3) => compile_op(b, 0x74, vec![e1, e2, e3]),
+            ExpandedBuiltIn::Bset(e1, e2, e3) => compile_op(b, 0x75, vec![e1, e2, e3]),
+            ExpandedBuiltIn::Bpush(e1, e2) => compile_op(b, 0x76, vec![e1, e2]),
+            ExpandedBuiltIn::Bcons(e1, e2) => compile_op(b, 0x77, vec![e1, e2]),
 
-            ExpandedBuiltIn::Jmp(n)      => compile_u16op(b, 0xa0, n),
-            ExpandedBuiltIn::Bez(n)      => compile_u16op(b, 0xa1, n),
-            ExpandedBuiltIn::Bnz(n)      => compile_u16op(b, 0xa2, n),
-            ExpandedBuiltIn::Store(idx)  => compile_u16op(b, 0x43, idx),
-            ExpandedBuiltIn::Load(idx)   => compile_u16op(b, 0x42, idx),
+            ExpandedBuiltIn::Jmp(n) => compile_u16op(b, 0xa0, n),
+            ExpandedBuiltIn::Bez(n) => compile_u16op(b, 0xa1, n),
+            ExpandedBuiltIn::Bnz(n) => compile_u16op(b, 0xa2, n),
+            ExpandedBuiltIn::Store(idx) => compile_u16op(b, 0x43, idx),
+            ExpandedBuiltIn::Load(idx) => compile_u16op(b, 0x42, idx),
         }
     }
 }
@@ -85,8 +89,10 @@ fn compile_u16op(mut b: BinCode, opcode: u8, idx: &HeapPos) -> BinCode {
 
 // Compile the args, then append the op (postfix)
 fn compile_op<T: Compile>(b: BinCode, opcode: u8, args: Vec<&T>) -> BinCode {
-    let mut b = args.iter().rev().fold(b, |b_acc, arg|
-            arg.compile_onto(b_acc));
+    let mut b = args
+        .iter()
+        .rev()
+        .fold(b, |b_acc, arg| arg.compile_onto(b_acc));
     b.0.push(opcode);
     b
 }
@@ -103,12 +109,12 @@ fn write_pushi(mut b: BinCode, n: &U256) -> BinCode {
     //b.0.reserve(b_size);
     //unsafe { b.0.set_len(idx + b_size); }
 
-    b.0.extend(&n.to_be_bytes());//&mut b.0[idx..]);
+    b.0.extend(&n.to_be_bytes()); //&mut b.0[idx..]);
 
     b
 }
 
-fn write_pushb(mut b: BinCode, bytes: &Vec<u8>) -> BinCode {
+fn write_pushb(mut b: BinCode, bytes: &[u8]) -> BinCode {
     // Op
     b.0.push(PushB.into());
     // Length of bytestring
@@ -145,28 +151,27 @@ impl Compile for MelExpr {
     fn compile_onto(&self, b: BinCode) -> BinCode {
         //println!("writing {:?} to {}", self, b);
         match self {
-            MelExpr::Hash(n,e) => compile_u16_expr_op(b, 0x30, n, &**e),
-            MelExpr::Sigeok(n,e1,e2,e3) => {
+            MelExpr::Hash(n, e) => compile_u16_expr_op(b, 0x30, n, &**e),
+            MelExpr::Sigeok(n, e1, e2, e3) => {
                 let mut b = e3.compile_onto(e2.compile_onto(e1.compile_onto(b)));
                 b.0.push(0x32);
                 n.compile_onto(b)
-            },
-            MelExpr::Loop(n,e) => write_loop(b, n, e),
+            }
+            MelExpr::Loop(n, e) => write_loop(b, n, e),
             // Integers evaluate to themselves (push onto stack)
             MelExpr::Value(v) => match v {
                 Value::Int(n) => write_pushi(b, n),
                 Value::Bytes(bytes) => write_pushb(b, bytes),
             },
             // Compile each expression in sequence
-            MelExpr::Seq(l) => l.iter().fold(b, |b_acc, expr|
-                                   expr.compile_onto(b_acc)),
+            MelExpr::Seq(l) => l.iter().fold(b, |b_acc, expr| expr.compile_onto(b_acc)),
             // Compile the op wth args in postfix
             MelExpr::BuiltIn(op) => op.compile_onto(b),
             MelExpr::Noop => {
                 let mut b = b;
                 b.0.push(0x09);
                 b
-            },
+            }
         }
     }
 }
@@ -190,13 +195,8 @@ impl From<PushB> for u8 {
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::parser;
-    use themelio_stf::melvm::{Covenant, OpCode::{self, *}};
-
     /*
     fn compile(code: &str) -> Result<BinCode, ()> {
         // Parse
@@ -214,10 +214,9 @@ mod test {
     }
     */
 
-    fn assert_veq<T: PartialEq + std::fmt::Debug>(v1: Vec<T>, v2: Vec<T>) {
-        v1.iter().zip(v2.iter())
-          .for_each(|(x,y)| assert_eq!(x, y))
-    }
+    // fn assert_veq<T: PartialEq + std::fmt::Debug>(v1: Vec<T>, v2: Vec<T>) {
+    //     v1.iter().zip(v2.iter()).for_each(|(x, y)| assert_eq!(x, y))
+    // }
 
     /*
     #[test]
