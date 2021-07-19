@@ -1222,9 +1222,9 @@ dependencies = [
 
 [[package]]
 name = "themelio-stf"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bea1045332f2bddc8f6dfc9bd5bebf0cf034d3006e46ac9dcbd0694a58f31079"
+checksum = "5193148590c25e4015aee72b6ff978d46b81d5e3c34d22bcd138f01d17752da3"
 dependencies = [
  "arbitrary",
  "dashmap",
@@ -1244,6 +1244,7 @@ dependencies = [
  "parking_lot",
  "rayon",
  "rustc-hash",
+ "scopeguard",
  "serde",
  "serde_repr",
  "smallvec",

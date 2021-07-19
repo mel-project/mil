@@ -137,6 +137,12 @@ impl MemoryMap {
                     ExpandedBuiltIn::ItoB(e) => {
                         ExpandedBuiltIn::<MelExpr>::ItoB(self.unrolled_to_mel(e))
                     }
+                    ExpandedBuiltIn::TypeQ(e) => {
+                        ExpandedBuiltIn::<MelExpr>::TypeQ(self.unrolled_to_mel(e))
+                    }
+                    ExpandedBuiltIn::Dup(e) => {
+                        ExpandedBuiltIn::<MelExpr>::Dup(self.unrolled_to_mel(e))
+                    }
                     ExpandedBuiltIn::Add(e1, e2) => {
                         self.binop(e1, e2, ExpandedBuiltIn::<MelExpr>::Add)
                     }
@@ -317,6 +323,8 @@ pub fn count_insts(e: &MelExpr) -> u16 {
             ExpandedBuiltIn::Not(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::BtoI(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::ItoB(e) => 1 + count_insts(&e),
+            ExpandedBuiltIn::TypeQ(e) => 1 + count_insts(&e),
+            ExpandedBuiltIn::Dup(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::Vempty => 1,
             ExpandedBuiltIn::Bempty => 1,
             ExpandedBuiltIn::Vref(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),

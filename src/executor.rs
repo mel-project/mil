@@ -3,7 +3,9 @@ use genawaiter::{rc::gen, yield_};
 use serde::Deserialize;
 use std::collections::HashMap;
 use themelio_stf::{
-    melvm::{self, Covenant, Executor, OpCode, Value},
+    melvm::{
+        self, Covenant, Executor, Value,
+        opcode::{OpCode, DecodeError}},
     CoinDataHeight, CoinID, Header, Transaction,
 };
 
@@ -37,17 +39,21 @@ impl<'a> From<&'a CovEnv> for melvm::CovenantEnv<'a> {
 }
 
 /// A wrapper of the MelVM Executor, associated with a list of opcodes to execute.
-pub struct ExecutionEnv<'a> {
+//pub struct ExecutionEnv<'a> {
+pub struct ExecutionEnv {
     /// A stack and heap environment.
     executor: Executor,
     /// Program instructions to execute.
-    ops: &'a [OpCode],
+    //ops: &'a [OpCode],
+    ops: Vec<OpCode>,
 }
 
-impl<'a> ExecutionEnv<'a> {
-    pub fn new(spending_tx: Transaction, cov_env: CovEnv, ops: &'a [OpCode]) -> ExecutionEnv<'a> {
+//impl<'a> ExecutionEnv<'a> {
+impl ExecutionEnv {
+    //pub fn new(spending_tx: Transaction, cov_env: CovEnv, ops: &'a [OpCode]) -> ExecutionEnv<'a> {
+    pub fn new(spending_tx: Transaction, cov_env: CovEnv, ops: Vec<OpCode>) -> ExecutionEnv {
         ExecutionEnv {
-            executor: Executor::new_from_env(spending_tx, Some(melvm::CovenantEnv::from(&cov_env))),
+            executor: Executor::new_from_env(ops.clone(), spending_tx, Some(melvm::CovenantEnv::from(&cov_env))),
             ops,
         }
     }
@@ -56,15 +62,19 @@ impl<'a> ExecutionEnv<'a> {
         (self.executor.stack.clone(), self.executor.heap.clone(), pc)
     }
 
-    pub fn iterate(mut self) -> impl Iterator<Item = Option<EnvView>> + 'a {
+    //pub fn iterate(mut self) -> impl Iterator<Item = Option<EnvView>> + 'a {
+    pub fn iterate(mut self) -> impl Iterator<Item = Option<EnvView>> {
         gen!({
             while self.executor.pc() < self.ops.len() {
+                /*
                 let next_op = self
                     .ops
                     .get(self.executor.pc())
                     .expect("ExecutionEnv iterator should never index an op out of range");
+                */
 
-                match self.executor.step(&next_op) {
+                //match self.executor.step() {
+                match self.executor.step() {
                     Some(_) => {
                         yield_!(Some(self.view(self.executor.pc())))
                     }
@@ -78,7 +88,7 @@ impl<'a> ExecutionEnv<'a> {
 }
 
 /// Disassemble a binary code using the MelVM disassembler.
-pub fn disassemble(bin: BinCode) -> Option<Vec<OpCode>> {
+pub fn disassemble(bin: BinCode) -> Result<Vec<OpCode>, DecodeError> {
     // Wrap in a covenant
     let script = Covenant(bin.0);
     // Disassemble compiled binary
@@ -169,7 +179,7 @@ mod tests {
             },
         };
 
-        execute(ExecutionEnv::new(tx.clone(), cov_env, &dis))
+        execute(ExecutionEnv::new(tx.clone(), cov_env, dis.clone()))
             .unwrap_or_else(|| panic!("Failed to execute: {:?}", dis))
     }
 
@@ -489,6 +499,15 @@ mod tests {
         let state = exec(&tx, &[], ops);
 
         assert_eq!(state.0, vec![Value::Int(U256::new(2))]);
+    }
+
+    #[test]
+    fn typeof_int() {
+        let ops = parse("(typeof 1)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::new(0))]);
     }
 
     #[test]

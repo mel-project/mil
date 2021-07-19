@@ -62,8 +62,7 @@ fn main() -> anyhow::Result<()> {
 
     // Disassemble compiled binary
     let ops = executor::disassemble(bincode)
-        .ok_or("Failed to disassemble binary.")
-        .unwrap();
+        .expect("Failed to disassemble binary.");
 
     // Show disassembly of binary if asked to
     if cmd.show_disassembly {
@@ -80,7 +79,7 @@ fn main() -> anyhow::Result<()> {
                 println!("Debug execution log for tx#{}", i);
                 //println!("{:?}", serde_json::to_string(&tx));
 
-                let env = ExecutionEnv::new(tx, cov_env, &ops);
+                let env = ExecutionEnv::new(tx, cov_env, ops.clone());
                 // Display every step in debug mode
                 env.iterate()
                     .take_while(|r| r.is_some())
@@ -104,7 +103,7 @@ fn main() -> anyhow::Result<()> {
             let weights: Vec<u128> = l.iter().map(|(_, tx)| tx.weight()).collect();
             let execs = l
                 .into_iter()
-                .map(|(cov_env, tx)| executor::execute(ExecutionEnv::new(tx, cov_env, &ops)));
+                .map(|(cov_env, tx)| executor::execute(ExecutionEnv::new(tx, cov_env, ops.clone())));
 
             execs.enumerate().for_each(|(i, res)| {
                 // Show weight of the transaction

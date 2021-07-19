@@ -47,6 +47,9 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
 
             ExpandedBuiltIn::ItoB(e) => compile_op(b, 0xc0, vec![e]),
             ExpandedBuiltIn::BtoI(e) => compile_op(b, 0xc1, vec![e]),
+            ExpandedBuiltIn::TypeQ(e) => compile_op(b, 0xc2, vec![e]),
+
+            ExpandedBuiltIn::Dup(e) => compile_op(b, 0xff, vec![e]),
 
             ExpandedBuiltIn::Vref(e1, e2) => compile_op(b, 0x50, vec![e1, e2]),
             ExpandedBuiltIn::Vappend(e1, e2) => compile_op(b, 0x51, vec![e1, e2]),

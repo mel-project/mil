@@ -396,6 +396,30 @@ pub fn hash(input: &str) -> ParseRes<(u16, Expr)> {
     .parse(input)
 }
 
+pub fn typeof_expr(input: &str) -> ParseRes<BuiltIn> {
+    context(
+        "typeof expression",
+        list!(
+            tag("typeof"),
+            cut(expr)
+        )
+        .map(|(_, e)| BuiltIn::TypeQ(e)),
+    )
+    .parse(input)
+}
+
+pub fn dup(input: &str) -> ParseRes<BuiltIn> {
+    context(
+        "dup expression",
+        list!(
+            tag("dup"),
+            cut(expr)
+        )
+        .map(|(_, e)| BuiltIn::TypeQ(e)),
+    )
+    .parse(input)
+}
+
 pub fn loop_stmnt(input: &str) -> ParseRes<(u16, Statement)> {
     context(
         "loop expression",
@@ -458,6 +482,8 @@ pub fn expr(input: &str) -> ParseRes<Expr> {
         if_expr.map(|(p, t, f)| Expr::If(Box::new(p), Box::new(t), Box::new(f))),
         hash.map(|(n, e)| Expr::Hash(n, Box::new(e))),
         sigeok.map(|(n, e1, e2, e3)| Expr::Sigeok(n, Box::new(e1), Box::new(e2), Box::new(e3))),
+        typeof_expr.map(|b| Expr::BuiltIn(Box::new(b))),
+        dup.map(|b| Expr::BuiltIn(Box::new(b))),
         app,
     ))
     .parse(input)

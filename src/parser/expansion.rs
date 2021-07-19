@@ -251,6 +251,12 @@ impl Env {
                 BuiltIn::ItoB(e) => {
                     self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::ItoB, mangler)
                 }
+                BuiltIn::TypeQ(e) => {
+                    self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::TypeQ, mangler)
+                }
+                BuiltIn::Dup(e) => {
+                    self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Dup, mangler)
+                }
                 BuiltIn::Add(e1, e2) => {
                     self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Add, mangler)
                 }

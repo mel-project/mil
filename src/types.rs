@@ -53,6 +53,9 @@ pub enum ExpandedBuiltIn<E> {
     // Type casts
     ItoB(E),
     BtoI(E),
+    TypeQ(E),
+    // Stack ops
+    Dup(E),
     // Heap access
     Load(HeapPos),
     Store(HeapPos),
@@ -141,6 +144,10 @@ pub enum BuiltIn {
     ItoB(Expr),
     /// First 32 bytes of a Bytes to an integer
     BtoI(Expr),
+    /// Get type of expression, Int=1 Bytes=2 Vector=3
+    TypeQ(Expr),
+    /// Duplicate the value of an expression
+    Dup(Expr),
     // TODO: Remove these
     // Unimplemented
     //Load(Symbol),
