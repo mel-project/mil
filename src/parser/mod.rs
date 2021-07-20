@@ -5,7 +5,10 @@ mod syntax;
 /// Count the number of instructions in a [MelExpr].
 pub use mel_expr::count_insts;
 
-use crate::types::{Expr, MelExpr, Symbol};
+use crate::{
+    optimize,
+    types::{Expr, MelExpr, Symbol},
+};
 use expansion::Evaluator;
 use mel_expr::MemoryMap;
 
@@ -24,7 +27,7 @@ pub enum ParseError<E> {
 type Defn = (Symbol, (Vec<Symbol>, Expr));
 
 /// Number of reserved locations on an execution heap, enumerated from 0.
-const NUM_RESERVED: i32 = 32;
+pub const NUM_RESERVED: i32 = 32;
 
 /// Parse a string into the low-level abstract syntax tree, [MelExpr],
 /// which can be directly compiled to bytes.
@@ -40,6 +43,7 @@ pub fn parse(input: &str) -> Result<MelExpr, ParseError<nom::error::VerboseError
         })
         // Low-level MelExpr
         .map(|expanded| {
+            let expanded = optimize::let_useonce(expanded);
             let mut mem = MemoryMap::new();
             mem.unrolled_to_mel(expanded)
         })

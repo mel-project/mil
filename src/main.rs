@@ -27,6 +27,9 @@ fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
 }
 
 fn main() -> anyhow::Result<()> {
+    env_logger::Builder::from_env("RUST_LOG")
+        .parse_filters("mil=debug,warn")
+        .init();
     // Command line arguments
     let cmd: BuildCmd = StructOpt::from_args();
 
@@ -61,8 +64,7 @@ fn main() -> anyhow::Result<()> {
     println!("{}", address);
 
     // Disassemble compiled binary
-    let ops = executor::disassemble(bincode)
-        .expect("Failed to disassemble binary.");
+    let ops = executor::disassemble(bincode).expect("Failed to disassemble binary.");
 
     // Show disassembly of binary if asked to
     if cmd.show_disassembly {
@@ -101,9 +103,9 @@ fn main() -> anyhow::Result<()> {
             });
         } else {
             let weights: Vec<u128> = l.iter().map(|(_, tx)| tx.weight()).collect();
-            let execs = l
-                .into_iter()
-                .map(|(cov_env, tx)| executor::execute(ExecutionEnv::new(tx, cov_env, ops.clone())));
+            let execs = l.into_iter().map(|(cov_env, tx)| {
+                executor::execute(ExecutionEnv::new(tx, cov_env, ops.clone()))
+            });
 
             execs.enumerate().for_each(|(i, res)| {
                 // Show weight of the transaction
