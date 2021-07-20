@@ -22,7 +22,6 @@ pub fn let_useonce(input: UnrolledExpr) -> UnrolledExpr {
 /// Inlines let bindings that are only used once
 fn let_useonce_once(input: UnrolledExpr) -> UnrolledExpr {
     const INLINE_THRESHOLD: usize = 1;
-    // Three pass: get varids, get usage counts, remove unused or used-once let bindings.
     // First, we gather all the varids.
     let mut varid_counts: BTreeMap<VarId, usize> = BTreeMap::new();
     let mut varid_bindings: BTreeMap<VarId, UnrolledExpr> = BTreeMap::new();
