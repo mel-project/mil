@@ -1,8 +1,8 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
     parser::NUM_RESERVED,
-    types::{UnrolledExpr, VarId},
+    types::{UnrolledExpr, UnrolledStatement, VarId},
 };
 
 /// Inlines things until idempotent
@@ -24,6 +24,7 @@ fn let_useonce_once(input: UnrolledExpr) -> UnrolledExpr {
     const INLINE_THRESHOLD: usize = 1;
     // First, we gather all the varids.
     let mut varid_counts: BTreeMap<VarId, usize> = BTreeMap::new();
+    let mut mutated_varids: BTreeSet<VarId> = BTreeSet::new();
     let mut varid_bindings: BTreeMap<VarId, UnrolledExpr> = BTreeMap::new();
     let input = input.structural_map(
         &mut |expr| {
@@ -42,7 +43,12 @@ fn let_useonce_once(input: UnrolledExpr) -> UnrolledExpr {
             }
             expr
         },
-        &mut |stmt| stmt,
+        &mut |stmt| {
+            if let UnrolledStatement::Set(vid, _) = &stmt {
+                mutated_varids.insert(*vid);
+            }
+            stmt
+        },
     );
     log::trace!("varid usages: {:#?}", varid_counts);
     // Then, we delete all the let bindings that are used insufficiently often and inline them instead.
@@ -61,6 +67,7 @@ fn let_useonce_once(input: UnrolledExpr) -> UnrolledExpr {
                     .get(&vid)
                     .map(|cnt| *cnt <= INLINE_THRESHOLD)
                     .unwrap_or_default()
+                    && !mutated_varids.contains(&vid)
                 {
                     varid_bindings
                         .get(&vid)
