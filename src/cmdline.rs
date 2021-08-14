@@ -1,8 +1,8 @@
-use structopt::StructOpt;
 use std::path::PathBuf;
+use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "Mil", about="Mil compiler")]
+#[structopt(name = "Mil", about = "Mil compiler")]
 pub struct BuildCmd {
     /// Display VM state at each step of execution.
     #[structopt(short, long)]

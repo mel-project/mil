@@ -61,6 +61,88 @@ pub enum ExpandedBuiltIn<E> {
     Store(HeapPos),
 }
 
+impl<E> ExpandedBuiltIn<E> {
+    /// Gets a vector of arguments
+    pub fn arguments(&self) -> Vec<&E> {
+        let mut toret = Vec::with_capacity(3);
+        match self {
+            ExpandedBuiltIn::Add(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Sub(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Mul(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Div(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Rem(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Not(x) => toret.push(x),
+            ExpandedBuiltIn::Or(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::And(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Xor(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Eql(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Lt(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Gt(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Shl(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Shr(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Vlen(x) => toret.push(x),
+            ExpandedBuiltIn::Vref(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Vpush(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Vcons(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Vappend(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Vslice(x, y, z) => toret.extend_from_slice(&[x, y, z]),
+            ExpandedBuiltIn::Vset(x, y, z) => toret.extend_from_slice(&[x, y, z]),
+            ExpandedBuiltIn::Blen(x) => toret.push(x),
+            ExpandedBuiltIn::Bref(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Bpush(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Bcons(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Bappend(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Bslice(x, y, z) => toret.extend_from_slice(&[x, y, z]),
+            ExpandedBuiltIn::Bset(x, y, z) => toret.extend_from_slice(&[x, y, z]),
+            ExpandedBuiltIn::ItoB(x) => toret.push(x),
+            ExpandedBuiltIn::BtoI(x) => toret.push(x),
+            ExpandedBuiltIn::TypeQ(x) => toret.push(x),
+            ExpandedBuiltIn::Dup(x) => toret.push(x),
+            _ => {}
+        };
+        toret
+    }
+
+    /// Structural map.
+    pub fn structural_map(self, mut f: impl FnMut(E) -> E) -> Self {
+        match self {
+            ExpandedBuiltIn::Add(x, y) => ExpandedBuiltIn::Add(f(x), f(y)),
+            ExpandedBuiltIn::Sub(x, y) => ExpandedBuiltIn::Sub(f(x), f(y)),
+            ExpandedBuiltIn::Mul(x, y) => ExpandedBuiltIn::Mul(f(x), f(y)),
+            ExpandedBuiltIn::Div(x, y) => ExpandedBuiltIn::Div(f(x), f(y)),
+            ExpandedBuiltIn::Rem(x, y) => ExpandedBuiltIn::Rem(f(x), f(y)),
+            ExpandedBuiltIn::Not(x) => ExpandedBuiltIn::Not(f(x)),
+            ExpandedBuiltIn::Or(x, y) => ExpandedBuiltIn::Or(f(x), f(y)),
+            ExpandedBuiltIn::And(x, y) => ExpandedBuiltIn::And(f(x), f(y)),
+            ExpandedBuiltIn::Xor(x, y) => ExpandedBuiltIn::Xor(f(x), f(y)),
+            ExpandedBuiltIn::Eql(x, y) => ExpandedBuiltIn::Eql(f(x), f(y)),
+            ExpandedBuiltIn::Lt(x, y) => ExpandedBuiltIn::Lt(f(x), f(y)),
+            ExpandedBuiltIn::Gt(x, y) => ExpandedBuiltIn::Gt(f(x), f(y)),
+            ExpandedBuiltIn::Shl(x, y) => ExpandedBuiltIn::Shl(f(x), f(y)),
+            ExpandedBuiltIn::Shr(x, y) => ExpandedBuiltIn::Shr(f(x), f(y)),
+            ExpandedBuiltIn::Vlen(x) => ExpandedBuiltIn::Vlen(x),
+            ExpandedBuiltIn::Vref(x, y) => ExpandedBuiltIn::Vref(f(x), f(y)),
+            ExpandedBuiltIn::Vpush(x, y) => ExpandedBuiltIn::Vpush(f(x), f(y)),
+            ExpandedBuiltIn::Vcons(x, y) => ExpandedBuiltIn::Vcons(f(x), f(y)),
+            ExpandedBuiltIn::Vappend(x, y) => ExpandedBuiltIn::Vappend(f(x), f(y)),
+            ExpandedBuiltIn::Vslice(x, y, z) => ExpandedBuiltIn::Vslice(f(x), f(y), f(z)),
+            ExpandedBuiltIn::Vset(x, y, z) => ExpandedBuiltIn::Vset(f(x), f(y), f(z)),
+            ExpandedBuiltIn::Blen(x) => ExpandedBuiltIn::Blen(f(x)),
+            ExpandedBuiltIn::Bref(x, y) => ExpandedBuiltIn::Bref(f(x), f(y)),
+            ExpandedBuiltIn::Bpush(x, y) => ExpandedBuiltIn::Bpush(f(x), f(y)),
+            ExpandedBuiltIn::Bcons(x, y) => ExpandedBuiltIn::Bcons(f(x), f(y)),
+            ExpandedBuiltIn::Bappend(x, y) => ExpandedBuiltIn::Bappend(f(x), f(y)),
+            ExpandedBuiltIn::Bslice(x, y, z) => ExpandedBuiltIn::Bslice(f(x), f(y), f(z)),
+            ExpandedBuiltIn::Bset(x, y, z) => ExpandedBuiltIn::Bset(f(x), f(y), f(z)),
+            ExpandedBuiltIn::ItoB(x) => ExpandedBuiltIn::ItoB(f(x)),
+            ExpandedBuiltIn::BtoI(x) => ExpandedBuiltIn::BtoI(f(x)),
+            ExpandedBuiltIn::TypeQ(x) => ExpandedBuiltIn::TypeQ(f(x)),
+            ExpandedBuiltIn::Dup(x) => ExpandedBuiltIn::TypeQ(f(x)),
+            other => other,
+        }
+    }
+}
+
 /// Primitive operations that are accessible in the mil language front-end.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BuiltIn {
@@ -232,6 +314,44 @@ pub enum UnrolledStatement {
     Noop,
 }
 
+impl UnrolledStatement {
+    pub fn structural_map(
+        self,
+        stmt_map: &mut impl FnMut(Self) -> Self,
+        expr_map: &mut impl FnMut(UnrolledExpr) -> UnrolledExpr,
+    ) -> Self {
+        let new_self = match self {
+            UnrolledStatement::SetLet(binds, stmt) => {
+                let binds = binds
+                    .into_iter()
+                    .map(|(i, j)| (i, j.structural_map(expr_map, stmt_map)))
+                    .collect();
+                let stmt = stmt
+                    .into_iter()
+                    .map(|s| s.structural_map(stmt_map, expr_map))
+                    .collect();
+                UnrolledStatement::SetLet(binds, stmt)
+            }
+            UnrolledStatement::Loop(n, body) => {
+                let body = Box::new(body.structural_map(stmt_map, expr_map));
+                UnrolledStatement::Loop(n, body)
+            }
+            UnrolledStatement::If(x, y, z) => {
+                let x = Box::new(x.structural_map(expr_map, stmt_map));
+                let y = Box::new(y.structural_map(stmt_map, expr_map));
+                let z = Box::new(z.structural_map(stmt_map, expr_map));
+                UnrolledStatement::If(x, y, z)
+            }
+            UnrolledStatement::Set(i, expr) => {
+                let expr = Box::new(expr.structural_map(expr_map, stmt_map));
+                UnrolledStatement::Set(i, expr)
+            }
+            UnrolledStatement::Noop => UnrolledStatement::Noop,
+        };
+        stmt_map(new_self)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 /// The lower level representation of a program that is directly compilable into a binary for the
 /// MelVM.
@@ -313,4 +433,47 @@ pub enum UnrolledExpr {
     Hash(u16, Box<UnrolledExpr>),
     /// Sign a message with a public key and check that it matches a signature.
     Sigeok(u16, Box<UnrolledExpr>, Box<UnrolledExpr>, Box<UnrolledExpr>),
+}
+
+impl UnrolledExpr {
+    /// Strucuturally recursively "maps" a function to the UnrolledExpr. In particular, given any UnrolledExpr, the given function is first applied to all subexpressions recursively, then to a new UnrolledExpr built from these new subexpressions.
+    pub fn structural_map(
+        self,
+        expr_map: &mut impl FnMut(Self) -> Self,
+        stmt_map: &mut impl FnMut(UnrolledStatement) -> UnrolledStatement,
+    ) -> Self {
+        let new_self = match self {
+            UnrolledExpr::BuiltIn(builtin) => UnrolledExpr::BuiltIn(Box::new(
+                builtin.structural_map(|f| f.structural_map(expr_map, stmt_map)),
+            )),
+            UnrolledExpr::Let(x, y, z) => {
+                let x: Vec<(i32, UnrolledExpr)> = x
+                    .into_iter()
+                    .map(|(i, j)| (i, j.structural_map(expr_map, stmt_map)))
+                    .collect();
+                let y: Vec<UnrolledStatement> = y
+                    .into_iter()
+                    .map(|i| i.structural_map(stmt_map, expr_map))
+                    .collect();
+                let z = z.structural_map(expr_map, stmt_map);
+                UnrolledExpr::Let(x, y, Box::new(z))
+            }
+            UnrolledExpr::If(x, y, z) => UnrolledExpr::If(
+                Box::new(x.structural_map(expr_map, stmt_map)),
+                Box::new(y.structural_map(expr_map, stmt_map)),
+                Box::new(z.structural_map(expr_map, stmt_map)),
+            ),
+            UnrolledExpr::Hash(x, y) => {
+                UnrolledExpr::Hash(x, Box::new(y.structural_map(expr_map, stmt_map)))
+            }
+            UnrolledExpr::Sigeok(n, x, y, z) => UnrolledExpr::Sigeok(
+                n,
+                Box::new(x.structural_map(expr_map, stmt_map)),
+                Box::new(y.structural_map(expr_map, stmt_map)),
+                Box::new(z.structural_map(expr_map, stmt_map)),
+            ),
+            other => other,
+        };
+        expr_map(new_self)
+    }
 }

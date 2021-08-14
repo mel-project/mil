@@ -4,8 +4,10 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use themelio_stf::{
     melvm::{
-        self, Covenant, Executor, Value,
-        opcode::{OpCode, DecodeError}},
+        self,
+        opcode::{DecodeError, OpCode},
+        Covenant, Executor, Value,
+    },
     CoinDataHeight, CoinID, Header, Transaction,
 };
 
@@ -53,7 +55,11 @@ impl ExecutionEnv {
     //pub fn new(spending_tx: Transaction, cov_env: CovEnv, ops: &'a [OpCode]) -> ExecutionEnv<'a> {
     pub fn new(spending_tx: Transaction, cov_env: CovEnv, ops: Vec<OpCode>) -> ExecutionEnv {
         ExecutionEnv {
-            executor: Executor::new_from_env(ops.clone(), spending_tx, Some(melvm::CovenantEnv::from(&cov_env))),
+            executor: Executor::new_from_env(
+                ops.clone(),
+                spending_tx,
+                Some(melvm::CovenantEnv::from(&cov_env)),
+            ),
             ops,
         }
     }
@@ -91,6 +97,7 @@ impl ExecutionEnv {
 pub fn disassemble(bin: BinCode) -> Result<Vec<OpCode>, DecodeError> {
     // Wrap in a covenant
     let script = Covenant(bin.0);
+    log::debug!("disassembling covenant of weight {}", script.weight()?);
     // Disassemble compiled binary
     script.to_ops()
 }
