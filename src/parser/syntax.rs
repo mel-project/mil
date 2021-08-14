@@ -215,7 +215,7 @@ fn symbol(input: &str) -> ParseRes<String> {
         "symbol",
         map_res(
             tuple((
-                alpha1,
+                alpha1.or(tag("@")),
                 take_while(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-' | '?' | '>' | '!')),
             )),
             concat,
@@ -408,17 +408,19 @@ pub fn typeof_expr(input: &str) -> ParseRes<BuiltIn> {
     .parse(input)
 }
 
+/*
 pub fn dup(input: &str) -> ParseRes<BuiltIn> {
     context(
         "dup expression",
         list!(
-            tag("dup"),
+            tag("dup!"),
             cut(expr)
         )
-        .map(|(_, e)| BuiltIn::TypeQ(e)),
+        .map(|(_, e)| BuiltIn::Dup(e)),
     )
     .parse(input)
 }
+*/
 
 pub fn loop_stmnt(input: &str) -> ParseRes<(u16, Statement)> {
     context(
@@ -483,7 +485,6 @@ pub fn expr(input: &str) -> ParseRes<Expr> {
         hash.map(|(n, e)| Expr::Hash(n, Box::new(e))),
         sigeok.map(|(n, e1, e2, e3)| Expr::Sigeok(n, Box::new(e1), Box::new(e2), Box::new(e3))),
         typeof_expr.map(|b| Expr::BuiltIn(Box::new(b))),
-        dup.map(|b| Expr::BuiltIn(Box::new(b))),
         app,
     ))
     .parse(input)

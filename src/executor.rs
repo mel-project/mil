@@ -511,6 +511,29 @@ mod tests {
     }
 
     #[test]
+    fn typeof_vec() {
+        let ops = parse("(typeof (vector 1 2))").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::new(2))]);
+    }
+
+    /*
+    #[test]
+    fn dup() {
+        let ops = parse("(dup! 1)").unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![
+            Value::Int(U256::new(1)),
+            Value::Int(U256::new(1)),
+        ]);
+    }
+    */
+
+    #[test]
     fn noop() {
         let ops = parse("(let () (noop) 2)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
