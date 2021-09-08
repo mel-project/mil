@@ -120,7 +120,7 @@ impl<E> ExpandedBuiltIn<E> {
             ExpandedBuiltIn::Gt(x, y) => ExpandedBuiltIn::Gt(f(x), f(y)),
             ExpandedBuiltIn::Shl(x, y) => ExpandedBuiltIn::Shl(f(x), f(y)),
             ExpandedBuiltIn::Shr(x, y) => ExpandedBuiltIn::Shr(f(x), f(y)),
-            ExpandedBuiltIn::Vlen(x) => ExpandedBuiltIn::Vlen(x),
+            ExpandedBuiltIn::Vlen(x) => ExpandedBuiltIn::Vlen(f(x)),
             ExpandedBuiltIn::Vref(x, y) => ExpandedBuiltIn::Vref(f(x), f(y)),
             ExpandedBuiltIn::Vpush(x, y) => ExpandedBuiltIn::Vpush(f(x), f(y)),
             ExpandedBuiltIn::Vcons(x, y) => ExpandedBuiltIn::Vcons(f(x), f(y)),
