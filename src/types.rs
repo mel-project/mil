@@ -144,7 +144,7 @@ impl<E> ExpandedBuiltIn<E> {
 }
 
 /// Primitive operations that are accessible in the mil language front-end.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum BuiltIn {
     // Arithmetic
     /// (+ 4 2)
@@ -243,7 +243,7 @@ pub type Symb = str;
 /// Internal data type for tracking variable ids.
 pub type VarId = i32;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 /// Lisp evaluator fundamental data types. These are used by the compiler, not by MelVM.
 pub enum Value {
     Int(U256),
@@ -251,7 +251,7 @@ pub enum Value {
 }
 
 // TODO: Why are SpenderTx and SpenderTxHash reversed??
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[repr(u8)]
 /// Reserved identities for values available in every MelVM script.
 /// u8 represents the corresponding location on the heap.
@@ -280,7 +280,7 @@ pub enum Reserved {
     LastHeader = 10,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 /// Non-value-returning syntax.
 pub enum Statement {
     /// Bind a symbol to a value within for the scope of a list of statements.
@@ -372,7 +372,7 @@ pub enum MelExpr {
     Noop,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 /// Abstract syntax tree of mil. This is evaluated into a [MelExpr] which can be compiled directly to
 /// the MelVM.
 pub enum Expr {

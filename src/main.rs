@@ -6,6 +6,7 @@ use mil::{
     parser,
     parser::ParseError,
 };
+use nom_packrat::storage;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -35,6 +36,7 @@ fn main() -> anyhow::Result<()> {
     let mut file = File::open(cmd.in_file)?;
     let mut code = String::new();
     file.read_to_string(&mut code)?;
+    log::debug!("read everything");
 
     // Parse to MelExpr ops
     let mel_ops = parser::parse(&code[..]).map_err(|e| match e {
@@ -46,6 +48,7 @@ fn main() -> anyhow::Result<()> {
         },
         ParseError::Expansion(msg) => anyhow!(msg.0),
     })?;
+    log::debug!("parsing done");
 
     // Compile to binary
     let empty = BinCode(Vec::new());

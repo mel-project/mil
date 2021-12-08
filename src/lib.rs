@@ -13,3 +13,6 @@ pub mod types;
 
 /// Non-user-facing, optimization functions
 mod optimize;
+
+// Declare storage used by packrat_parser
+nom_packrat::storage!(types::Expr);
