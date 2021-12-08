@@ -230,6 +230,8 @@ pub enum BuiltIn {
     TypeQ(Expr),
     /// Duplicate the value of an expression
     Dup(Expr),
+
+    Fail,
     // TODO: Remove these
     // Unimplemented
     //Load(Symbol),
