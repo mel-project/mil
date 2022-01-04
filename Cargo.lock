@@ -661,7 +661,7 @@ dependencies = [
 
 [[package]]
 name = "mil"
-version = "0.2.1"
+version = "0.2.2-alpha.0"
 dependencies = [
  "anyhow",
  "env_logger 0.8.4",
