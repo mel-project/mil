@@ -10,7 +10,7 @@ repository = "https://github.com/themeliolabs/mil"
 
 
 [dependencies]
-nom = "6.2.1"
+nom = "7.1.0"
 hex = "0.4.3"
 im = "15.0.0"
 anyhow = "1.0.42"

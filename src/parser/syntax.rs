@@ -26,7 +26,6 @@ macro_rules! list {
         s_expr(tuple($($tuple),+))
     };
     (@accum ($($tuple:expr),*) $parser:expr) => {
-        //list!(@as_expr ($($tuple),*, preceded(many1(ws_or_comment), $parser)))
         list!(@as_expr ($($tuple),*, delimited(many1(ws_or_comment), $parser, many0(ws_or_comment))))
     };
     (@accum ($($tuple:expr),*) $parser:expr, $($tail:tt)*) => {
@@ -35,8 +34,7 @@ macro_rules! list {
                   $($tail)*)
     };
     ($parser:expr, $($tail:tt)*) => {
-        list!(@accum (opt(comment)
-                          .flat_map(|_| preceded(multispace0, $parser))) $($tail)*)
+        list!(@accum (nom::combinator::flat_map(opt(comment), |_| preceded(multispace0, $parser))) $($tail)*)
     };
 }
 
