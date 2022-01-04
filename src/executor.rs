@@ -96,7 +96,7 @@ impl ExecutionEnv {
 /// Disassemble a binary code using the MelVM disassembler.
 pub fn disassemble(bin: BinCode) -> Result<Vec<OpCode>, DecodeError> {
     // Wrap in a covenant
-    let script = Covenant(bin.0);
+    let script = Covenant::from_ops(&bin.0).unwrap();
     log::debug!("disassembling covenant of weight {}", script.weight()?);
     // Disassemble compiled binary
     script.to_ops()
@@ -122,7 +122,7 @@ mod tests {
     use crate::parser::parse;
     use crate::types::MelExpr;
     use ethnum::U256;
-    use im::vector;
+    use imbl::vector;
     use themelio_stf::{melvm::Address, CoinData, TxHash, TxKind};
     use tmelcrypt::{ed25519_keygen, Ed25519PK, Ed25519SK, HashVal};
 
@@ -131,7 +131,7 @@ mod tests {
             kind: TxKind::Normal,
             inputs: Vec::new(),
             outputs: Vec::new(),
-            fee: 0,
+            fee: 0.into(),
             scripts: Vec::new(),
             data: Vec::new(),
             sigs: Vec::new(),
@@ -160,11 +160,11 @@ mod tests {
         let empty_cdh = CoinDataHeight {
             coin_data: CoinData {
                 covhash: Address::coin_destroy(), //tmelcrypt::HashVal::default().to_addr(),
-                value: 0,
+                value: 0.into(),
                 denom: themelio_stf::Denom::Mel,
                 additional_data: input.into(),
             },
-            height: 0,
+            height: 0.into(),
         };
 
         let cov_env = CovEnv {
@@ -174,11 +174,11 @@ mod tests {
             last_header: Header {
                 network: themelio_stf::NetID::Testnet,
                 previous: HashVal::default(),
-                height: 0,
+                height: 0.into(),
                 history_hash: HashVal::default(),
                 coins_hash: HashVal::default(),
                 transactions_hash: HashVal::default(),
-                fee_pool: 0,
+                fee_pool: 0.into(),
                 fee_multiplier: 0,
                 dosc_speed: 0,
                 pools_hash: HashVal::default(),

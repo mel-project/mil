@@ -16,6 +16,8 @@ use nom::{
     IResult, Parser,
 };
 
+use nom_packrat::{packrat_parser, storage};
+
 /// Create a parser for an s-expression, where each element of the list is a parser.
 /// ```
 /// // Parses "(f 1 (* 3 4))"
@@ -137,6 +139,7 @@ fn empty_builtin(input: &str) -> ParseRes<BuiltIn> {
             |s: &str| match s {
                 "v-nil" => Some(BuiltIn::Vempty),
                 "b-nil" => Some(BuiltIn::Bempty),
+                "fail!" => Some(BuiltIn::Fail),
                 _ => None,
             },
         ),
@@ -397,11 +400,7 @@ pub fn hash(input: &str) -> ParseRes<(u16, Expr)> {
 pub fn typeof_expr(input: &str) -> ParseRes<BuiltIn> {
     context(
         "typeof expression",
-        list!(
-            tag("typeof"),
-            cut(expr)
-        )
-        .map(|(_, e)| BuiltIn::TypeQ(e)),
+        list!(tag("typeof"), cut(expr)).map(|(_, e)| BuiltIn::TypeQ(e)),
     )
     .parse(input)
 }
@@ -466,7 +465,9 @@ pub fn statement(input: &str) -> ParseRes<Statement> {
 }
 
 /// Top level parser returns any valid [Expr].
+#[packrat_parser]
 pub fn expr(input: &str) -> ParseRes<Expr> {
+    nom_packrat::init!();
     // The order is important
     alt((
         bytes.map(Value::Bytes).map(Expr::Value),

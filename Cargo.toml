@@ -1,6 +1,6 @@
 [package]
 name = "mil"
-version = "0.1.5-alpha.0"
+version = "0.2.1-alpha.0"
 authors = ["Jay Butera <buterajay@protonmail.com>"]
 edition = "2018"
 
@@ -12,17 +12,21 @@ repository = "https://github.com/themeliolabs/mil"
 [dependencies]
 nom = "7.1.0"
 hex = "0.4.3"
-im = "15.0.0"
+imbl = "1"
 anyhow = "1.0.42"
 genawaiter = "0.99.1"
 ethnum = "1.0.3"
-themelio-stf = "0.5.1"
-#themelio-stf = { path = "../themelio-stf" }
+themelio-stf = "0.6"
 tmelcrypt= "0.1.0"
-#tmelcrypt = { path = "../themelio-core/libs/tmelcrypt" }
 primitive-types = { version = "0.10.1", default-features = false }
 structopt = { version = "0.3.22", default-features = false }
 serde = { version = "1.0.126", features = ["derive"] }
 serde_json = "1.0.64"
 log="0.4"
 env_logger = "0.9.0"
+tap = "1.0.1"
+nom-packrat = "0.6.0"
+
+[target.'cfg(fuzzing)'.dependencies] 
+honggfuzz= "0.5.54"
+env_logger= "0.8.4"

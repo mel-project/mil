@@ -36,7 +36,10 @@ pub fn parse(input: &str) -> Result<MelExpr, ParseError<nom::error::VerboseError
     syntax::root(input)
         .map_err(ParseError::Syntax)
         // Expand AST
-        .and_then(|(_, (fn_defs, ast))| {
+        .and_then(|(remaining, (fn_defs, ast))| {
+            if !remaining.trim().is_empty() {
+                return Err(ParseError::Expansion(ParseErr("leftover stuff".into())));
+            }
             //println!("{:?}\n\n{:?}\n", fn_defs, ast);
             let env = expansion::Env::new(fn_defs);
             env.expand_fns(&ast).map_err(ParseError::Expansion)

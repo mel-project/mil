@@ -236,6 +236,9 @@ impl Env {
                 BuiltIn::Bempty => Ok(UnrolledExpr::BuiltIn(Box::new(
                     ExpandedBuiltIn::<UnrolledExpr>::Bempty,
                 ))),
+                BuiltIn::Fail => Ok(UnrolledExpr::BuiltIn(Box::new(
+                    ExpandedBuiltIn::<UnrolledExpr>::Load(u16::MAX),
+                ))),
                 BuiltIn::Not(e) => {
                     self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler)
                 }
