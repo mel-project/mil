@@ -65,7 +65,6 @@ impl MemoryMap {
             UnrolledStatement::SetLet(binds, stmnts) => {
                 // For each binding, evaluate the expression (to push onto stack) and store in a new
                 // memory location.
-                // TODO: What happens when the binding expression is a 'set!'?
                 let mut mel_binds = vec![];
                 binds.into_iter().for_each(|(var_id, expr)| {
                     // Make sure the variable is not somehow already there
@@ -100,7 +99,7 @@ impl MemoryMap {
 
     /// Translate an [UnrolledExpr] into a set of low-level [MelExpr] instructions.
     pub fn unrolled_to_mel(&mut self, expr: UnrolledExpr) -> MelExpr {
-        match expr {
+        match expr.clone() {
             UnrolledExpr::Value(v) => match v {
                 Value::Int(n) => MelExpr::Value(Value::Int(n)),
                 Value::Bytes(b) => MelExpr::Value(Value::Bytes(b)),
@@ -249,7 +248,6 @@ impl MemoryMap {
             UnrolledExpr::Let(binds, stmnts, expr) => {
                 // For each binding, evaluate the expression (to push onto stack) and store in a new
                 // memory location.
-                // TODO: What happens when the binding expression is a 'set!'?
                 let mut mel_binds = vec![];
                 binds.into_iter().for_each(|(var_id, expr)| {
                     // Make sure the variable is not somehow already there

@@ -55,7 +55,10 @@ fn let_useonce_once(input: UnrolledExpr) -> UnrolledExpr {
     input.structural_map(
         &mut |expr| match expr {
             UnrolledExpr::Let(mut bindings, stmt, expr) => {
-                bindings.retain(|(vid, _)| varid_counts.get(vid).copied().unwrap_or_default() > 0);
+                // Remove any bindings that aren't actually used
+                bindings.retain(|(vid, _)|
+                    varid_counts.get(vid).copied().unwrap_or_default()
+                    + mutated_varids.get(vid).copied().unwrap_or_default() as usize > 0);
                 if bindings.is_empty() && stmt.is_empty() {
                     *expr
                 } else {
