@@ -16,8 +16,8 @@ imbl = "1"
 anyhow = "1.0.42"
 genawaiter = "0.99.1"
 ethnum = "1.0.3"
-themelio-stf = "0.6"
-tmelcrypt= "0.1.0"
+themelio-stf = "0.7.8"
+tmelcrypt= "0.2.3"
 primitive-types = { version = "0.10.1", default-features = false }
 structopt = { version = "0.3.22", default-features = false }
 serde = { version = "1.0.126", features = ["derive"] }
@@ -26,6 +26,9 @@ log="0.4"
 env_logger = "0.9.0"
 tap = "1.0.1"
 nom-packrat = "0.6.0"
+
+[dev-dependencies]
+catvec = "0.1.6"
 
 [target.'cfg(fuzzing)'.dependencies] 
 honggfuzz= "0.5.54"

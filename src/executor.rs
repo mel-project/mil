@@ -243,7 +243,7 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Vector(vector![Value::Int(U256::new(1))])]
+            vec![Value::Vector(vec![Value::Int(U256::new(1))].into())]
         );
     }
 
@@ -255,10 +255,10 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Vector(vector![
+            vec![Value::Vector(vec![
                 Value::Int(U256::new(2)),
                 Value::Int(U256::new(1))
-            ])]
+            ].into())]
         );
     }
 
@@ -349,10 +349,10 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Bytes(vector![
+            vec![Value::Bytes(vec![
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 1
-            ])]
+            ].into())]
         );
     }
 
@@ -407,7 +407,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Bytes(vector![2])]);
+        assert_eq!(state.0, vec![Value::Bytes(vec![2].into())]);
     }
 
     #[test]
@@ -418,7 +418,7 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Vector(vector![Value::Int(U256::new(2))])]
+            vec![Value::Vector(vec![Value::Int(U256::new(2))].into())]
         );
     }
 
@@ -428,7 +428,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Bytes(vector![2])]);
+        assert_eq!(state.0, vec![Value::Bytes(vec![2].into())]);
     }
 
     #[test]
@@ -458,7 +458,7 @@ mod tests {
         let (_, _, tx) = key_and_empty_tx();
         let state = exec(&tx, &[], ops);
 
-        assert_eq!(state.0, vec![Value::Bytes(vector![])]);
+        assert_eq!(state.0, vec![Value::Bytes(vec![].into())]);
     }
 
     #[test]
@@ -482,11 +482,11 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Vector(vector![
+            vec![Value::Vector(vec![
                 Value::Int(U256::new(1)),
                 Value::Int(U256::new(2)),
                 Value::Int(U256::new(3))
-            ])]
+            ].into())]
         );
     }
 
@@ -589,11 +589,11 @@ mod tests {
 
         if let themelio_stf::melvm::Value::Bytes(im_bytes) = state.0.pop().unwrap() {
             assert_eq!(
-                im_bytes.into_iter().collect::<Vec<u8>>(),
+                im_bytes,
                 vec![
                     233, 131, 224, 169, 229, 83, 12, 43, 119, 20, 230, 120, 233, 61, 188, 129, 150,
                     148, 124, 190, 111, 195, 63, 163, 212, 106, 36, 240, 111, 251, 98, 193
-                ]
+                ].into()
             );
         } else {
             panic!();
