@@ -12,11 +12,11 @@ repository = "https://github.com/themeliolabs/mil"
 [dependencies]
 nom = "7.1.0"
 hex = "0.4.3"
-imbl = "1"
 anyhow = "1.0.42"
 genawaiter = "0.99.1"
 ethnum = "1.0.3"
-themelio-stf = "0.7.8"
+themelio-stf = "0.8.4"
+themelio-structs = "0.1.4"
 tmelcrypt= "0.2.3"
 primitive-types = { version = "0.10.1", default-features = false }
 structopt = { version = "0.3.22", default-features = false }

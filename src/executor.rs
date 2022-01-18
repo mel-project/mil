@@ -2,13 +2,13 @@ use crate::compiler::BinCode;
 use genawaiter::{rc::gen, yield_};
 use serde::Deserialize;
 use std::collections::HashMap;
+use themelio_structs::{CoinDataHeight, CoinID, Header, Transaction};
 use themelio_stf::{
     melvm::{
         self,
         opcode::{DecodeError, OpCode},
         Covenant, Executor, Value,
     },
-    CoinDataHeight, CoinID, Header, Transaction,
 };
 
 /// Points to current instruction of a program in an [ExecutionEnv].
@@ -122,8 +122,7 @@ mod tests {
     use crate::parser::parse;
     use crate::types::MelExpr;
     use ethnum::U256;
-    use imbl::vector;
-    use themelio_stf::{melvm::Address, CoinData, TxHash, TxKind};
+    use themelio_structs::{Address, CoinData, TxHash, TxKind, Denom, NetID};
     use tmelcrypt::{ed25519_keygen, Ed25519PK, Ed25519SK, HashVal};
 
     fn empty_test() -> Transaction {
@@ -132,7 +131,7 @@ mod tests {
             inputs: Vec::new(),
             outputs: Vec::new(),
             fee: 0.into(),
-            scripts: Vec::new(),
+            covenants: Vec::new(),
             data: Vec::new(),
             sigs: Vec::new(),
         }
@@ -159,9 +158,9 @@ mod tests {
         };
         let empty_cdh = CoinDataHeight {
             coin_data: CoinData {
-                covhash: Address::coin_destroy(), //tmelcrypt::HashVal::default().to_addr(),
+                covhash: Address::coin_destroy(),
                 value: 0.into(),
-                denom: themelio_stf::Denom::Mel,
+                denom: Denom::Mel,
                 additional_data: input.into(),
             },
             height: 0.into(),
@@ -172,7 +171,7 @@ mod tests {
             parent_cdh: empty_cdh,
             spender_index: 0,
             last_header: Header {
-                network: themelio_stf::NetID::Testnet,
+                network: NetID::Testnet,
                 previous: HashVal::default(),
                 height: 0.into(),
                 history_hash: HashVal::default(),
