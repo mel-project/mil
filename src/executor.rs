@@ -199,6 +199,15 @@ mod tests {
     }
 
     #[test]
+    fn exp_numbers() {
+        let ops = parse("(** 2 2 4)").unwrap();
+        let (pk, sk, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::new(16))]);
+    }
+
+    #[test]
     fn test_eql() {
         let ops = parse("(= 1 1)").unwrap();
         let (_, _, tx) = key_and_empty_tx();
