@@ -114,6 +114,7 @@ impl MemoryMap {
             }
             UnrolledExpr::BuiltIn(b) => {
                 let mel_b = match *b {
+                    ExpandedBuiltIn::Oflo => ExpandedBuiltIn::<MelExpr>::Oflo,
                     ExpandedBuiltIn::Vempty => ExpandedBuiltIn::<MelExpr>::Vempty,
                     ExpandedBuiltIn::Bempty => ExpandedBuiltIn::<MelExpr>::Bempty,
                     ExpandedBuiltIn::Bez(n) => ExpandedBuiltIn::<MelExpr>::Bez(n),
@@ -151,6 +152,11 @@ impl MemoryMap {
                     ExpandedBuiltIn::Mul(e1, e2) => {
                         self.binop(e1, e2, ExpandedBuiltIn::<MelExpr>::Mul)
                     }
+                    ExpandedBuiltIn::Exp(e1, e2, k) => ExpandedBuiltIn::<MelExpr>::Exp(
+                        self.unrolled_to_mel(e1),
+                        self.unrolled_to_mel(e2),
+                        k,
+                    ),
                     ExpandedBuiltIn::Div(e1, e2) => {
                         self.binop(e1, e2, ExpandedBuiltIn::<MelExpr>::Div)
                     }
@@ -308,6 +314,7 @@ pub fn count_insts(e: &MelExpr) -> u16 {
             ExpandedBuiltIn::Add(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Sub(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Mul(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Exp(e1, e2, _) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Div(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Rem(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Eql(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
@@ -323,6 +330,7 @@ pub fn count_insts(e: &MelExpr) -> u16 {
             ExpandedBuiltIn::ItoB(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::TypeQ(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::Dup(e) => 1 + count_insts(&e),
+            ExpandedBuiltIn::Oflo => 1,
             ExpandedBuiltIn::Vempty => 1,
             ExpandedBuiltIn::Bempty => 1,
             ExpandedBuiltIn::Vref(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),

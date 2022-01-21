@@ -617,6 +617,16 @@ mod tests {
         assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
+    #[test]
+    fn overflow() {
+        let max = U256::MAX;
+        let ops = crate::parser::parse_no_optimize(&format!("(let (x (+ {max} 10)) oflo)")).unwrap();
+        let (_, _, tx) = key_and_empty_tx();
+        let state = exec(&tx, &[], ops);
+
+        assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
+    }
+
     /*
     #[test]
     fn fn_no_capture() {

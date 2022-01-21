@@ -15,6 +15,7 @@ pub enum ExpandedBuiltIn<E> {
     Add(E, E),
     Sub(E, E),
     Mul(E, E),
+    Exp(E, E, u8),
     Div(E, E),
     Rem(E, E),
     // Logical
@@ -56,6 +57,8 @@ pub enum ExpandedBuiltIn<E> {
     TypeQ(E),
     // Stack ops
     Dup(E),
+    // Overflow
+    Oflo,
     // Heap access
     Load(HeapPos),
     Store(HeapPos),
@@ -69,6 +72,7 @@ impl<E> ExpandedBuiltIn<E> {
             ExpandedBuiltIn::Add(x, y) => toret.extend_from_slice(&[x, y]),
             ExpandedBuiltIn::Sub(x, y) => toret.extend_from_slice(&[x, y]),
             ExpandedBuiltIn::Mul(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Exp(x, y, _) => toret.extend_from_slice(&[x, y]),
             ExpandedBuiltIn::Div(x, y) => toret.extend_from_slice(&[x, y]),
             ExpandedBuiltIn::Rem(x, y) => toret.extend_from_slice(&[x, y]),
             ExpandedBuiltIn::Not(x) => toret.push(x),
@@ -109,6 +113,7 @@ impl<E> ExpandedBuiltIn<E> {
             ExpandedBuiltIn::Add(x, y) => ExpandedBuiltIn::Add(f(x), f(y)),
             ExpandedBuiltIn::Sub(x, y) => ExpandedBuiltIn::Sub(f(x), f(y)),
             ExpandedBuiltIn::Mul(x, y) => ExpandedBuiltIn::Mul(f(x), f(y)),
+            ExpandedBuiltIn::Exp(x, y, k) => ExpandedBuiltIn::Exp(f(x), f(y), k),
             ExpandedBuiltIn::Div(x, y) => ExpandedBuiltIn::Div(f(x), f(y)),
             ExpandedBuiltIn::Rem(x, y) => ExpandedBuiltIn::Rem(f(x), f(y)),
             ExpandedBuiltIn::Not(x) => ExpandedBuiltIn::Not(f(x)),
@@ -157,6 +162,8 @@ pub enum BuiltIn {
     Div(Expr, Expr),
     /// (% 10 3)
     Rem(Expr, Expr),
+    /// (** 10 3)
+    Exp(Expr, Expr, u8),
 
     // Logical
     // ---------
@@ -232,6 +239,7 @@ pub enum BuiltIn {
     Dup(Expr),
 
     Fail,
+    Oflo,
     // TODO: Remove these
     // Unimplemented
     //Load(Symbol),

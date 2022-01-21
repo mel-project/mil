@@ -52,6 +52,26 @@ pub fn parse(input: &str) -> Result<MelExpr, ParseError<nom::error::VerboseError
         })
 }
 
+pub fn parse_no_optimize(input: &str) -> Result<MelExpr, ParseError<nom::error::VerboseError<&str>>> {
+    // First pass AST
+    syntax::root(input)
+        .map_err(ParseError::Syntax)
+        // Expand AST
+        .and_then(|(remaining, (fn_defs, ast))| {
+            if !remaining.trim().is_empty() {
+                return Err(ParseError::Expansion(ParseErr("leftover stuff".into())));
+            }
+            //println!("{:?}\n\n{:?}\n", fn_defs, ast);
+            let env = expansion::Env::new(fn_defs);
+            env.expand_fns(&ast).map_err(ParseError::Expansion)
+        })
+        // Low-level MelExpr
+        .map(|expanded| {
+            let mut mem = MemoryMap::new();
+            mem.unrolled_to_mel(expanded)
+        })
+}
+
 /// Syntax parser error type. May become may intricate later.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ParseErr(pub String);

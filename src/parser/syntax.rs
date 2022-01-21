@@ -114,12 +114,16 @@ fn tri_builtin(input: &str) -> ParseRes<BuiltIn> {
             ),
             |(s, e1, e2, e3)| match s {
                 "v-from" => Some(BuiltIn::Vset(e1, e2, e3)),
+                // TODO e3 is not an expression its a u8
+                //"**" => Some(BuiltIn::Exp(e1,e2,e3)),
                 "b-from" => Some(BuiltIn::Bset(e1, e2, e3)),
                 "v-slice" => Some(BuiltIn::Vslice(e1, e2, e3)),
                 "b-slice" => Some(BuiltIn::Bslice(e1, e2, e3)),
                 _ => None,
             },
-        ),
+        )
+        .or(list!(tag("**"), uint8, expr, expr)
+                .map(|(_, k, e1, e2)| BuiltIn::Exp(e1, e2, k))),
     )
     .parse(input)
 }
@@ -139,6 +143,7 @@ fn empty_builtin(input: &str) -> ParseRes<BuiltIn> {
             |s: &str| match s {
                 "v-nil" => Some(BuiltIn::Vempty),
                 "b-nil" => Some(BuiltIn::Bempty),
+                "oflo" => Some(BuiltIn::Oflo),
                 "fail!" => Some(BuiltIn::Fail),
                 _ => None,
             },
@@ -267,12 +272,20 @@ fn noop(input: &str) -> ParseRes<Statement> {
     .parse(input)
 }
 
-/// Parse a [U256] integer.
+/// parse a [U256] integer.
 fn int(input: &str) -> ParseRes<U256> {
     context(
         "int",
-        //map_res(digit1, |n_str: &str| U256::from_dec_str(n_str))
         map_res(digit1, |n_str: &str| U256::from_str_radix(n_str, 10)).map(U256::from),
+    )
+    .parse(input)
+}
+
+/// parse a [u8] integer.
+fn uint8(input: &str) -> ParseRes<u8> {
+    context(
+        "u8",
+        map_res(digit1, |n_str: &str| u8::from_str_radix(n_str, 10))
     )
     .parse(input)
 }
@@ -404,20 +417,6 @@ pub fn typeof_expr(input: &str) -> ParseRes<BuiltIn> {
     )
     .parse(input)
 }
-
-/*
-pub fn dup(input: &str) -> ParseRes<BuiltIn> {
-    context(
-        "dup expression",
-        list!(
-            tag("dup!"),
-            cut(expr)
-        )
-        .map(|(_, e)| BuiltIn::Dup(e)),
-    )
-    .parse(input)
-}
-*/
 
 pub fn loop_stmnt(input: &str) -> ParseRes<(u16, Statement)> {
     context(

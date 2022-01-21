@@ -230,6 +230,9 @@ impl Env {
             }
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
+                BuiltIn::Oflo => Ok(UnrolledExpr::BuiltIn(Box::new(
+                    ExpandedBuiltIn::<UnrolledExpr>::Oflo,
+                ))),
                 BuiltIn::Vempty => Ok(UnrolledExpr::BuiltIn(Box::new(
                     ExpandedBuiltIn::<UnrolledExpr>::Vempty,
                 ))),
@@ -269,6 +272,11 @@ impl Env {
                 BuiltIn::Mul(e1, e2) => {
                     self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Mul, mangler)
                 }
+                BuiltIn::Exp(e1, e2, k) => Ok(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::<UnrolledExpr>::Exp(
+                    self.expand_mangle_fns(&e1, mangler)?,
+                    self.expand_mangle_fns(&e2, mangler)?,
+                    *k,
+                )))),
                 BuiltIn::Div(e1, e2) => {
                     self.expand_binop(e1, e2, ExpandedBuiltIn::<UnrolledExpr>::Div, mangler)
                 }

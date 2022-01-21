@@ -1,5 +1,4 @@
-use crate::types::{ExpandedBuiltIn, HeapPos, MelExpr, PushB, PushI, Value};
-use ethnum::U256;
+use crate::types::{ExpandedBuiltIn, MelExpr, PushB, PushI, Value};
 use std::fmt;
 use tap::{Pipe, Tap};
 use themelio_stf::melvm::opcode::OpCode;
@@ -34,6 +33,7 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
             ExpandedBuiltIn::Add(e1, e2) => compile_op(b, OpCode::Add, vec![e1, e2]),
             ExpandedBuiltIn::Sub(e1, e2) => compile_op(b, OpCode::Sub, vec![e1, e2]),
             ExpandedBuiltIn::Mul(e1, e2) => compile_op(b, OpCode::Mul, vec![e1, e2]),
+            ExpandedBuiltIn::Exp(e1, e2, k) => compile_op(b, OpCode::Exp(*k), vec![e1, e2]),
             ExpandedBuiltIn::Div(e1, e2) => compile_op(b, OpCode::Div, vec![e1, e2]),
             ExpandedBuiltIn::Rem(e1, e2) => compile_op(b, OpCode::Rem, vec![e1, e2]),
 
@@ -52,6 +52,7 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
             ExpandedBuiltIn::TypeQ(e) => compile_op(b, OpCode::TypeQ, vec![e]),
 
             ExpandedBuiltIn::Dup(e) => compile_op(b, OpCode::Dup, vec![e]),
+            ExpandedBuiltIn::Oflo => compile_op::<MelExpr>(b, OpCode::Oflo, vec![]),
 
             ExpandedBuiltIn::Vref(e1, e2) => compile_op(b, OpCode::VRef, vec![e1, e2]),
             ExpandedBuiltIn::Vappend(e1, e2) => compile_op(b, OpCode::VAppend, vec![e1, e2]),
@@ -90,59 +91,8 @@ fn compile_op<T: Compile>(b: BinCode, opcode: OpCode, args: Vec<&T>) -> BinCode 
     b
 }
 
-// // Convenience fn for allocating and appending an op code and number to bincode
-// fn write_pushi(mut b: BinCode, n: &U256) -> BinCode {
-//     // Write op + n to bincode
-//     b.0.push(PushI.into());
-
-//     //let idx = b.0.len();
-
-//     // Extend vec by 32 bytes to effeciently add U256
-//     //let b_size = 32;
-//     //b.0.reserve(b_size);
-//     //unsafe { b.0.set_len(idx + b_size); }
-
-//     b.0.extend(&n.to_be_bytes()); //&mut b.0[idx..]);
-
-//     b
-// }
-
-// fn write_pushb(mut b: BinCode, bytes: &[u8]) -> BinCode {
-//     // Op
-//     b.0.push(PushB.into());
-//     // Length of bytestring
-//     b.0.push(bytes.len() as u8);
-//     // Bytes
-//     b.0.extend(bytes.iter());
-//     b
-// }
-
-// /// Compile a loop expression onto a bincode.
-// fn write_loop(mut b: BinCode, n: &u16, e: &MelExpr) -> BinCode {
-//     b.0.push(0xb0);
-//     let op_cnt: u16 = crate::parser::count_insts(e);
-//     let b = n.compile_onto(b);
-//     let b = op_cnt.compile_onto(b);
-//     e.compile_onto(b)
-// }
-
-/*
-fn write_vec(mut bin: BinCode, v: &Vec<Atom>) -> BinCode {
-    // Write v.len() vpush opcodes
-    let vpush: u8 = (&BuiltIn::Vpush).into();
-    bin.0.extend( (1..v.len()).map(|_| vpush) );
-
-    // Followed by vempty
-    bin.0.push( (&BuiltIn::Vempty).into() );
-
-    // Then the elements in reverse
-    v.iter().rev().fold(bin, |acc, e| e.compile_onto(acc))
-}
-*/
-
 impl Compile for MelExpr {
     fn compile_onto(&self, b: BinCode) -> BinCode {
-        //println!("writing {:?} to {}", self, b);
         match self {
             MelExpr::Hash(n, e) => e.compile_onto(b).tap_mut(|b| b.0.push(OpCode::Hash(*n))),
             MelExpr::Sigeok(n, e1, e2, e3) => e1
