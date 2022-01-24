@@ -692,7 +692,7 @@ dependencies = [
 
 [[package]]
 name = "mil"
-version = "0.2.4-alpha"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "catvec",
