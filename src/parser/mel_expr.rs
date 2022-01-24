@@ -114,7 +114,7 @@ impl MemoryMap {
             }
             UnrolledExpr::BuiltIn(b) => {
                 let mel_b = match *b {
-                    ExpandedBuiltIn::Oflo => ExpandedBuiltIn::<MelExpr>::Oflo,
+                    //ExpandedBuiltIn::Oflo => ExpandedBuiltIn::<MelExpr>::Oflo,
                     ExpandedBuiltIn::Vempty => ExpandedBuiltIn::<MelExpr>::Vempty,
                     ExpandedBuiltIn::Bempty => ExpandedBuiltIn::<MelExpr>::Bempty,
                     ExpandedBuiltIn::Bez(n) => ExpandedBuiltIn::<MelExpr>::Bez(n),
@@ -330,7 +330,7 @@ pub fn count_insts(e: &MelExpr) -> u16 {
             ExpandedBuiltIn::ItoB(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::TypeQ(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::Dup(e) => 1 + count_insts(&e),
-            ExpandedBuiltIn::Oflo => 1,
+            //ExpandedBuiltIn::Oflo => 1,
             ExpandedBuiltIn::Vempty => 1,
             ExpandedBuiltIn::Bempty => 1,
             ExpandedBuiltIn::Vref(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),

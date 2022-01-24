@@ -52,7 +52,7 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
             ExpandedBuiltIn::TypeQ(e) => compile_op(b, OpCode::TypeQ, vec![e]),
 
             ExpandedBuiltIn::Dup(e) => compile_op(b, OpCode::Dup, vec![e]),
-            ExpandedBuiltIn::Oflo => compile_op::<MelExpr>(b, OpCode::Oflo, vec![]),
+            //ExpandedBuiltIn::Oflo => compile_op::<MelExpr>(b, OpCode::Oflo, vec![]),
 
             ExpandedBuiltIn::Vref(e1, e2) => compile_op(b, OpCode::VRef, vec![e1, e2]),
             ExpandedBuiltIn::Vappend(e1, e2) => compile_op(b, OpCode::VAppend, vec![e1, e2]),

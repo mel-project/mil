@@ -58,7 +58,7 @@ pub enum ExpandedBuiltIn<E> {
     // Stack ops
     Dup(E),
     // Overflow
-    Oflo,
+    //Oflo,
     // Heap access
     Load(HeapPos),
     Store(HeapPos),
@@ -239,7 +239,6 @@ pub enum BuiltIn {
     Dup(Expr),
 
     Fail,
-    //Oflo,
     // TODO: Remove these
     // Unimplemented
     //Load(Symbol),
@@ -407,8 +406,8 @@ pub enum Expr {
     Hash(u16, Box<Expr>),
     /// Sign a message with a public key and check that it matches a signature.
     Sigeok(u16, Box<Expr>, Box<Expr>, Box<Expr>),
-    /// Run the expression and then check overflow, with a default value if true.
-    Checked(Box<Expr>, Box<Expr>),
+    // Run the expression and then check overflow, with a default value if true.
+    //Checked(Box<Expr>, Box<Expr>),
 }
 
 /// An expression where all applications are on [BuiltIn] operators.

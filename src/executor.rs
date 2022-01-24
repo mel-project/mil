@@ -624,6 +624,7 @@ mod tests {
         assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
 
+    /*
     #[test]
     fn overflow() {
         let max = U256::MAX;
@@ -633,6 +634,7 @@ mod tests {
 
         assert_eq!(state.0, vec![Value::Int(U256::new(1))]);
     }
+    */
 
     /*
     #[test]

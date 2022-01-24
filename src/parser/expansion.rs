@@ -194,6 +194,7 @@ impl Env {
         mangler: &mut LinearMangler,
     ) -> Result<UnrolledExpr, ParseErr> {
         match expr {
+            /*
             Expr::Checked(expr, default) => {
                 let var = mangler.next();
                 Ok(UnrolledExpr::Let(
@@ -204,6 +205,7 @@ impl Env {
                             Box::new(self.expand_mangle_fns(default, mangler)?),
                             Box::new(UnrolledExpr::Var(var))))))
             }
+            */
             // A variable should already be mangled, find its mangled value
             Expr::Var(x) => {
                 let v = try_get_var(x, &self.mangled)?;
@@ -240,9 +242,11 @@ impl Env {
             }
             // For a builtin op, expand its arguments and cast into an ExpandedBuiltIn
             Expr::BuiltIn(b) => match &**b {
+                /*
                 BuiltIn::Oflo => Ok(UnrolledExpr::BuiltIn(Box::new(
                     ExpandedBuiltIn::<UnrolledExpr>::Oflo,
                 ))),
+                */
                 BuiltIn::Vempty => Ok(UnrolledExpr::BuiltIn(Box::new(
                     ExpandedBuiltIn::<UnrolledExpr>::Vempty,
                 ))),
