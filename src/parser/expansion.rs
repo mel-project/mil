@@ -194,6 +194,16 @@ impl Env {
         mangler: &mut LinearMangler,
     ) -> Result<UnrolledExpr, ParseErr> {
         match expr {
+            Expr::Checked(expr, default) => {
+                let var = mangler.next();
+                Ok(UnrolledExpr::Let(
+                        vec![(var, self.expand_mangle_fns(expr, mangler)?)],
+                        vec![],
+                        Box::new(UnrolledExpr::If(
+                            Box::new(UnrolledExpr::BuiltIn(Box::new(ExpandedBuiltIn::Oflo))),
+                            Box::new(self.expand_mangle_fns(default, mangler)?),
+                            Box::new(UnrolledExpr::Var(var))))))
+            }
             // A variable should already be mangled, find its mangled value
             Expr::Var(x) => {
                 let v = try_get_var(x, &self.mangled)?;

@@ -3,12 +3,10 @@ use genawaiter::{rc::gen, yield_};
 use serde::Deserialize;
 use std::collections::HashMap;
 use themelio_structs::{CoinDataHeight, CoinID, Header, Transaction};
-use themelio_stf::{
-    melvm::{
-        self,
-        opcode::{DecodeError, OpCode},
-        Covenant, Executor, Value,
-    },
+use themelio_stf::melvm::{
+    self,
+    opcode::{DecodeError, OpCode},
+    Covenant, Executor, Value,
 };
 
 /// Points to current instruction of a program in an [ExecutionEnv].

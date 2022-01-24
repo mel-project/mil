@@ -143,7 +143,7 @@ fn empty_builtin(input: &str) -> ParseRes<BuiltIn> {
             |s: &str| match s {
                 "v-nil" => Some(BuiltIn::Vempty),
                 "b-nil" => Some(BuiltIn::Bempty),
-                "oflo" => Some(BuiltIn::Oflo),
+                //"oflo" => Some(BuiltIn::Oflo),
                 "fail!" => Some(BuiltIn::Fail),
                 _ => None,
             },

@@ -239,7 +239,7 @@ pub enum BuiltIn {
     Dup(Expr),
 
     Fail,
-    Oflo,
+    //Oflo,
     // TODO: Remove these
     // Unimplemented
     //Load(Symbol),
@@ -395,24 +395,20 @@ pub enum Expr {
     BuiltIn(Box<BuiltIn>),
     /// Application of a user-defined function to some arguments.
     App(Symbol, Vec<Expr>),
-    // Assign a value stored on the heap to a symbol
-    //Set(Symbol, Box<Expr>),
     /// A variable is a pointer to a location on the heap.
     Var(Symbol),
     /// Reserved identities for values available in every MelVM script.
     Reserved(Reserved),
     /// Bind a symbol to a value within the scope of a given expression.
     Let(Vec<(Symbol, Expr)>, Vec<Statement>, Box<Expr>),
-    // Set a symbol to point to a location.
-    //SetTo(Symbol, Box<Expr>),
     /// If expression.
     If(Box<Expr>, Box<Expr>, Box<Expr>),
-    // Loop an expression a specified number of  times.
-    //Loop(u16, Box<Expr>),
     /// Hash the return value of an expression.
     Hash(u16, Box<Expr>),
     /// Sign a message with a public key and check that it matches a signature.
     Sigeok(u16, Box<Expr>, Box<Expr>, Box<Expr>),
+    /// Run the expression and then check overflow, with a default value if true.
+    Checked(Box<Expr>, Box<Expr>),
 }
 
 /// An expression where all applications are on [BuiltIn] operators.
