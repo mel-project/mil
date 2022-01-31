@@ -692,7 +692,7 @@ dependencies = [
 
 [[package]]
 name = "mil"
-version = "0.2.4"
+version = "0.2.5-alpha"
 dependencies = [
  "anyhow",
  "catvec",
@@ -1401,7 +1401,9 @@ dependencies = [
 
 [[package]]
 name = "themelio-stf"
-version = "0.9.6-alpha.0"
+version = "0.9.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a538a4deb536228f39db47bab3c7e0beb8f37f6282edcf6a935a48f4d4a102b"
 dependencies = [
  "arbitrary",
  "catvec",
@@ -1419,6 +1421,7 @@ dependencies = [
  "novasmt",
  "num",
  "num_enum",
+ "once_cell",
  "parking_lot",
  "rayon",
  "rustc-hash",

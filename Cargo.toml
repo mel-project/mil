@@ -1,6 +1,6 @@
 [package]
 name = "mil"
-version = "0.2.4"
+version = "0.2.5-alpha"
 authors = ["Jay Butera <buterajay@protonmail.com>"]
 edition = "2018"
 
@@ -15,8 +15,8 @@ hex = "0.4.3"
 anyhow = "1.0.42"
 genawaiter = "0.99.1"
 ethnum = "1.0.3"
-#themelio-stf = "0.9.6"
-themelio-stf = { path = "../themelio-stf", features = ["print"] }
+themelio-stf = { version = "0.9.7", features = ["print"] }
+#themelio-stf = { path = "../themelio-stf", features = ["print"] }
 themelio-structs = "0.2"
 tmelcrypt= "0.2.3"
 primitive-types = { version = "0.10.1", default-features = false }
