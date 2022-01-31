@@ -40,6 +40,7 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
             ExpandedBuiltIn::And(e1, e2) => compile_op(b, OpCode::And, vec![e1, e2]),
             ExpandedBuiltIn::Or(e1, e2) => compile_op(b, OpCode::Or, vec![e1, e2]),
             ExpandedBuiltIn::Xor(e1, e2) => compile_op(b, OpCode::Xor, vec![e1, e2]),
+            ExpandedBuiltIn::Print(e) => compile_op(b, OpCode::Print, vec![e]),
             ExpandedBuiltIn::Not(e) => compile_op(b, OpCode::Not, vec![e]),
             ExpandedBuiltIn::Eql(e1, e2) => compile_op(b, OpCode::Eql, vec![e1, e2]),
             ExpandedBuiltIn::Lt(e1, e2) => compile_op(b, OpCode::Lt, vec![e1, e2]),

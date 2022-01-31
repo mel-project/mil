@@ -161,6 +161,7 @@ fn unary_builtin(input: &str) -> ParseRes<BuiltIn> {
             ),
             |(s, e)| match s {
                 "not" => Some(BuiltIn::Not(e)),
+                "print" => Some(BuiltIn::Print(e)),
                 "v-len" => Some(BuiltIn::Vlen(e)),
                 "b-len" => Some(BuiltIn::Blen(e)),
                 "bytes->u256" => Some(BuiltIn::BtoI(e)),

@@ -11,6 +11,7 @@ pub type HeapPos = u16;
 /// ExpandedBuiltins are directly compilable to MelVM opcodes.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ExpandedBuiltIn<E> {
+    Print(E),
     // Arithmetic
     Add(E, E),
     Sub(E, E),
@@ -75,6 +76,7 @@ impl<E> ExpandedBuiltIn<E> {
             ExpandedBuiltIn::Exp(x, y, _) => toret.extend_from_slice(&[x, y]),
             ExpandedBuiltIn::Div(x, y) => toret.extend_from_slice(&[x, y]),
             ExpandedBuiltIn::Rem(x, y) => toret.extend_from_slice(&[x, y]),
+            ExpandedBuiltIn::Print(x) => toret.push(x),
             ExpandedBuiltIn::Not(x) => toret.push(x),
             ExpandedBuiltIn::Or(x, y) => toret.extend_from_slice(&[x, y]),
             ExpandedBuiltIn::And(x, y) => toret.extend_from_slice(&[x, y]),
@@ -116,6 +118,7 @@ impl<E> ExpandedBuiltIn<E> {
             ExpandedBuiltIn::Exp(x, y, k) => ExpandedBuiltIn::Exp(f(x), f(y), k),
             ExpandedBuiltIn::Div(x, y) => ExpandedBuiltIn::Div(f(x), f(y)),
             ExpandedBuiltIn::Rem(x, y) => ExpandedBuiltIn::Rem(f(x), f(y)),
+            ExpandedBuiltIn::Print(x) => ExpandedBuiltIn::Print(f(x)),
             ExpandedBuiltIn::Not(x) => ExpandedBuiltIn::Not(f(x)),
             ExpandedBuiltIn::Or(x, y) => ExpandedBuiltIn::Or(f(x), f(y)),
             ExpandedBuiltIn::And(x, y) => ExpandedBuiltIn::And(f(x), f(y)),
@@ -151,6 +154,9 @@ impl<E> ExpandedBuiltIn<E> {
 /// Primitive operations that are accessible in the mil language front-end.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum BuiltIn {
+    /// (print 0)
+    Print(Expr),
+
     // Arithmetic
     /// (+ 4 2)
     Add(Expr, Expr),

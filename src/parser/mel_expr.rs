@@ -122,6 +122,9 @@ impl MemoryMap {
                     ExpandedBuiltIn::Jmp(n) => ExpandedBuiltIn::<MelExpr>::Jmp(n),
                     ExpandedBuiltIn::Load(p) => ExpandedBuiltIn::<MelExpr>::Load(p),
                     ExpandedBuiltIn::Store(p) => ExpandedBuiltIn::<MelExpr>::Store(p),
+                    ExpandedBuiltIn::Print(e) => {
+                        ExpandedBuiltIn::<MelExpr>::Print(self.unrolled_to_mel(e))
+                    }
                     ExpandedBuiltIn::Not(e) => {
                         ExpandedBuiltIn::<MelExpr>::Not(self.unrolled_to_mel(e))
                     }
@@ -325,6 +328,7 @@ pub fn count_insts(e: &MelExpr) -> u16 {
             ExpandedBuiltIn::Xor(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Shl(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
             ExpandedBuiltIn::Shr(e1, e2) => 1 + count_insts(&e1) + count_insts(&e2),
+            ExpandedBuiltIn::Print(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::Not(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::BtoI(e) => 1 + count_insts(&e),
             ExpandedBuiltIn::ItoB(e) => 1 + count_insts(&e),

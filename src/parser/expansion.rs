@@ -256,6 +256,9 @@ impl Env {
                 BuiltIn::Fail => Ok(UnrolledExpr::BuiltIn(Box::new(
                     ExpandedBuiltIn::<UnrolledExpr>::Load(u16::MAX),
                 ))),
+                BuiltIn::Print(e) => {
+                    self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Print, mangler)
+                }
                 BuiltIn::Not(e) => {
                     self.expand_monop(e, ExpandedBuiltIn::<UnrolledExpr>::Not, mangler)
                 }
