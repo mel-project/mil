@@ -54,7 +54,6 @@ impl<T: Compile> Compile for ExpandedBuiltIn<T> {
 
             ExpandedBuiltIn::Dup(e) => compile_op(b, OpCode::Dup, vec![e]),
             //ExpandedBuiltIn::Oflo => compile_op::<MelExpr>(b, OpCode::Oflo, vec![]),
-
             ExpandedBuiltIn::Vref(e1, e2) => compile_op(b, OpCode::VRef, vec![e1, e2]),
             ExpandedBuiltIn::Vappend(e1, e2) => compile_op(b, OpCode::VAppend, vec![e1, e2]),
             ExpandedBuiltIn::Vempty => compile_op::<MelExpr>(b, OpCode::VEmpty, vec![]),
@@ -96,10 +95,10 @@ impl Compile for MelExpr {
     fn compile_onto(&self, b: BinCode) -> BinCode {
         match self {
             MelExpr::Hash(n, e) => e.compile_onto(b).tap_mut(|b| b.0.push(OpCode::Hash(*n))),
-            MelExpr::Sigeok(n, e1, e2, e3) => e1
+            MelExpr::Sigeok(n, e1, e2, e3) => e3
                 .compile_onto(b)
                 .pipe(|b| e2.compile_onto(b))
-                .pipe(|b| e3.compile_onto(b))
+                .pipe(|b| e1.compile_onto(b))
                 .tap_mut(|b| b.0.push(OpCode::SigEOk(*n))),
             MelExpr::Loop(n, e) => {
                 let inner = e.compile_onto(BinCode::default());

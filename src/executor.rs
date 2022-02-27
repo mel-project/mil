@@ -2,12 +2,12 @@ use crate::compiler::BinCode;
 use genawaiter::{rc::gen, yield_};
 use serde::Deserialize;
 use std::collections::HashMap;
-use themelio_structs::{CoinDataHeight, CoinID, Header, Transaction};
 use themelio_stf::melvm::{
     self,
     opcode::{DecodeError, OpCode},
     Covenant, Executor, Value,
 };
+use themelio_structs::{CoinDataHeight, CoinID, Header, Transaction};
 
 /// Points to current instruction of a program in an [ExecutionEnv].
 pub type ProgramCounter = usize;
@@ -120,7 +120,7 @@ mod tests {
     use crate::parser::parse;
     use crate::types::MelExpr;
     use ethnum::U256;
-    use themelio_structs::{Address, CoinData, TxHash, TxKind, Denom, NetID};
+    use themelio_structs::{Address, CoinData, Denom, NetID, TxHash, TxKind};
     use tmelcrypt::{ed25519_keygen, Ed25519PK, Ed25519SK, HashVal};
 
     fn empty_test() -> Transaction {
@@ -261,10 +261,9 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Vector(vec![
-                Value::Int(U256::new(2)),
-                Value::Int(U256::new(1))
-            ].into())]
+            vec![Value::Vector(
+                vec![Value::Int(U256::new(2)), Value::Int(U256::new(1))].into()
+            )]
         );
     }
 
@@ -355,10 +354,13 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Bytes(vec![
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 1
-            ].into())]
+            vec![Value::Bytes(
+                vec![
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 1
+                ]
+                .into()
+            )]
         );
     }
 
@@ -488,11 +490,14 @@ mod tests {
 
         assert_eq!(
             state.0,
-            vec![Value::Vector(vec![
-                Value::Int(U256::new(1)),
-                Value::Int(U256::new(2)),
-                Value::Int(U256::new(3))
-            ].into())]
+            vec![Value::Vector(
+                vec![
+                    Value::Int(U256::new(1)),
+                    Value::Int(U256::new(2)),
+                    Value::Int(U256::new(3))
+                ]
+                .into()
+            )]
         );
     }
 
@@ -599,7 +604,8 @@ mod tests {
                 vec![
                     233, 131, 224, 169, 229, 83, 12, 43, 119, 20, 230, 120, 233, 61, 188, 129, 150,
                     148, 124, 190, 111, 195, 63, 163, 212, 106, 36, 240, 111, 251, 98, 193
-                ].into()
+                ]
+                .into()
             );
         } else {
             panic!();
@@ -612,9 +618,9 @@ mod tests {
         let ops = parse(&format!(
             "
                 (sigeok 32
-                    (v-get (v-get SPENDER-TX 6) 0)
+                    SPENDER-TX-HASH
                     0x{}
-                    SPENDER-TX-HASH)",
+                    (v-get (v-get SPENDER-TX 6) 0))",
             hex::encode(&pk.0)
         ))
         .unwrap();
