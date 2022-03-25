@@ -20,6 +20,7 @@ pub trait Evaluator {
     fn new(fns: Vec<Defn>) -> Self;
 }
 
+#[derive(Clone)]
 pub struct Env {
     // Mapping variables to the location they point to on the heap.
     /// Mapping parameters as defined in a fn definition, to their mangled form.
@@ -416,40 +417,25 @@ impl Env {
             }
             // Mangling happens here
             Expr::Let(binds, stmnts, e) => {
-                // Generate mangled names for variables
-                let mangled_vars: Vec<VarId> = binds.iter().map(|_| mangler.next()).collect();
-                // Expand binding expressions
-                let expanded_bind_exprs = fold_results(
-                    binds
-                        .iter()
-                        .map(|(_, expr)| self.expand_mangle_fns(expr, mangler))
-                        .collect(),
-                )?;
-                // Zip em together for later
-                let mangled_binds = mangled_vars
-                    .iter()
-                    .cloned()
-                    .zip(expanded_bind_exprs.iter().cloned())
-                    .collect();
+                let mut f_env = (*self).clone();
+                let mut mangled_binds = vec![];
 
-                // Map between mangled and original variable names
-                let mangled_map: HashMap<Symbol, VarId> = binds
-                    .iter()
-                    .map(|(s, _)| s.clone())
-                    .zip(mangled_vars.into_iter())
-                    .collect();
+                // Roll bindings into the environment recursively so that each
+                // can reference the last
+                for (var, expr) in binds {
+                    let mangled_var = mangler.next();
+                    let mangled_expr = f_env.expand_mangle_fns(expr, mangler)?;
 
-                // Create a new env to expand the body and replace variables with the mangled version
-                let f_env = Env {
-                    // TODO: Make sure mangled_map overrides mangled
-                    mangled: self
-                        .mangled
-                        .clone()
-                        .into_iter()
-                        .chain(mangled_map)
-                        .collect(),
-                    fns: self.fns.clone(),
-                };
+                    mangled_binds.push((mangled_var.clone(), mangled_expr.clone()));
+
+                    let mut new_binds = f_env.mangled.clone();
+                    new_binds.insert(var.clone(), mangled_var);
+
+                    f_env = Env {
+                        mangled: new_binds,
+                        fns: self.fns.clone(),
+                    }
+                }
 
                 // Expand body statements
                 let expanded_stmnts = fold_results(
