@@ -1,6 +1,6 @@
 [package]
 name = "mil"
-version = "0.2.7-alpha.0"
+version = "0.3.0"
 authors = ["Jay Butera <buterajay@protonmail.com>"]
 edition = "2018"
 
