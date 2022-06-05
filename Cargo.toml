@@ -1,6 +1,6 @@
 [package]
 name = "mil"
-version = "0.3.0"
+version = "0.2.7"
 authors = ["Jay Butera <buterajay@protonmail.com>"]
 edition = "2018"
 
@@ -8,7 +8,7 @@ description = "Intermediate language for the MelVM"
 license = "MPL-2.0"
 repository = "https://github.com/themeliolabs/mil"
 
- 
+
 [dependencies]
 nom = "7.1.1"
 hex = "0.4.3"
