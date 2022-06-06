@@ -122,8 +122,7 @@ fn tri_builtin(input: &str) -> ParseRes<BuiltIn> {
                 _ => None,
             },
         )
-        .or(list!(tag("**"), uint8, expr, expr)
-                .map(|(_, k, e1, e2)| BuiltIn::Exp(e1, e2, k))),
+        .or(list!(tag("**"), uint8, expr, expr).map(|(_, k, e1, e2)| BuiltIn::Exp(e1, e2, k))),
     )
     .parse(input)
 }
@@ -188,7 +187,23 @@ fn binary_builtin(input: &str) -> ParseRes<BuiltIn> {
                 "*" => Some(BuiltIn::Mul(e1, e2)),
                 "/" => Some(BuiltIn::Div(e1, e2)),
                 "<" => Some(BuiltIn::Lt(e1, e2)),
+                "<=" => {
+                    let lt = BuiltIn::Lt(e1.clone(), e2.clone());
+                    let eq = BuiltIn::Eql(e1, e2);
+                    Some(BuiltIn::Or(
+                        Expr::BuiltIn(lt.into()),
+                        Expr::BuiltIn(eq.into()),
+                    ))
+                }
                 ">" => Some(BuiltIn::Gt(e1, e2)),
+                ">=" => {
+                    let gt = BuiltIn::Gt(e1.clone(), e2.clone());
+                    let eq = BuiltIn::Eql(e1, e2);
+                    Some(BuiltIn::Or(
+                        Expr::BuiltIn(gt.into()),
+                        Expr::BuiltIn(eq.into()),
+                    ))
+                }
                 "%" => Some(BuiltIn::Rem(e1, e2)),
                 "and" => Some(BuiltIn::And(e1, e2)),
                 "or" => Some(BuiltIn::Or(e1, e2)),
@@ -286,7 +301,7 @@ fn int(input: &str) -> ParseRes<U256> {
 fn uint8(input: &str) -> ParseRes<u8> {
     context(
         "u8",
-        map_res(digit1, |n_str: &str| u8::from_str_radix(n_str, 10))
+        map_res(digit1, |n_str: &str| u8::from_str_radix(n_str, 10)),
     )
     .parse(input)
 }

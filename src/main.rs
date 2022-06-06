@@ -42,7 +42,7 @@ fn main() -> anyhow::Result<()> {
     log::debug!("read everything");
 
     // Parse to MelExpr ops
-    let mel_ops = parser::parse(&code[..]).map_err(|e| match e {
+    let mel_ops = parser::parse_no_optimize(&code[..]).map_err(|e| match e {
         ParseError::Syntax(e) => match e {
             nom::Err::Failure(e) | nom::Err::Error(e) => {
                 anyhow!(nom::error::convert_error(&code[..], e))

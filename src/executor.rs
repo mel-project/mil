@@ -560,6 +560,28 @@ mod tests {
         assert_eq!(state.0, vec![Value::Int(U256::new(2))]);
     }
 
+    // #[test]
+    // fn tricky_case() {
+    //     let ops = parse(
+    //         "
+    //         ((fn dol (x) (vector x))
+    //         (fn foo (x)
+    //          (let (y (dol x))
+    //           (if (and (and (= 2 (typeof y)) (= 1 (v-len y)))
+    //             (if (= 0 (typeof y)) (and (>= y 1) (<= y 5) ) ) 0)
+    //            (v-get y 0)
+    //            y)))
+    //         (foo 2))
+
+    //     ",
+    //     )
+    //     .unwrap();
+    //     let (_, _, tx) = key_and_empty_tx();
+    //     let state = exec(&tx, &[], ops);
+
+    //     assert_eq!(state.0, vec![Value::Int(U256::new(30))]);
+    // }
+
     #[test]
     fn loop_with_noop() {
         let ops = parse(
