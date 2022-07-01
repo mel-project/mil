@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use themelio_stf::melvm::{
     self,
     opcode::{DecodeError, OpCode},
-    Covenant, Executor, Value,
+    Covenant, CovenantEnv, Executor, Value,
 };
 use themelio_structs::{CoinDataHeight, CoinID, Header, Transaction};
 
@@ -16,30 +16,7 @@ pub type EnvView = (Stack, Heap, ProgramCounter);
 type Stack = Vec<Value>;
 type Heap = HashMap<u16, Value>;
 
-/// The execution environment of a covenant.
-/// Matches the CovenantEnv struct of themelio_stf package.
-/// However, fields here are owned not borrowed.
-#[derive(Debug, Deserialize)]
-pub struct CovEnv {
-    pub parent_coinid: CoinID,
-    pub parent_cdh: CoinDataHeight,
-    pub spender_index: u8,
-    pub last_header: Header,
-}
-
-impl<'a> From<&'a CovEnv> for melvm::CovenantEnv<'a> {
-    fn from(e: &'a CovEnv) -> Self {
-        melvm::CovenantEnv {
-            parent_coinid: &e.parent_coinid,
-            parent_cdh: &e.parent_cdh,
-            spender_index: e.spender_index,
-            last_header: &e.last_header,
-        }
-    }
-}
-
 /// A wrapper of the MelVM Executor, associated with a list of opcodes to execute.
-//pub struct ExecutionEnv<'a> {
 pub struct ExecutionEnv {
     /// A stack and heap environment.
     executor: Executor,
@@ -51,13 +28,9 @@ pub struct ExecutionEnv {
 //impl<'a> ExecutionEnv<'a> {
 impl ExecutionEnv {
     //pub fn new(spending_tx: Transaction, cov_env: CovEnv, ops: &'a [OpCode]) -> ExecutionEnv<'a> {
-    pub fn new(spending_tx: Transaction, cov_env: CovEnv, ops: Vec<OpCode>) -> ExecutionEnv {
+    pub fn new(spending_tx: Transaction, cov_env: CovenantEnv, ops: Vec<OpCode>) -> ExecutionEnv {
         ExecutionEnv {
-            executor: Executor::new_from_env(
-                ops.clone(),
-                spending_tx,
-                Some(melvm::CovenantEnv::from(&cov_env)),
-            ),
+            executor: Executor::new_from_env(ops.clone(), spending_tx, Some(cov_env)),
             ops,
         }
     }
