@@ -2,7 +2,6 @@ use anyhow::anyhow;
 use mil::{
     cmdline::BuildCmd,
     compiler::{BinCode, Compile},
-    executor::CovEnv,
     parser,
     parser::ParseError,
 };

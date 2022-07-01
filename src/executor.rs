@@ -137,7 +137,7 @@ mod tests {
             height: 0.into(),
         };
 
-        let cov_env = CovEnv {
+        let cov_env = CovenantEnv {
             parent_coinid: empty_ci,
             parent_cdh: empty_cdh,
             spender_index: 0,
