@@ -16,7 +16,8 @@ use nom::{
     IResult, Parser,
 };
 
-use nom_packrat::{packrat_parser, storage};
+use nom_packrat::packrat_parser;
+use once_cell::sync::Lazy;
 
 /// Create a parser for an s-expression, where each element of the list is a parser.
 /// ```
@@ -479,10 +480,15 @@ pub fn statement(input: &str) -> ParseRes<Statement> {
     .parse(input)
 }
 
+static RATTED: Lazy<bool> = Lazy::new(|| {
+    nom_packrat::init!();
+    true
+});
+
 /// Top level parser returns any valid [Expr].
 #[packrat_parser]
 pub fn expr(input: &str) -> ParseRes<Expr> {
-    nom_packrat::init!();
+    assert!(*RATTED);
     // The order is important
     alt((
         bytes.map(Value::Bytes).map(Expr::Value),

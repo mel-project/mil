@@ -26,6 +26,7 @@ fn read_txs(fp: PathBuf) -> anyhow::Result<TestTxs> {
     Ok(serde_json::from_str(&str_txs).expect("Failed to parse transactions as json."))
 }
 */
+nom_packrat::storage!(String);
 
 fn main() -> anyhow::Result<()> {
     env_logger::Builder::from_env("RUST_LOG")
